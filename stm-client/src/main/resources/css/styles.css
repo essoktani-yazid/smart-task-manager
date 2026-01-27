@@ -1,0 +1,106 @@
+/* Styles pour l'application SmartTaskManager */
+
+.root {
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Styles pour la page de connexion */
+.login-form {
+    -fx-pref-width: 300px;
+}
+
+.login-form .text-field,
+.login-form .password-field {
+    -fx-pref-height: 35px;
+    -fx-padding: 5px 10px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+}
+
+.login-form .button {
+    -fx-pref-height: 35px;
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.login-form .button:hover {
+    -fx-background-color: #2980b9;
+}
+
+/* Styles pour le header */
+.header {
+    -fx-background-color: #2c3e50;
+}
+
+.header .label {
+    -fx-text-fill: white;
+}
+
+.header .button {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.header .button:hover {
+    -fx-background-color: #c0392b;
+}
+
+/* Styles pour le formulaire de tâche */
+.task-form {
+    -fx-background-color: #ecf0f1;
+    -fx-padding: 10px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+}
+
+.task-form .text-field,
+.task-form .combo-box {
+    -fx-pref-height: 35px;
+}
+
+.task-form .button {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+}
+
+.task-form .button:hover {
+    -fx-background-color: #229954;
+}
+
+/* Styles pour le tableau */
+.table-view {
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #34495e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #3498db;
+    -fx-text-background-color: white;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #ecf0f1;
+}
+
+/* Styles pour les messages d'erreur */
+.error-label {
+    -fx-text-fill: #e74c3c;
+    -fx-font-weight: bold;
+}
+

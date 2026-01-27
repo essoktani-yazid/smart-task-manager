@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smarttask.client.view.controller.DashboardController">
+   <top>
+      <VBox>
+         <children>
+            <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="header">
+               <children>
+                  <Label text="SmartTaskManager" textFill="#ffffff">
+                     <font>
+                        <Font name="System Bold" size="24.0" />
+                     </font>
+                  </Label>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label fx:id="userLabel" text="Utilisateur" textFill="#ffffff" />
+                  <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" text="Déconnexion" />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+               </padding>
+            </HBox>
+         </children>
+      </VBox>
+   </top>
+   <center>
+      <VBox spacing="20.0">
+         <children>
+            <HBox spacing="10.0" styleClass="task-form">
+               <children>
+                  <TextField fx:id="titleField" promptText="Titre de la tâche" HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="descriptionField" promptText="Description" HBox.hgrow="ALWAYS" />
+                  <ComboBox fx:id="priorityComboBox" prefWidth="150.0" />
+                  <Button fx:id="addTaskButton" mnemonicParsing="false" onAction="#handleAddTask" text="Ajouter" />
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+               </padding>
+            </HBox>
+            <TableView fx:id="tasksTable" VBox.vgrow="ALWAYS">
+               <columns>
+                  <TableColumn fx:id="titleColumn" prefWidth="200.0" text="Titre" />
+                  <TableColumn fx:id="descriptionColumn" prefWidth="300.0" text="Description" />
+                  <TableColumn fx:id="priorityColumn" prefWidth="100.0" text="Priorité" />
+                  <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Statut" />
+                  <TableColumn fx:id="dueDateColumn" prefWidth="150.0" text="Date d'échéance" />
+                  <TableColumn fx:id="actionsColumn" prefWidth="150.0" text="Actions" />
+               </columns>
+            </TableView>
+         </children>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+      </VBox>
+   </center>
+   <stylesheets>
+      <URL value="@../css/styles.css" />
+   </stylesheets>
+</BorderPane>
+
