@@ -1,6 +1,8 @@
 package com.smarttask.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Model representing a task in the application.
@@ -16,6 +18,8 @@ public class Task {
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
     private User user;
+    private Task parentTask;
+    private List<Task> subTasks = new ArrayList<>();
 
     // Constructeurs
     public Task() {
@@ -93,6 +97,22 @@ public class Task {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Task getParentTask() {
+        return parentTask;
+    }
+
+    public void setParentTask(Task parentTask) {
+        this.parentTask = parentTask;
+    }
+
+    public List<Task> getSubTasks() {
+        return subTasks;
+    }
+
+    public void setSubTasks(List<Task> subTasks) {
+        this.subTasks = subTasks;
     }
 
     @Override
