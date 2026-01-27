@@ -17,18 +17,14 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Contrôleur pour la vue du dashboard (liste des tâches).
+ * Controller for the dashboard view (task list).
  */
 public class DashboardController {
-    @FXML
-    private Label userLabel;
-
-    @FXML
-    private Button logoutButton;
 
     @FXML
     private TextField titleField;
@@ -40,7 +36,16 @@ public class DashboardController {
     private ComboBox<Priority> priorityComboBox;
 
     @FXML
+    private DatePicker dueDatePicker;
+
+    @FXML
     private Button addTaskButton;
+
+    @FXML
+    private Button refreshButton;
+
+    @FXML
+    private Button refreshButtonHeader;
 
     @FXML
     private TableView<Task> tasksTable;
@@ -69,26 +74,54 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
-        // Initialiser la ComboBox de priorité
+        // Initialize priority ComboBox
         priorityComboBox.setItems(FXCollections.observableArrayList(Priority.values()));
         priorityComboBox.setValue(Priority.MEDIUM);
 
-        // Configurer les colonnes du tableau
+        // Configure table columns
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+        
+        // Format priority column
         priorityColumn.setCellValueFactory(new PropertyValueFactory<>("priority"));
+        priorityColumn.setCellFactory(column -> new TableCell<Task, Priority>() {
+            @Override
+            protected void updateItem(Priority priority, boolean empty) {
+                super.updateItem(priority, empty);
+                if (empty || priority == null) {
+                    setText(null);
+                } else {
+                    setText(priority.getLabel());
+                }
+            }
+        });
+        
+        // Format status column
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusColumn.setCellFactory(column -> new TableCell<Task, Status>() {
+            @Override
+            protected void updateItem(Status status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                } else {
+                    setText(status.getLabel());
+                }
+            }
+        });
+        
+        // Format due date column
         dueDateColumn.setCellValueFactory(cellData -> {
             LocalDateTime dueDate = cellData.getValue().getDueDate();
             return new javafx.beans.property.SimpleStringProperty(
-                    dueDate != null ? dueDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : ""
+                    dueDate != null ? dueDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "Not set"
             );
         });
 
-        // Colonne des actions
+        // Actions column
         actionsColumn.setCellFactory(column -> new TableCell<Task, String>() {
-            private final Button deleteButton = new Button("Supprimer");
-            private final Button editButton = new Button("Modifier");
+            private final Button deleteButton = new Button("Delete");
+            private final Button editButton = new Button("Edit");
 
             {
                 deleteButton.setOnAction(event -> {
@@ -119,7 +152,6 @@ public class DashboardController {
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
-        userLabel.setText("Bienvenue, " + user.getUsername());
         loadTasks();
     }
 
@@ -128,38 +160,61 @@ public class DashboardController {
         String title = titleField.getText();
         String description = descriptionField.getText();
         Priority priority = priorityComboBox.getValue();
+        LocalDate dueDate = dueDatePicker.getValue();
 
         if (title.isEmpty()) {
-            showAlert("Erreur", "Le titre est obligatoire");
+            showAlert("Error", "Title is required");
             return;
         }
 
         Task task = taskService.createTask(title, description, priority, currentUser);
         if (task != null) {
+            // Set due date if it was selected
+            if (dueDate != null) {
+                task.setDueDate(dueDate.atStartOfDay());
+                // Update the task with the due date
+                Task updatedTask = taskService.updateTask(task);
+                if (updatedTask != null) {
+                    task = updatedTask;
+                }
+            }
             tasks.add(task);
             titleField.clear();
             descriptionField.clear();
+            dueDatePicker.setValue(null);
+            showSuccessMessage("Task created successfully");
         } else {
-            showAlert("Erreur", "Impossible de créer la tâche");
+            showAlert("Error", "Unable to create task");
         }
     }
 
     @FXML
     private void handleDeleteTask(Task task) {
-        boolean deleted = taskService.deleteTask(task.getId());
-        if (deleted) {
-            tasks.remove(task);
-        } else {
-            showAlert("Erreur", "Impossible de supprimer la tâche");
-        }
+        // Ask for confirmation before deleting
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Delete Confirmation");
+        confirmAlert.setHeaderText("Delete Task");
+        confirmAlert.setContentText("Are you sure you want to delete the task \"" + task.getTitle() + "\"?");
+
+        confirmAlert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                boolean deleted = taskService.deleteTask(task.getId());
+                if (deleted) {
+                    tasks.remove(task);
+                    showSuccessMessage("Task deleted successfully");
+                } else {
+                    showAlert("Error", "Unable to delete task");
+                }
+            }
+        });
     }
 
     @FXML
     private void handleEditTask(Task task) {
-        // Ouvrir une boîte de dialogue pour modifier la tâche
+        // Open dialog to edit task
         Dialog<Task> dialog = new Dialog<>();
-        dialog.setTitle("Modifier la tâche");
-        dialog.setHeaderText("Modifiez les informations de la tâche");
+        dialog.setTitle("Edit Task");
+        dialog.setHeaderText("Modify task information");
 
         TextField titleField = new TextField(task.getTitle());
         TextField descriptionField = new TextField(task.getDescription());
@@ -167,14 +222,24 @@ public class DashboardController {
         priorityCombo.setValue(task.getPriority());
         ComboBox<Status> statusCombo = new ComboBox<>(FXCollections.observableArrayList(Status.values()));
         statusCombo.setValue(task.getStatus());
+        
+        // DatePicker for due date
+        DatePicker dueDatePicker = new DatePicker();
+        if (task.getDueDate() != null) {
+            dueDatePicker.setValue(task.getDueDate().toLocalDate());
+        }
 
-        dialog.getDialogPane().setContent(new javafx.scene.layout.VBox(10,
-                new Label("Titre:"), titleField,
+        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(10);
+        content.getChildren().addAll(
+                new Label("Title:"), titleField,
                 new Label("Description:"), descriptionField,
-                new Label("Priorité:"), priorityCombo,
-                new Label("Statut:"), statusCombo));
+                new Label("Priority:"), priorityCombo,
+                new Label("Status:"), statusCombo,
+                new Label("Due Date:"), dueDatePicker
+        );
+        dialog.getDialogPane().setContent(content);
 
-        ButtonType saveButtonType = new ButtonType("Enregistrer", ButtonBar.ButtonData.OK_DONE);
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
         dialog.setResultConverter(dialogButton -> {
@@ -183,6 +248,12 @@ public class DashboardController {
                 task.setDescription(descriptionField.getText());
                 task.setPriority(priorityCombo.getValue());
                 task.setStatus(statusCombo.getValue());
+                // Update due date
+                if (dueDatePicker.getValue() != null) {
+                    task.setDueDate(dueDatePicker.getValue().atStartOfDay());
+                } else {
+                    task.setDueDate(null);
+                }
                 return task;
             }
             return null;
@@ -193,27 +264,19 @@ public class DashboardController {
             if (savedTask != null) {
                 int index = tasks.indexOf(task);
                 tasks.set(index, savedTask);
+                showSuccessMessage("Task updated successfully");
             } else {
-                showAlert("Erreur", "Impossible de mettre à jour la tâche");
+                showAlert("Error", "Unable to update task");
             }
         });
     }
 
     @FXML
-    private void handleLogout() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) logoutButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("SmartTaskManager - Connexion");
-            stage.setWidth(400);
-            stage.setHeight(500);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void handleRefresh() {
+        loadTasks();
+        showSuccessMessage("Task list refreshed");
     }
+
 
     private void loadTasks() {
         if (currentUser != null) {
@@ -227,6 +290,14 @@ public class DashboardController {
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showSuccessMessage(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();

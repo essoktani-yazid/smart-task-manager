@@ -48,14 +48,11 @@ enum PermissionLevel {
     ADMIN
 }
 
-// Classe d'ID composite pour SharedTask
-@Embeddable
+// Composite ID for SharedTask (plain model, no JPA annotations)
 class SharedTaskId implements java.io.Serializable {
 
-    @Column(name = "task_id", length = 36)
     private String taskId;
 
-    @Column(name = "user_id", length = 36)
     private String userId;
 
     public SharedTaskId() {}

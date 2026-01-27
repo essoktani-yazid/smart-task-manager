@@ -34,17 +34,15 @@ public class Comment {
         this.content = content;
     }
 
-    // Callbacks
-    @PrePersist
-    protected void onCreate() {
+    // Utility to (re)set timestamps
+    public void touchOnCreate() {
         if (createdAt == null) {
             createdAt = new Date();
         }
         updatedAt = new Date();
     }
 
-    @PreUpdate
-    protected void onUpdate() {
+    public void touchOnUpdate() {
         updatedAt = new Date();
     }
 

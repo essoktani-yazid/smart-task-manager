@@ -10,7 +10,7 @@ public class MainTask extends Task {
     }
 
     public MainTask(String title, String description, User user) {
-        super(title, description, user);
+        super(title, description, Priority.MEDIUM, user);
     }
 
     // Specific methods for main tasks

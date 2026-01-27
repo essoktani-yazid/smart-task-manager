@@ -1,0 +1,13 @@
+com/smarttask/client/view/controller/LoginController.class
+com/smarttask/client/view/controller/DashboardController.class
+com/smarttask/client/service/TaskService.class
+com/smarttask/client/view/controller/DashboardController$3.class
+com/smarttask/client/service/AuthService$LoginRequest.class
+com/smarttask/client/view/controller/DashboardController$2.class
+com/smarttask/client/service/TaskService$3.class
+com/smarttask/client/service/TaskService$1.class
+com/smarttask/client/App.class
+com/smarttask/client/view/controller/MainLayoutController.class
+com/smarttask/client/view/controller/DashboardController$1.class
+com/smarttask/client/service/AuthService.class
+com/smarttask/client/service/TaskService$2.class

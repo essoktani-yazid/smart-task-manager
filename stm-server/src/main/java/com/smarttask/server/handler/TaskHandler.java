@@ -2,7 +2,6 @@ package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import com.smarttask.model.Priority;
 import com.smarttask.model.Status;
 import com.smarttask.model.Task;

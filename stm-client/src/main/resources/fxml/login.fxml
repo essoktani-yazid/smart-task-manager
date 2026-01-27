@@ -30,9 +30,6 @@
    <padding>
       <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
    </padding>
-   <stylesheets>
-      <URL value="@../css/styles.css" />
-   </stylesheets>
 </VBox>
 
 

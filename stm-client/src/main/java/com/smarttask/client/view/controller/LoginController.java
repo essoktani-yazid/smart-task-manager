@@ -63,7 +63,6 @@ public class LoginController {
             return;
         }
 
-        // Pour simplifier, on utilise l'username comme email
         User user = authService.register(username, password, username + "@example.com");
         if (user != null) {
             navigateToDashboard(user);
@@ -81,7 +80,9 @@ public class LoginController {
             dashboardController.setCurrentUser(user);
 
             Stage stage = (Stage) loginButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            stage.setScene(scene);
             stage.setTitle("SmartTaskManager - Dashboard");
             stage.setWidth(1000);
             stage.setHeight(700);

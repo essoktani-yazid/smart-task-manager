@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label text="Collaboration" textFill="#2c3e50">
+         <font>
+            <Font name="System Bold" size="36.0" />
+         </font>
+      </Label>
+      
+      <Label text="Collaboration features will be displayed here" textFill="#7f8c8d" styleClass="placeholder-text">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      
+      <VBox alignment="CENTER" spacing="15.0" styleClass="feature-info">
+         <children>
+            <Label text="Upcoming features:" textFill="#34495e">
+               <font>
+                  <Font name="System Bold" size="16.0" />
+               </font>
+            </Label>
+            <Label text="• Task sharing between users" textFill="#7f8c8d" />
+            <Label text="• Comments and file attachments" textFill="#7f8c8d" />
+            <Label text="• Real-time notifications" textFill="#7f8c8d" />
+         </children>
+      </VBox>
+   </children>
+   <padding>
+      <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+   </padding>
+</VBox>

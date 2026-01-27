@@ -10,7 +10,7 @@ public class SubTask extends Task {
     }
 
     public SubTask(String title, String description, User user, MainTask parentTask) {
-        super(title, description, user);
+        super(title, description, Priority.MEDIUM, user);
         setParentTask(parentTask);
     }
 }
