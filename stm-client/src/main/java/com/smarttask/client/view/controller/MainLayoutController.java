@@ -4,9 +4,11 @@ import com.smarttask.model.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 
@@ -37,6 +39,9 @@ public class MainLayoutController {
 
     @FXML
     private Button logoutButton;
+
+    @FXML
+    private Button profileButton;
 
     private User currentUser;
     private Button currentActiveButton;
@@ -87,8 +92,40 @@ public class MainLayoutController {
     }
 
     @FXML
+    private void showProfile() {
+        setActiveButton(profileButton);
+        loadView("/fxml/profile.fxml");
+    }
+
+    @FXML
     private void handleLogout() {
-        System.out.println("Déconnexion...");
+        try {
+            // Load login page
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+            Parent root = loader.load();
+
+            // Get current stage
+            Stage stage = (Stage) logoutButton.getScene().getWindow();
+            
+            // Create new scene with login page
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
+            
+            // Set scene and adjust window size for login page
+            stage.setScene(scene);
+            stage.setTitle("SmartTaskManager - Connexion");
+            stage.setWidth(1200);
+            stage.setHeight(700);
+            stage.centerOnScreen();
+            
+            // Clear current user
+            currentUser = null;
+            
+            System.out.println("Déconnexion réussie");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Erreur lors de la déconnexion");
+        }
     }
 
     private void loadView(String fxmlPath) {
@@ -101,6 +138,11 @@ public class MainLayoutController {
                 Object controller = loader.getController();
                 if (controller instanceof DashboardController && currentUser != null) {
                     ((DashboardController) controller).setCurrentUser(currentUser);
+                }
+            } else if (fxmlPath.equals("/fxml/profile.fxml")) {
+                Object controller = loader.getController();
+                if (controller instanceof ProfileController && currentUser != null) {
+                    ((ProfileController) controller).setCurrentUser(currentUser);
                 }
             }
 

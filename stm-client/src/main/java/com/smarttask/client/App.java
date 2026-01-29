@@ -16,29 +16,18 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Load main layout with sidebar
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
+        // Load login view
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
         Parent root = loader.load();
 
-        // Create default user for development
-        User defaultUser = new User();
-        defaultUser.setId(1L);
-        defaultUser.setUsername("ESSOKTANI Yazid");
-        defaultUser.setEmail("yazid.essoktani@esprit.tn");
-
-        // Configure main controller with default user
-        MainLayoutController controller = loader.getController();
-        controller.setCurrentUser(defaultUser);
-
-        primaryStage.setTitle("SmartTaskManager - Intelligent Task Management");
-        Scene scene = new Scene(root, 1400, 900);
+        primaryStage.setTitle("SmartTaskManager - Login");
+        Scene scene = new Scene(root, 800, 600);
         
+        // Add CSS if exists (login.fxml might not supply it directly if not linked)
         scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
         
         primaryStage.setScene(scene);
-        primaryStage.setResizable(true);
-        primaryStage.setMinWidth(1200);
-        primaryStage.setMinHeight(700);
+        primaryStage.setResizable(false);
         primaryStage.show();
     }
 

@@ -1,6 +1,8 @@
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-client/src/main/java/com/smarttask/client/view/controller/DashboardController.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-client/src/main/java/com/smarttask/client/App.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-client/src/main/java/com/smarttask/client/service/AuthService.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-client/src/main/java/com/smarttask/client/view/controller/LoginController.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-client/src/main/java/com/smarttask/client/service/TaskService.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-client/src/main/java/com/smarttask/client/view/controller/MainLayoutController.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\App.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\view\controller\LoginController.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\service\UserService.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\service\TaskService.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\view\controller\MainLayoutController.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\view\controller\ProfileController.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\service\AuthService.java
+C:\Users\lenovo\Desktop\matache\SmartTaskManager\stm-client\src\main\java\com\smarttask\client\view\controller\DashboardController.java

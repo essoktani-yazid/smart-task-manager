@@ -94,6 +94,33 @@ public class AuthService {
         }
     }
 
+    /**
+     * Vérifie le mot de passe actuel d'un utilisateur.
+     * @param username Le nom d'utilisateur
+     * @param password Le mot de passe à vérifier
+     * @return true si le mot de passe est correct, false sinon
+     */
+    public boolean verifyPassword(String username, String password) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpPost request = new HttpPost(BASE_URL + "/verify-password");
+            request.setHeader("Content-Type", "application/json");
+
+            LoginRequest verifyRequest = new LoginRequest();
+            verifyRequest.username = username;
+            verifyRequest.password = password;
+
+            String json = gson.toJson(verifyRequest);
+            request.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
+
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                return response.getStatusLine().getStatusCode() == 200;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // Classe interne pour la requête de login
     private static class LoginRequest {
         String username;

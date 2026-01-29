@@ -4,32 +4,112 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.*?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smarttask.client.view.controller.LoginController">
-   <children>
-      <Label text="SmartTaskManager" textFill="#2c3e50">
-         <font>
-            <Font name="System Bold" size="32.0" />
-         </font>
-      </Label>
-      <Label text="Connexion" textFill="#7f8c8d">
-         <font>
-            <Font size="18.0" />
-         </font>
-      </Label>
-      <VBox spacing="10.0" styleClass="login-form">
+<StackPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.smarttask.client.view.controller.LoginController" 
+           styleClass="login-container">
+   
+   <!-- Main Login Card -->
+   <HBox styleClass="login-card" maxWidth="1000" maxHeight="600" alignment="CENTER">
+      
+      <!-- Left Panel - Team Illustration -->
+      <VBox styleClass="login-left-panel" prefWidth="400" alignment="CENTER" spacing="20">
          <children>
-            <TextField fx:id="usernameField" promptText="Nom d'utilisateur" />
-            <PasswordField fx:id="passwordField" promptText="Mot de passe" />
-            <Button fx:id="loginButton" mnemonicParsing="false" onAction="#handleLogin" text="Se connecter" />
-            <Button fx:id="registerButton" mnemonicParsing="false" onAction="#handleRegister" text="S'inscrire" />
-            <Label fx:id="errorLabel" textFill="#e74c3c" visible="false" />
+            <!-- Team Illustration Image -->
+            <ImageView fitWidth="350" fitHeight="350" preserveRatio="true">
+               <image>
+                  <Image url="@../images/team_collaboration.png"/>
+               </image>
+            </ImageView>
+            
+            <!-- Branding Text Below Image -->
+            <VBox alignment="CENTER" spacing="10">
+               <Label text="SMART TASK.AI" styleClass="brand-text-main">
+                  <font><Font name="System Bold" size="32" /></font>
+               </Label>
+               <Label text="Intelligent Task Management" styleClass="brand-subtitle">
+                  <font><Font size="14" /></font>
+               </Label>
+            </VBox>
          </children>
+         <padding>
+            <Insets top="40" bottom="40" left="40" right="40"/>
+         </padding>
       </VBox>
-   </children>
-   <padding>
-      <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-   </padding>
-</VBox>
-
-
+      
+      <!-- Right Panel - Login/Register Form -->
+      <VBox styleClass="login-right-panel" prefWidth="600" spacing="30">
+         <children>
+            <!-- Tab Selector -->
+            <HBox styleClass="tab-container" spacing="20" alignment="CENTER">
+               <Button fx:id="loginTab" text="Se connecter" styleClass="tab-button, tab-active" 
+                       onAction="#switchToLogin" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+               <Button fx:id="registerTab" text="S'inscrire" styleClass="tab-button" 
+                       onAction="#switchToRegister" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            
+            <!-- Login Form -->
+            <VBox fx:id="loginForm" spacing="20" styleClass="auth-form">
+               <Label text="Bienvenue !" styleClass="form-title">
+                  <font><Font name="System Bold" size="28" /></font>
+               </Label>
+               <Label text="Connectez-vous pour continuer" styleClass="form-subtitle"/>
+               
+               <VBox spacing="12">
+                  <Label text="Nom d'utilisateur" styleClass="field-label"/>
+                  <TextField fx:id="loginUsernameField" promptText="Entrez votre nom d'utilisateur" 
+                            styleClass="form-field"/>
+               </VBox>
+               
+               <VBox spacing="12">
+                  <Label text="Mot de passe" styleClass="field-label"/>
+                  <PasswordField fx:id="loginPasswordField" promptText="Entrez votre mot de passe" 
+                                styleClass="form-field"/>
+               </VBox>
+               
+               <Label fx:id="loginErrorLabel" styleClass="error-label" visible="false"/>
+               
+               <Button fx:id="loginButton" text="Se connecter" styleClass="primary-btn" 
+                      onAction="#handleLogin" maxWidth="Infinity"/>
+            </VBox>
+            
+            <!-- Register Form -->
+            <VBox fx:id="registerForm" spacing="20" styleClass="auth-form" visible="false" managed="false">
+               <Label text="Créer un compte" styleClass="form-title">
+                  <font><Font name="System Bold" size="28" /></font>
+               </Label>
+               <Label text="Rejoignez-nous aujourd'hui" styleClass="form-subtitle"/>
+               
+               <VBox spacing="12">
+                  <Label text="Nom d'utilisateur" styleClass="field-label"/>
+                  <TextField fx:id="registerUsernameField" promptText="Choisissez un nom d'utilisateur" 
+                            styleClass="form-field"/>
+               </VBox>
+               
+               <VBox spacing="12">
+                  <Label text="Email" styleClass="field-label"/>
+                  <TextField fx:id="registerEmailField" promptText="votre.email@example.com" 
+                            styleClass="form-field"/>
+               </VBox>
+               
+               <VBox spacing="12">
+                  <Label text="Mot de passe" styleClass="field-label"/>
+                  <PasswordField fx:id="registerPasswordField" promptText="Créez un mot de passe sécurisé" 
+                                styleClass="form-field"/>
+               </VBox>
+               
+               <Label fx:id="registerErrorLabel" styleClass="error-label" visible="false"/>
+               
+               <Button fx:id="registerButton" text="S'inscrire" styleClass="primary-btn" 
+                      onAction="#handleRegister" maxWidth="Infinity"/>
+            </VBox>
+         </children>
+         <padding>
+            <Insets top="40" bottom="40" left="50" right="50"/>
+         </padding>
+      </VBox>
+      
+   </HBox>
+   
+</StackPane>

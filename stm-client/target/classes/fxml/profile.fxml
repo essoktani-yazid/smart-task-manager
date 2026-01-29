@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Circle?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.smarttask.client.view.controller.ProfileController"
+            styleClass="profile-scroll"
+            fitToWidth="true">
+
+    <VBox styleClass="profile-container" spacing="25">
+        <padding>
+            <Insets top="30" right="30" bottom="30" left="30"/>
+        </padding>
+
+        <!-- Page Header -->
+        <HBox styleClass="profile-page-header" alignment="CENTER_LEFT" spacing="15">
+            <Text text="Mon Profil" styleClass="profile-page-title"/>
+        </HBox>
+
+        <!-- Profile Information Card -->
+        <VBox styleClass="profile-card" spacing="20">
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <!-- Card Header with Avatar -->
+            <HBox styleClass="profile-header" alignment="CENTER_LEFT" spacing="20">
+                <StackPane styleClass="avatar-large">
+                    <Text text="?" styleClass="avatar-text"/>
+                </StackPane>
+                <VBox spacing="5">
+                    <Label text="Username" styleClass="profile-username"/>
+                    <Label text="Membre" styleClass="profile-role"/>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <!-- Section Header -->
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Text text="📋" styleClass="section-icon"/>
+                <Label text="Informations Personnelles" styleClass="section-header"/>
+            </HBox>
+
+            <!-- Profile Fields -->
+            <GridPane vgap="20" hgap="20" styleClass="profile-grid">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="150" prefWidth="180"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <!-- Username (Read-only) -->
+                <Label text="Nom d'utilisateur" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <TextField fx:id="usernameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="0" editable="false" disable="true"/>
+
+                <!-- First Name -->
+                <Label text="Prénom" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <TextField fx:id="firstNameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="Votre prénom"/>
+
+                <!-- Last Name -->
+                <Label text="Nom" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <TextField fx:id="lastNameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="2" promptText="Votre nom"/>
+
+                <!-- Email -->
+                <Label text="Email" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                <TextField fx:id="emailField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="3" promptText="votre.email@example.com"/>
+            </GridPane>
+
+            <!-- Save Button -->
+            <HBox alignment="CENTER_LEFT" spacing="15">
+                <Button text="Sauvegarder les Modifications" styleClass="primary-btn" onAction="#handleSaveProfile"/>
+                <Label fx:id="profileStatusLabel" visible="false" styleClass="status-label"/>
+            </HBox>
+        </VBox>
+
+        <!-- Password Management Card -->
+        <VBox styleClass="profile-card password-card" spacing="20">
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <!-- Section Header -->
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Text text="🔒" styleClass="section-icon"/>
+                <Label text="Gestion du Mot de Passe" styleClass="section-header"/>
+            </HBox>
+
+            <Label text="Pour modifier votre mot de passe, veuillez d'abord vérifier votre mot de passe actuel." styleClass="section-subtitle"/>
+
+            <Separator/>
+
+            <!-- Step 1: Current Password Verification -->
+            <VBox spacing="15" styleClass="password-step">
+                <Label text="Étape 1 : Vérification" styleClass="step-label"/>
+                
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <VBox HBox.hgrow="ALWAYS" spacing="5">
+                        <Label text="Mot de passe actuel" styleClass="field-label"/>
+                        <PasswordField fx:id="currentPasswordField" styleClass="form-field" promptText="Entrez votre mot de passe actuel"/>
+                    </VBox>
+                    <Button fx:id="verifyPasswordButton" text="Vérifier" styleClass="secondary-btn" onAction="#handleVerifyPassword">
+                        <VBox.margin>
+                            <Insets top="22" right="0" bottom="0" left="0"/>
+                        </VBox.margin>
+                    </Button>
+                </HBox>
+
+                <Label fx:id="verifyStatusLabel" visible="false" styleClass="status-label"/>
+            </VBox>
+
+            <Separator/>
+
+            <!-- Step 2: New Password Entry (Initially Disabled) -->
+            <VBox fx:id="newPasswordSection" spacing="15" styleClass="password-step" disable="true" opacity="0.5">
+                <Label text="Étape 2 : Nouveau Mot de Passe" styleClass="step-label"/>
+
+                <GridPane vgap="15" hgap="20">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="150" prefWidth="180"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Nouveau mot de passe" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <PasswordField fx:id="newPasswordField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="Minimum 6 caractères"/>
+
+                    <Label text="Confirmer le mot de passe" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <PasswordField fx:id="confirmPasswordField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="Ressaisissez le mot de passe"/>
+                </GridPane>
+
+                <HBox alignment="CENTER_LEFT" spacing="15">
+                    <Button fx:id="changePasswordButton" text="Modifier le Mot de Passe" styleClass="primary-btn" onAction="#handleChangePassword"/>
+                    <Label fx:id="passwordStatusLabel" visible="false" styleClass="status-label"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </VBox>
+</ScrollPane>

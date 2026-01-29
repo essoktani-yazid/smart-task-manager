@@ -9,11 +9,13 @@ import java.util.List;
  * Note: Hibernate annotations removed - using JDBC now.
  */
 public class User {
-    private Long id;
+    private String id;
     private String username;
     private String password;
     private String email;
-    private List<Task> tasks = new ArrayList<>();
+    private String firstName;
+    private String lastName;
+    private transient List<Task> tasks = new ArrayList<>();
 
     // Constructeurs
     public User() {
@@ -25,12 +27,20 @@ public class User {
         this.email = email;
     }
 
+    public User(String username, String password, String email, String firstName, String lastName) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     // Getters et Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -58,6 +68,22 @@ public class User {
         this.email = email;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public List<Task> getTasks() {
         return tasks;
     }
@@ -72,6 +98,8 @@ public class User {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
                 '}';
     }
 }

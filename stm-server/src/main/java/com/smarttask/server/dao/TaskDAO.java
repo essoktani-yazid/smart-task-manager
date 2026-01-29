@@ -21,20 +21,22 @@ public class TaskDAO {
     /**
      * Saves a new task to the database.
      */
-    public Long save(Task task) {
-        String sql = "INSERT INTO tasks (title, description, priority, status, due_date, created_at, user_id) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public String save(Task task) {
+        String sql = "INSERT INTO tasks (id, title, description, priority, status, due_date, created_at, user_id) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String id = java.util.UUID.randomUUID().toString();
         
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setString(1, task.getTitle());
-            pstmt.setString(2, task.getDescription());
-            pstmt.setString(3, task.getPriority().name());
-            pstmt.setString(4, task.getStatus().name());
-            pstmt.setTimestamp(5, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
-            pstmt.setTimestamp(6, task.getCreatedAt() != null ? Timestamp.valueOf(task.getCreatedAt()) : Timestamp.valueOf(LocalDateTime.now()));
-            pstmt.setLong(7, task.getUser().getId());
+            pstmt.setString(1, id);
+            pstmt.setString(2, task.getTitle());
+            pstmt.setString(3, task.getDescription());
+            pstmt.setString(4, task.getPriority().name());
+            pstmt.setString(5, task.getStatus().name());
+            pstmt.setTimestamp(6, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
+            pstmt.setTimestamp(7, task.getCreatedAt() != null ? Timestamp.valueOf(task.getCreatedAt()) : Timestamp.valueOf(LocalDateTime.now()));
+            pstmt.setString(8, task.getUser().getId());
             
             int affectedRows = pstmt.executeUpdate();
             
@@ -42,15 +44,8 @@ public class TaskDAO {
                 throw new SQLException("Creating task failed, no rows affected.");
             }
             
-            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    Long id = generatedKeys.getLong(1);
-                    task.setId(id);
-                    return id;
-                } else {
-                    throw new SQLException("Creating task failed, no ID obtained.");
-                }
-            }
+            task.setId(id);
+            return id;
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Error saving task", e);
@@ -60,7 +55,7 @@ public class TaskDAO {
     /**
      * Finds a task by ID.
      */
-    public Optional<Task> findById(Long id) {
+    public Optional<Task> findById(String id) {
         String sql = "SELECT t.*, u.id as user_id, u.username, u.email, u.password as user_password " +
                      "FROM tasks t " +
                      "INNER JOIN users u ON t.user_id = u.id " +
@@ -69,7 +64,7 @@ public class TaskDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setLong(1, id);
+            pstmt.setString(1, id);
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -93,7 +88,7 @@ public class TaskDAO {
     /**
      * Retrieves all tasks for a user by user ID.
      */
-    public List<Task> findByUserId(Long userId) {
+    public List<Task> findByUserId(String userId) {
         String sql = "SELECT t.*, u.id as user_id, u.username, u.email, u.password as user_password " +
                      "FROM tasks t " +
                      "INNER JOIN users u ON t.user_id = u.id " +
@@ -105,7 +100,7 @@ public class TaskDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setLong(1, userId);
+            pstmt.setString(1, userId);
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -158,7 +153,7 @@ public class TaskDAO {
             pstmt.setString(3, task.getPriority().name());
             pstmt.setString(4, task.getStatus().name());
             pstmt.setTimestamp(5, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
-            pstmt.setLong(6, task.getId());
+            pstmt.setString(6, task.getId());
             
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -177,13 +172,13 @@ public class TaskDAO {
     /**
      * Deletes a task by ID.
      */
-    public boolean deleteById(Long id) {
+    public boolean deleteById(String id) {
         String sql = "DELETE FROM tasks WHERE id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setLong(1, id);
+            pstmt.setString(1, id);
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
@@ -197,7 +192,7 @@ public class TaskDAO {
      */
     private Task mapResultSetToTask(ResultSet rs) throws SQLException {
         Task task = new Task();
-        task.setId(rs.getLong("id"));
+        task.setId(rs.getString("id"));
         task.setTitle(rs.getString("title"));
         task.setDescription(rs.getString("description"));
         task.setPriority(Priority.valueOf(rs.getString("priority")));
@@ -215,7 +210,7 @@ public class TaskDAO {
         
         // Map user
         User user = new User();
-        user.setId(rs.getLong("user_id"));
+        user.setId(rs.getString("user_id"));
         user.setUsername(rs.getString("username"));
         user.setEmail(rs.getString("email"));
         user.setPassword(rs.getString("user_password"));

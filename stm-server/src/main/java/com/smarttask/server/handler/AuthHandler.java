@@ -29,6 +29,8 @@ public class AuthHandler implements HttpHandler {
                     handleRegister(exchange);
                 } else if (path.equals("/api/auth/login")) {
                     handleLogin(exchange);
+                } else if (path.equals("/api/auth/verify-password")) {
+                    handleVerifyPassword(exchange);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
                 }
@@ -52,7 +54,7 @@ public class AuthHandler implements HttpHandler {
         }
 
         // Créer le nouvel utilisateur
-        Long userId = userDAO.save(user);
+        String userId = userDAO.save(user);
         user.setId(userId);
         user.setPassword(null); // Ne pas renvoyer le mot de passe
 
@@ -75,6 +77,36 @@ public class AuthHandler implements HttpHandler {
         // Ne pas renvoyer le mot de passe
         user.setPassword(null);
         sendResponse(exchange, 200, gson.toJson(user));
+    }
+
+    private void handleVerifyPassword(HttpExchange exchange) throws IOException {
+        String requestBody = readRequestBody(exchange);
+        LoginRequest verifyRequest = gson.fromJson(requestBody, LoginRequest.class);
+
+        System.out.println("=== DEBUG VERIFY PASSWORD ===");
+        System.out.println("Username from request: '" + verifyRequest.username + "'");
+        System.out.println("Password from request: '" + verifyRequest.password + "'");
+
+        // Trouver l'utilisateur
+        User user = userDAO.findByUsername(verifyRequest.username)
+                .orElse(null);
+
+        if (user == null) {
+            System.out.println("User not found!");
+            sendResponse(exchange, 401, "{\"error\":\"Invalid password\"}");
+            return;
+        }
+
+        System.out.println("User found: " + user.getUsername());
+        System.out.println("Password in DB: '" + user.getPassword() + "'");
+        System.out.println("Passwords match: " + user.getPassword().equals(verifyRequest.password));
+
+        if (!user.getPassword().equals(verifyRequest.password)) {
+            sendResponse(exchange, 401, "{\"error\":\"Invalid password\"}");
+            return;
+        }
+
+        sendResponse(exchange, 200, "{\"message\":\"Password verified\"}");
     }
 
     private String readRequestBody(HttpExchange exchange) throws IOException {

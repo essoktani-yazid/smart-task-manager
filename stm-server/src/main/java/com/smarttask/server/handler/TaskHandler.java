@@ -57,10 +57,10 @@ public class TaskHandler implements HttpHandler {
                 } else if (path.startsWith("/api/tasks/")) {
                     String[] parts = path.split("/");
                     if (parts.length == 4) {
-                        Long taskId = Long.parseLong(parts[3]);
+                        String taskId = parts[3];
                         handleGetTask(exchange, taskId);
                     } else if (parts.length == 5 && parts[4].equals("user")) {
-                        Long userId = Long.parseLong(parts[3]);
+                        String userId = parts[3];
                         handleGetTasksByUser(exchange, userId);
                     } else {
                         sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
@@ -78,7 +78,7 @@ public class TaskHandler implements HttpHandler {
                 if (path.startsWith("/api/tasks/")) {
                     String[] parts = path.split("/");
                     if (parts.length == 4) {
-                        Long taskId = Long.parseLong(parts[3]);
+                        String taskId = parts[3];
                         handleUpdateTask(exchange, taskId);
                     } else {
                         sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
@@ -90,7 +90,7 @@ public class TaskHandler implements HttpHandler {
                 if (path.startsWith("/api/tasks/")) {
                     String[] parts = path.split("/");
                     if (parts.length == 4) {
-                        Long taskId = Long.parseLong(parts[3]);
+                        String taskId = parts[3];
                         handleDeleteTask(exchange, taskId);
                     } else {
                         sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
@@ -112,7 +112,7 @@ public class TaskHandler implements HttpHandler {
         sendResponse(exchange, 200, gson.toJson(tasks));
     }
 
-    private void handleGetTask(HttpExchange exchange, Long taskId) throws IOException {
+    private void handleGetTask(HttpExchange exchange, String taskId) throws IOException {
         Task task = taskDAO.findById(taskId).orElse(null);
         if (task == null) {
             sendResponse(exchange, 404, "{\"error\":\"Task not found\"}");
@@ -121,7 +121,7 @@ public class TaskHandler implements HttpHandler {
         }
     }
 
-    private void handleGetTasksByUser(HttpExchange exchange, Long userId) throws IOException {
+    private void handleGetTasksByUser(HttpExchange exchange, String userId) throws IOException {
         List<Task> tasks = taskDAO.findByUserId(userId);
         sendResponse(exchange, 200, gson.toJson(tasks));
     }
@@ -147,12 +147,12 @@ public class TaskHandler implements HttpHandler {
             task.setCreatedAt(LocalDateTime.now());
         }
 
-        Long taskId = taskDAO.save(task);
+        String taskId = taskDAO.save(task);
         task.setId(taskId);
         sendResponse(exchange, 201, gson.toJson(task));
     }
 
-    private void handleUpdateTask(HttpExchange exchange, Long taskId) throws IOException {
+    private void handleUpdateTask(HttpExchange exchange, String taskId) throws IOException {
         Task existingTask = taskDAO.findById(taskId).orElse(null);
         if (existingTask == null) {
             sendResponse(exchange, 404, "{\"error\":\"Task not found\"}");
@@ -173,7 +173,7 @@ public class TaskHandler implements HttpHandler {
         sendResponse(exchange, 200, gson.toJson(existingTask));
     }
 
-    private void handleDeleteTask(HttpExchange exchange, Long taskId) throws IOException {
+    private void handleDeleteTask(HttpExchange exchange, String taskId) throws IOException {
         boolean deleted = taskDAO.deleteById(taskId);
         if (deleted) {
             sendResponse(exchange, 200, "{\"message\":\"Task deleted successfully\"}");

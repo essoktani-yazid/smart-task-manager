@@ -49,7 +49,7 @@ public class TaskService {
     /**
      * Récupère toutes les tâches d'un utilisateur.
      */
-    public List<Task> getTasksByUser(Long userId) {
+    public List<Task> getTasksByUser(String userId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(BASE_URL + "/" + userId + "/user");
             request.setHeader("Content-Type", "application/json");
@@ -76,7 +76,7 @@ public class TaskService {
     /**
      * Récupère une tâche par son ID.
      */
-    public Task getTaskById(Long taskId) {
+    public Task getTaskById(String taskId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(BASE_URL + "/" + taskId);
             request.setHeader("Content-Type", "application/json");
@@ -168,7 +168,7 @@ public class TaskService {
     /**
      * Supprime une tâche.
      */
-    public boolean deleteTask(Long taskId) {
+    public boolean deleteTask(String taskId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpDelete request = new HttpDelete(BASE_URL + "/" + taskId);
             request.setHeader("Content-Type", "application/json");

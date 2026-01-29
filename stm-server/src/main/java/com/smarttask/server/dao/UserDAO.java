@@ -17,31 +17,28 @@ public class UserDAO {
     /**
      * Saves a new user to the database.
      */
-    public Long save(User user) {
-        String sql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-        
+    public String save(User user) {
+        String sql = "INSERT INTO users (id, username, password_hash, email, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?)";
+        String id = java.util.UUID.randomUUID().toString();
+
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
-            pstmt.setString(1, user.getUsername());
-            pstmt.setString(2, user.getPassword());
-            pstmt.setString(3, user.getEmail());
-            
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, id);
+            pstmt.setString(2, user.getUsername());
+            pstmt.setString(3, user.getPassword()); // on stocke le hash ici
+            pstmt.setString(4, user.getEmail());
+            pstmt.setString(5, user.getFirstName());
+            pstmt.setString(6, user.getLastName());
+
             int affectedRows = pstmt.executeUpdate();
-            
+
             if (affectedRows == 0) {
                 throw new SQLException("Creating user failed, no rows affected.");
             }
-            
-            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    Long id = generatedKeys.getLong(1);
-                    user.setId(id);
-                    return id;
-                } else {
-                    throw new SQLException("Creating user failed, no ID obtained.");
-                }
-            }
+
+            user.setId(id);
+            return id;
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Error saving user", e);
@@ -51,14 +48,14 @@ public class UserDAO {
     /**
      * Finds a user by ID.
      */
-    public Optional<User> findById(Long id) {
+    public Optional<User> findById(String id) {
         String sql = "SELECT * FROM users WHERE id = ?";
-        
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setLong(1, id);
-            
+
+            pstmt.setString(1, id);
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapResultSetToUser(rs));
@@ -67,7 +64,7 @@ public class UserDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return Optional.empty();
     }
 
@@ -76,12 +73,12 @@ public class UserDAO {
      */
     public Optional<User> findByUsername(String username) {
         String sql = "SELECT * FROM users WHERE username = ?";
-        
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, username);
-            
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapResultSetToUser(rs));
@@ -90,7 +87,7 @@ public class UserDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return Optional.empty();
     }
 
@@ -99,12 +96,12 @@ public class UserDAO {
      */
     public Optional<User> findByEmail(String email) {
         String sql = "SELECT * FROM users WHERE email = ?";
-        
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, email);
-            
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapResultSetToUser(rs));
@@ -113,7 +110,7 @@ public class UserDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return Optional.empty();
     }
 
@@ -123,18 +120,18 @@ public class UserDAO {
     public List<User> findAll() {
         String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
-        
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
-            
+
             while (rs.next()) {
                 users.add(mapResultSetToUser(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return users;
     }
 
@@ -142,16 +139,34 @@ public class UserDAO {
      * Updates an existing user.
      */
     public void update(User user) {
-        String sql = "UPDATE users SET username = ?, password = ?, email = ? WHERE id = ?";
-        
+        // If password is null, don't update it
+        String sql;
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            sql = "UPDATE users SET username = ?, email = ?, first_name = ?, last_name = ? WHERE id = ?";
+        } else {
+            sql = "UPDATE users SET username = ?, password_hash = ?, email = ?, first_name = ?, last_name = ? WHERE id = ?";
+        }
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, user.getUsername());
-            pstmt.setString(2, user.getPassword());
-            pstmt.setString(3, user.getEmail());
-            pstmt.setLong(4, user.getId());
-            
+
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                // Update without password
+                pstmt.setString(1, user.getUsername());
+                pstmt.setString(2, user.getEmail());
+                pstmt.setString(3, user.getFirstName());
+                pstmt.setString(4, user.getLastName());
+                pstmt.setString(5, user.getId());
+            } else {
+                // Update with password
+                pstmt.setString(1, user.getUsername());
+                pstmt.setString(2, user.getPassword()); // hash
+                pstmt.setString(3, user.getEmail());
+                pstmt.setString(4, user.getFirstName());
+                pstmt.setString(5, user.getLastName());
+                pstmt.setString(6, user.getId());
+            }
+
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -160,22 +175,15 @@ public class UserDAO {
     }
 
     /**
-     * Deletes a user from the database.
-     */
-    public void delete(User user) {
-        deleteById(user.getId());
-    }
-
-    /**
      * Deletes a user by ID.
      */
-    public void deleteById(Long id) {
+    public void deleteById(String id) {
         String sql = "DELETE FROM users WHERE id = ?";
-        
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setLong(1, id);
+
+            pstmt.setString(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -188,12 +196,12 @@ public class UserDAO {
      */
     public boolean existsByUsername(String username) {
         String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
-        
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, username);
-            
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
@@ -202,7 +210,7 @@ public class UserDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return false;
     }
 
@@ -211,10 +219,12 @@ public class UserDAO {
      */
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
         User user = new User();
-        user.setId(rs.getLong("id"));
+        user.setId(rs.getString("id"));
         user.setUsername(rs.getString("username"));
-        user.setPassword(rs.getString("password"));
+        user.setPassword(rs.getString("password_hash"));
         user.setEmail(rs.getString("email"));
+        user.setFirstName(rs.getString("first_name"));
+        user.setLastName(rs.getString("last_name"));
         return user;
     }
 }

@@ -10,7 +10,7 @@ import java.util.List;
  * Note: Hibernate annotations removed - using JDBC now.
  */
 public class Task {
-    private Long id;
+    private String id;
     private String title;
     private String description;
     private Priority priority = Priority.MEDIUM;
@@ -35,11 +35,11 @@ public class Task {
     }
 
     // Getters et Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

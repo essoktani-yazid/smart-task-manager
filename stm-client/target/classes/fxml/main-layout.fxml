@@ -33,6 +33,7 @@
                   <Button fx:id="aiButton" maxWidth="Infinity" mnemonicParsing="false" onAction="#showAI" styleClass="nav-button-creative-special" text="🤖  AI Assistant" />
                   <Button fx:id="collaborationButton" maxWidth="Infinity" mnemonicParsing="false" onAction="#showCollaboration" styleClass="nav-button-creative" text="👥  Teamwork" />
                   <Button fx:id="analyticsButton" maxWidth="Infinity" mnemonicParsing="false" onAction="#showAnalytics" styleClass="nav-button-creative" text="📊  Insights" />
+                  <Button fx:id="profileButton" maxWidth="Infinity" mnemonicParsing="false" onAction="#showProfile" styleClass="nav-button-creative" text="👤  My Profile" />
                </children>
                <padding>
                   <Insets left="15.0" right="15.0" top="20.0" />

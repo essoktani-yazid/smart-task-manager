@@ -22,6 +22,7 @@ public class MainServer {
             // Test database connection
             try (Connection conn = DatabaseConnection.getConnection()) {
                 System.out.println("Database connection successful!");
+                com.smarttask.server.config.SchemaUpdater.checkAndUpdateSchema();
             } catch (SQLException e) {
                 System.err.println("Database connection failed: " + e.getMessage());
                 System.err.println("Please check your database configuration in database.properties");
@@ -34,6 +35,7 @@ public class MainServer {
             // Configure routes
             server.createContext("/api/auth", new AuthHandler());
             server.createContext("/api/tasks", new TaskHandler());
+            server.createContext("/api/users", new com.smarttask.server.handler.UserHandler());
 
             // Start server
             server.setExecutor(null); // Uses default thread pool
