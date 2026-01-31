@@ -2,105 +2,76 @@ package com.smarttask.client.view.controller;
 
 import com.smarttask.client.service.AuthService;
 import com.smarttask.model.User;
+import javafx.animation.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import javafx.util.Duration;
 import java.io.IOException;
 
-/**
- * Contrôleur pour la vue de connexion/inscription.
- */
 public class LoginController {
-    // Login form fields
-    @FXML
-    private TextField loginUsernameField;
 
-    @FXML
-    private PasswordField loginPasswordField;
-
-    @FXML
-    private Label loginErrorLabel;
-
-    // Register form fields
-    @FXML
-    private TextField registerUsernameField;
-
-    @FXML
-    private TextField registerEmailField;
-
-    @FXML
-    private PasswordField registerPasswordField;
-
-    @FXML
-    private Label registerErrorLabel;
-
-    // Forms
-    @FXML
-    private VBox loginForm;
-
-    @FXML
-    private VBox registerForm;
-
-    // Tab buttons
-    @FXML
-    private Button loginTab;
-
-    @FXML
-    private Button registerTab;
-
-    @FXML
-    private Button loginButton;
-
-    @FXML
-    private Button registerButton;
+    @FXML private TextField loginUsernameField, registerUsernameField, registerEmailField;
+    @FXML private PasswordField loginPasswordField, registerPasswordField;
+    @FXML private Label loginErrorLabel, registerErrorLabel;
+    @FXML private VBox loginForm, registerForm;
+    @FXML private Button loginTab, registerTab, loginButton, registerButton;
+    @FXML private ImageView brandingImage;
+    @FXML private HBox mainCard;
 
     private final AuthService authService = new AuthService();
 
     @FXML
-    private void initialize() {
-        // Show login form by default
-        showLoginForm();
+    public void initialize() {
+        
+        // Les animations d'entrée et de flottement ont été supprimées ici
+        // On s'assure que la carte est bien visible immédiatement
+        mainCard.setOpacity(1.0);
+        mainCard.setScaleX(1.0);
+        mainCard.setScaleY(1.0);
     }
 
     @FXML
     private void switchToLogin() {
-        showLoginForm();
+        if (loginForm.isVisible()) return;
+        animateFormSwitch(registerForm, loginForm);
+        updateTabUI(loginTab, registerTab);
     }
 
     @FXML
     private void switchToRegister() {
-        showRegisterForm();
+        if (registerForm.isVisible()) return;
+        animateFormSwitch(loginForm, registerForm);
+        updateTabUI(registerTab, loginTab);
     }
 
-    private void showLoginForm() {
-        loginForm.setVisible(true);
-        loginForm.setManaged(true);
-        registerForm.setVisible(false);
-        registerForm.setManaged(false);
-
-        loginTab.getStyleClass().add("tab-active");
-        registerTab.getStyleClass().remove("tab-active");
-
-        clearErrors();
+    private void animateFormSwitch(VBox toHide, VBox toShow) {
+        // On garde cette animation car elle est fonctionnelle pour le changement d'onglet
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(200), toHide);
+        fadeOut.setFromValue(1.0); fadeOut.setToValue(0.0);
+        
+        fadeOut.setOnFinished(e -> {
+            toHide.setVisible(false);
+            toHide.setManaged(false);
+            toShow.setVisible(true);
+            toShow.setManaged(true);
+            
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), toShow);
+            fadeIn.setFromValue(0.0); fadeIn.setToValue(1.0);
+            fadeIn.play();
+        });
+        fadeOut.play();
     }
 
-    private void showRegisterForm() {
-        loginForm.setVisible(false);
-        loginForm.setManaged(false);
-        registerForm.setVisible(true);
-        registerForm.setManaged(true);
-
-        registerTab.getStyleClass().add("tab-active");
-        loginTab.getStyleClass().remove("tab-active");
-
+    private void updateTabUI(Button active, Button inactive) {
+        active.getStyleClass().add("tab-active");
+        inactive.getStyleClass().remove("tab-active");
         clearErrors();
     }
 
@@ -110,16 +81,13 @@ public class LoginController {
         String password = loginPasswordField.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showLoginError("Veuillez remplir tous les champs");
+            showError(loginErrorLabel, "Veuillez remplir tous les champs");
             return;
         }
 
         User user = authService.login(username, password);
-        if (user != null) {
-            navigateToDashboard(user);
-        } else {
-            showLoginError("Nom d'utilisateur ou mot de passe incorrect");
-        }
+        if (user != null) navigateToDashboard(user);
+        else showError(loginErrorLabel, "Identifiants incorrects");
     }
 
     @FXML
@@ -129,54 +97,34 @@ public class LoginController {
         String password = registerPasswordField.getText();
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            showRegisterError("Veuillez remplir tous les champs");
-            return;
-        }
-
-        if (!email.contains("@")) {
-            showRegisterError("Veuillez entrer une adresse email valide");
+            showError(registerErrorLabel, "Veuillez tout remplir");
             return;
         }
 
         User user = authService.register(username, password, email);
-        if (user != null) {
-            navigateToDashboard(user);
-        } else {
-            showRegisterError("Erreur lors de l'inscription. Le nom d'utilisateur existe peut-être déjà.");
-        }
+        if (user != null) navigateToDashboard(user);
+        else showError(registerErrorLabel, "Nom d'utilisateur déjà pris");
     }
 
     private void navigateToDashboard(User user) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
             Parent root = loader.load();
-
-            MainLayoutController mainController = loader.getController();
-            mainController.setCurrentUser(user);
-
             Stage stage = (Stage) loginButton.getScene().getWindow();
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
-            stage.setScene(scene);
-            stage.setTitle("SmartTaskManager - Intelligent Task Management");
-            stage.setWidth(1400);
-            stage.setHeight(900);
-            stage.setResizable(true);
+            stage.setScene(new Scene(root));
             stage.centerOnScreen();
-        } catch (IOException e) {
-            e.printStackTrace();
-            showLoginError("Erreur lors du chargement de l'application");
-        }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
-    private void showLoginError(String message) {
-        loginErrorLabel.setText(message);
-        loginErrorLabel.setVisible(true);
-    }
-
-    private void showRegisterError(String message) {
-        registerErrorLabel.setText(message);
-        registerErrorLabel.setVisible(true);
+    private void showError(Label label, String msg) {
+        label.setText(msg);
+        label.setVisible(true);
+        // On peut garder la secousse d'erreur car elle aide l'utilisateur
+        TranslateTransition shake = new TranslateTransition(Duration.millis(50), label);
+        shake.setByX(5);
+        shake.setAutoReverse(true);
+        shake.setCycleCount(4);
+        shake.play();
     }
 
     private void clearErrors() {

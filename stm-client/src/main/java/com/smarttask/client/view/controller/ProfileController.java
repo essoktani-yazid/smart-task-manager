@@ -44,8 +44,8 @@ public class ProfileController {
     private void populateFields() {
         if (currentUser == null) return;
         usernameField.setText(currentUser.getUsername());
-        firstNameField.setText(currentUser.getFirstName());
-        lastNameField.setText(currentUser.getLastName());
+        firstNameField.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
+        lastNameField.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
         emailField.setText(currentUser.getEmail());
         
         // Initialize password section state
