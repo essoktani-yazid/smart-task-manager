@@ -15,6 +15,7 @@ public class DatabaseConnection {
     private static String username;
     private static String password;
     private static String driver;
+    private static DatabaseConnection instance;
 
     static {
         loadDatabaseProperties();
@@ -55,6 +56,17 @@ public class DatabaseConnection {
      */
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, username, password);
+    }
+
+    public static DatabaseConnection getInstance() {
+        if (instance == null) {
+            synchronized (DatabaseConnection.class) {
+                if (instance == null) {
+                    instance = new DatabaseConnection();
+                }
+            }
+        }
+        return instance;
     }
 
     /**

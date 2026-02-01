@@ -216,7 +216,7 @@ CREATE TABLE notifications (
 -- ============================================
 
 -- Table Calendar Events
-CREATE TABLE calendar_events (
+CREATE TABLE calendar_event (
     id VARCHAR(36) PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     description TEXT,
@@ -514,7 +514,7 @@ INSERT INTO task_tags (task_id, tag_name) VALUES
 ('t008', 'email');
 
 -- Événements calendrier
-INSERT INTO calendar_events (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
+INSERT INTO calendar_event (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
 ('e001', 'Réunion équipe', 'Revue hebdomadaire', 
  DATE_ADD(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 1 DAY + INTERVAL 1 HOUR),
  '550e8400-e29b-41d4-a716-446655440000', 't001', '#FF6B6B'),
