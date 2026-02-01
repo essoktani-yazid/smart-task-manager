@@ -515,14 +515,19 @@ INSERT INTO task_tags (task_id, tag_name) VALUES
 
 -- Événements calendrier
 INSERT INTO calendar_event (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
-('e001', 'Réunion équipe', 'Revue hebdomadaire', 
- DATE_ADD(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 1 DAY + INTERVAL 1 HOUR),
+('e001', 'Réunion équipe', 'Revue hebdomadaire',
+ DATE_ADD(NOW(), INTERVAL 1 DAY),
+ DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 DAY), INTERVAL 1 HOUR),
  '550e8400-e29b-41d4-a716-446655440000', 't001', '#FF6B6B'),
-('e002', 'Développement NLP', 'Session focus', 
- DATE_ADD(NOW(), INTERVAL 2 DAY), DATE_ADD(NOW(), INTERVAL 2 DAY + INTERVAL 3 HOUR),
+
+('e002', 'Développement NLP', 'Session focus',
+ DATE_ADD(NOW(), INTERVAL 2 DAY),
+ DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 DAY), INTERVAL 3 HOUR),
  '550e8400-e29b-41d4-a716-446655440000', 't002', '#4ECDC4'),
-('e003', 'Rendez-vous médical', 'Contrôle annuel', 
- DATE_ADD(NOW(), INTERVAL 3 DAY), DATE_ADD(NOW(), INTERVAL 3 DAY + INTERVAL 1 HOUR),
+
+('e003', 'Rendez-vous médical', 'Contrôle annuel',
+ DATE_ADD(NOW(), INTERVAL 3 DAY),
+ DATE_ADD(DATE_ADD(NOW(), INTERVAL 3 DAY), INTERVAL 1 HOUR),
  '550e8400-e29b-41d4-a716-446655440002', 't007', '#45B7D1');
 
 -- Suivi du temps
@@ -571,6 +576,6 @@ CREATE INDEX idx_tasks_search ON tasks(title, description(100));
 CREATE INDEX idx_tasks_user_status ON tasks(user_id, status);
 CREATE INDEX idx_tasks_user_priority ON tasks(user_id, priority);
 CREATE INDEX idx_time_tracking_date_range ON time_tracking(start_time, end_time);
-CREATE INDEX idx_calendar_events_date_range ON calendar_events(start_time, end_time);
+CREATE INDEX idx_calendar_events_date_range ON calendar_event(start_time, end_time);
 CREATE FULLTEXT INDEX idx_tasks_fulltext ON tasks(title, description);
 CREATE FULLTEXT INDEX idx_comments_fulltext ON comments(content);
