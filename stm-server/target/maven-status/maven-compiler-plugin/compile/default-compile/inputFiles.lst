@@ -1,6 +1,0 @@
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-server/src/main/java/com/smarttask/server/MainServer.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-server/src/main/java/com/smarttask/server/dao/TaskDAO.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-server/src/main/java/com/smarttask/server/config/DatabaseConnection.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-server/src/main/java/com/smarttask/server/dao/UserDAO.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-server/src/main/java/com/smarttask/server/handler/TaskHandler.java
-/home/yazid/Bureau/Master_SDIA/Semestre_1/M12_POO_Java/Projets/SmartTaskManager/stm-server/src/main/java/com/smarttask/server/handler/AuthHandler.java
