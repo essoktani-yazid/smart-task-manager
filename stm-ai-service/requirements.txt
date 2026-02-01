@@ -1,6 +1,5 @@
 fastapi
-uvicorn[standard]
-requests
-pydantic
+uvicorn
+httpx
+mysql-connector-python
 python-dotenv
-websockets

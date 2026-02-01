@@ -33,19 +33,19 @@
             
             <VBox spacing="8.0" styleClass="nav-menu" VBox.vgrow="ALWAYS">
                <children>
-                  <Label text="MENU PRINCIPAL" styleClass="menu-category-label" />
+                  <Label text="MAIN MENU" styleClass="menu-category-label" />
                   
                   <Button fx:id="tasksButton" maxWidth="Infinity" onAction="#showTasks" 
                           styleClass="nav-button-creative" text="Dashboard" />
                           
                   <Button fx:id="calendarButton" maxWidth="Infinity" onAction="#showCalendar" 
-                          styleClass="nav-button-creative" text="Planning" />
+                          styleClass="nav-button-creative" text="Calendar" />
                   
                   <Button fx:id="collaborationButton" maxWidth="Infinity" onAction="#showCollaboration" 
-                          styleClass="nav-button-creative" text="Équipes" />
+                          styleClass="nav-button-creative" text="Teams" />
                   
                   <Button fx:id="analyticsButton" maxWidth="Infinity" onAction="#showAnalytics" 
-                          styleClass="nav-button-creative" text="Rapports" />
+                          styleClass="nav-button-creative" text="Reports" />
 
                   <Region prefHeight="15.0" />
                   <Label text="INTELLIGENCE" styleClass="menu-category-label" />
@@ -67,12 +67,12 @@
                         </StackPane>
                         <VBox>
                            <Label fx:id="userLabel" text="Yazid ESSOKTANI" styleClass="user-name" />
-                           <Label text="Admin" styleClass="user-role" />
+                           <Label fx:id="userEmailLabel" text="essoktani.yazid@gmail.com" styleClass="user-email" />
                         </VBox>
                      </children>
                   </HBox>
                   <Button fx:id="logoutButton" maxWidth="Infinity" onAction="#handleLogout" 
-                          styleClass="logout-button-creative" text="Se déconnecter" />
+                          styleClass="logout-button-creative" text="Logout" />
                </children>
                <padding>
                   <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />

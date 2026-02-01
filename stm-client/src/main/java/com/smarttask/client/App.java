@@ -21,7 +21,7 @@ public class App extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
         Parent root = loader.load();
 
-        primaryStage.setTitle("SmartTaskManager - Login");
+        primaryStage.setTitle("SmartTaskManager ");
         Scene scene = new Scene(root, 800, 600);
         
         // Add CSS if exists (login.fxml might not supply it directly if not linked)

@@ -1,3 +1,44 @@
-.idea
-stm-server/src/main/resources/database.properties
-error.txt
+# --- Configurations sensibles ---
+database.properties
+**/database.properties
+# --- Maven & Java ---
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# --- IDEs (IntelliJ, Eclipse, VS Code) ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+
+# --- Python (Service IA) ---
+stm-ai-service/__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Node.js (Si vous avez installé nodemon localement) ---
+node_modules/
+npm-debug.log
+
+# --- Système d'exploitation ---
+.DS_Store
+Thumbs.db
+
+# --- Sécurité & Configuration Locale ---
+# Ignorer le fichier contenant votre clé API OpenRouter
+.env
+*.env
+
+# --- Fichiers temporaires ---
+*.swp
+*~

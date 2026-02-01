@@ -15,6 +15,7 @@ import java.io.IOException;
 public class MainLayoutController {
     @FXML private StackPane contentPane;
     @FXML private Label userLabel;
+    @FXML private Label userEmailLabel;
     
     // Boutons de navigation
     @FXML private Button tasksButton;
@@ -42,6 +43,7 @@ public class MainLayoutController {
                           ? user.getFirstName() + " " + user.getLastName() 
                           : user.getUsername();
             userLabel.setText(name);
+            userEmailLabel.setText(user.getEmail());
         }
     }
 
