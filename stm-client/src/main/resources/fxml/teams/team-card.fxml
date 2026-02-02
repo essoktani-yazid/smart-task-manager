@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+
+<HBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      spacing="16"
+      alignment="CENTER_LEFT"
+      styleClass="team-card">
+
+    <!-- Icon -->
+    <StackPane fx:id="colorBadge"
+               styleClass="team-badge">
+        <Label text="👥" styleClass="team-icon"/>
+    </StackPane>
+
+    <!-- Info -->
+    <VBox spacing="4">
+        <Label fx:id="teamName"
+               text="Nom de l'équipe"
+               styleClass="team-name"/>
+        <Label fx:id="teamDescription"
+               text="Description de l'équipe"
+               styleClass="team-desc"/>
+    </VBox>
+
+</HBox>
+

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.smarttask.client.view.controller.teams.TeamViewController"
+            styleClass="team-view-root"
+			stylesheets="@../../css/teams/team.css">
+
+    <!-- HEADER -->
+    <top>
+        <VBox styleClass="header-container">
+            <HBox alignment="CENTER_LEFT" spacing="15" styleClass="toolbar">
+                <padding>
+                    <Insets topRightBottomLeft="15"/>
+                </padding>
+
+                <VBox spacing="2">
+                    <Label fx:id="teamNameLabel" text="Design Team" styleClass="app-title"/>
+                    <Label fx:id="teamDescLabel" text="UI / UX & product design"
+                           styleClass="subtitle"/>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <HBox spacing="0" styleClass="view-toggle-group">
+                    <ToggleButton text="Kanban" styleClass="view-toggle, view-toggle-left"/>
+                    <ToggleButton text="List" styleClass="view-toggle, view-toggle-right"/>
+                </HBox>
+            </HBox>
+
+            <Separator/>
+        </VBox>
+    </top>
+
+    <!-- CONTENT -->
+    <center>
+        <TabPane styleClass="team-tabs">
+            <Tab text="Overview">
+                <StackPane fx:id="overviewContainer" styleClass="tab-content"/>
+            </Tab>
+
+            <Tab text="Tasks">
+                <StackPane fx:id="tasksContainer" styleClass="tab-content"/>
+            </Tab>
+
+            <Tab text="Team">
+                <VBox spacing="15" styleClass="tab-content">
+                    <HBox alignment="CENTER_RIGHT">
+                        <Button text="+ Add member"
+                                onAction="#handleAddMember"
+                                styleClass="secondary-action-button"/>
+                    </HBox>
+
+                    <TableView fx:id="membersTable" VBox.vgrow="ALWAYS" styleClass="members-table">
+                        <columns>
+                            <TableColumn text="Name"/>
+                            <TableColumn text="Email"/>
+                            <TableColumn text="Role"/>
+                            <TableColumn text="Actions"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+        </TabPane>
+    </center>
+
+</BorderPane>
+
