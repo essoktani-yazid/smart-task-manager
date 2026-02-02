@@ -1,0 +1,58 @@
+.create-team-dialog {
+    -fx-background-color: linear-gradient(
+        to bottom right,
+        rgba(255,255,255,0.75),
+        rgba(245,247,255,0.9)
+    );
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 25, 0.3, 0, 8);
+}
+
+.dialog-title {
+    -fx-text-fill: #2C2F4A;
+}
+
+.dialog-subtitle {
+    -fx-text-fill: #7A7FA3;
+    -fx-font-size: 12px;
+}
+
+.field-label {
+    -fx-text-fill: #4A4F77;
+    -fx-font-weight: bold;
+}
+
+.dialog-input,
+.dialog-textarea {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: rgba(120,130,255,0.3);
+    -fx-background-color: rgba(255,255,255,0.9);
+    -fx-padding: 10;
+}
+
+.dialog-textarea {
+    -fx-control-inner-background: rgba(255,255,255,0.9);
+}
+
+.dialog-color-picker {
+    -fx-background-radius: 10;
+}
+
+.dialog-button-primary {
+    -fx-background-radius: 12;
+    -fx-background-color: linear-gradient(to right, #7C8CFF, #9F7BFF);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18;
+}
+
+.dialog-button-secondary {
+    -fx-background-radius: 12;
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(120,130,255,0.4);
+    -fx-border-radius: 12;
+    -fx-text-fill: #4A4F77;
+    -fx-padding: 8 18;
+}
+

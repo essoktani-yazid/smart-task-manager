@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.smarttask.client.view.controller.teams.TeamsController"
+            styleClass="teams-root"
+			stylesheets="@../../css/teams/teams.css">
+
+    <fx:define>
+        <ToggleGroup fx:id="viewToggleGroup"/>
+    </fx:define>
+
+    <!-- HEADER -->
+    <top>
+        <VBox styleClass="header-container">
+            <HBox alignment="CENTER_LEFT" spacing="15" styleClass="toolbar">
+                <padding>
+                    <Insets topRightBottomLeft="15"/>
+                </padding>
+
+                <Label text="Teams" styleClass="app-title">
+                    <font>
+                        <Font name="System Bold" size="24"/>
+                    </font>
+                </Label>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Toggle view -->
+                <HBox spacing="0" styleClass="view-toggle-group">
+                    <ToggleButton text="Cards"
+                                  toggleGroup="$viewToggleGroup"
+                                  selected="true"
+                                  styleClass="view-toggle, view-toggle-left"/>
+                    <ToggleButton text="List"
+                                  toggleGroup="$viewToggleGroup"
+                                  styleClass="view-toggle, view-toggle-right"/>
+                </HBox>
+
+                <!-- Create team -->
+                <Button text="+ Create team"
+                        onAction="#handleCreateTeam"
+                        styleClass="primary-action-button"/>
+            </HBox>
+
+            <Separator/>
+        </VBox>
+    </top>
+
+    <!-- CONTENT -->
+    <center>
+        <StackPane styleClass="teams-container">
+            <padding>
+                <Insets topRightBottomLeft="25"/>
+            </padding>
+
+            <!-- Cards container -->
+            <FlowPane fx:id="teamsFlow"
+                      hgap="20"
+                      vgap="20"
+                      prefWrapLength="900"
+                      alignment="TOP_CENTER"/>
+        </StackPane>
+    </center>
+
+</BorderPane>
+

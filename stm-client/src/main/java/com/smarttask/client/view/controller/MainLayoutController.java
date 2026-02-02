@@ -21,7 +21,8 @@ public class MainLayoutController {
     @FXML private Button tasksButton;
     @FXML private Button calendarButton;
     @FXML private Button aiButton;
-    @FXML private Button collaborationButton;
+    @FXML private Button teamsButton;
+    @FXML private Button projectsButton;
     @FXML private Button analyticsButton;
     @FXML private Button logoutButton;
     @FXML private Button profileButton;
@@ -61,8 +62,12 @@ public class MainLayoutController {
         if(loadView("/fxml/ai-view.fxml")) setActiveButton(aiButton);
     }
 
-    @FXML private void showCollaboration() {
-        if(loadView("/fxml/collaboration-view.fxml")) setActiveButton(collaborationButton);
+    @FXML private void showTeams() {
+        if(loadView("/fxml/teams/root-view.fxml")) setActiveButton(teamsButton);
+    }
+
+	@FXML private void showProjects() {
+        if(loadView("/fxml/projects/root-view.fxml")) setActiveButton(projectsButton);
     }
 
     @FXML private void showAnalytics() {

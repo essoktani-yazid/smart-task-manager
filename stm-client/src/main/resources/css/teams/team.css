@@ -1,0 +1,22 @@
+.team-root {
+    -fx-padding: 30;
+}
+
+.text-muted {
+    -fx-text-fill: #64748b;
+}
+
+.team-tabs .tab-header-area {
+    -fx-padding: 0 0 10 0;
+}
+
+.team-tabs .tab {
+    -fx-background-radius: 10 10 0 0;
+    -fx-padding: 8 16;
+}
+
+.team-tabs .tab:selected {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 3);
+}
+
