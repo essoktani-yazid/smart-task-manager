@@ -59,6 +59,7 @@
                 </HBox>
 
                 <!-- Add event button -->
+                <Button fx:id="addTaskButton" text="📋 Add Task" onAction="#handleAddTask" styleClass="add-task-button"/>
                 <Button fx:id="addEventButton" text="+ Add Event" onAction="#handleAddEvent" styleClass="add-event-button"/>
             </HBox>
 
