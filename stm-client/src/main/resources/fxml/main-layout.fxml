@@ -41,9 +41,12 @@
                   <Button fx:id="calendarButton" maxWidth="Infinity" onAction="#showCalendar" 
                           styleClass="nav-button-creative" text="Calendar" />
                   
-                  <Button fx:id="collaborationButton" maxWidth="Infinity" onAction="#showCollaboration" 
-                          styleClass="nav-button-creative" text="Teams" />
-                  
+                  <Button fx:id="teamsButton" maxWidth="Infinity" onAction="#showTeams" 
+							styleClass="nav-button-creative" text="Teams" />
+
+                  <Button fx:id="projectsButton" maxWidth="Infinity" onAction="#showProjects" 
+                          styleClass="nav-button-creative" text="Projects" />
+
                   <Button fx:id="analyticsButton" maxWidth="Infinity" onAction="#showAnalytics" 
                           styleClass="nav-button-creative" text="Reports" />
 
