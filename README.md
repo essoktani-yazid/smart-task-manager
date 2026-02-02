@@ -1,512 +1,319 @@
-# SmartTaskManager
+<div align="center" width="100%">
 
-Task management application with client-server architecture in Java, using Maven, JDBC, MySQL and JavaFX.
+  <h1>🧠 SmartTask Manager</h1>
+  
+  <p>
+    An intelligent productivity platform merging <b>Modern UI</b> with <b>Generative AI</b>.
+    <br>
+    <i>"Stop managing tasks, start executing them."</i>
+  </p>
+
+  <a href="https://www.java.com">
+    <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java" />
+  </a>
+  <a href="https://openjfx.io/">
+    <img src="https://img.shields.io/badge/Frontend-JavaFX-007396?style=for-the-badge&logo=java&logoColor=white" alt="JavaFX" />
+  </a>
+  <a href="https://fastapi.tiangolo.com/">
+    <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/AI-Mistral_7B-purple?style=for-the-badge&logo=openai&logoColor=white" alt="AI" />
+  </a>
+
+<br /> <br />
+
+  <table align="center" style="margin-left: auto; margin-right: auto; border-collapse: collapse; width: 100%;">
+    <tr>
+        <td align="center" width="25%"><b>🎓 School</b></td>
+        <td align="center" width="25%"><b>📚 Module</b></td>
+        <td align="center" width="25%"><b>👩‍🏫 Supervisor</b></td>
+    </tr>
+    <tr>
+        <td align="center">ENSET Mohammedia (Master SDIA)</td>
+        <td align="center">Object-Oriented Programming</td>
+        <td align="center">Prof. Loubna Aminou</td>
+    </tr>
+  </table>
+
+  <h3>👨‍💻 The Development Team</h3>
+  
+  **Yazid ESSOKTANI** • **Loubna MAHRACH** • **Rayane TOKO** • **Mohamed Amin BOUSSAID**
+
+</div>
+
+<hr>
+
+## 📝 Project Overview
+
+**SmartTask Manager** is not just another To-Do list application. It is a hybrid system designed to demonstrate how **Java Object-Oriented architecture** can seamlessly interact with a **Python Microservice for AI**.
+
+The user can manage tasks via a beautiful Glassmorphism UI or simply **chat with the AI** to perform complex database operations using natural language.
+
+---
 
 ## 📋 Table of Contents
 
-1. [Overview](#overview)
-2. [Project Architecture](#project-architecture)
-3. [File Structure](#file-structure)
-4. [Module Details](#module-details)
-5. [Configuration](#configuration)
-6. [Compilation and Execution](#compilation-and-execution)
-7. [REST API](#rest-api)
+1. [Overview](#-overview)
+2. [Architecture](#-architecture)
+3. [Project Structure](#-project-structure)
+4. [Modules](#-modules)
+5. [Configuration](#-configuration)
+6. [Build and Run](#-build-and-run)
+7. [REST API](#-rest-api)
 
 ---
 
 ## 🎯 Overview
 
-SmartTaskManager is a task management application built with a Maven multi-module architecture. The project is divided into three main modules:
+SmartTaskManager is a task management application divided into **four main components**:
 
-- **stm-common** : Shared module containing data models
-- **stm-server** : Server module with custom HTTP API and JDBC persistence
-- **stm-client** : Client module with JavaFX interface
-
----
-
-## 🏗️ Project Architecture
-
-The project follows a **client-server** architecture where:
-
-- The **server** exposes a REST API via `HttpServer` (JDK) and uses JDBC for persistence
-- The **client** communicates with the server via HTTP (Apache HttpClient) and displays a JavaFX interface
-- **Models** are shared between both modules to avoid code duplication
-
-### Data Flow
-
-```
-┌─────────────┐         HTTP/JSON          ┌─────────────┐
-│   Client    │ ───────────────────────────> │   Server    │
-│  (JavaFX)   │ <─────────────────────────── │  (HttpServer)│
-└─────────────┘                              └─────────────┘
-                                                      │
-                                                      │ JDBC
-                                                      ▼
-                                              ┌─────────────┐
-                                              │   MySQL DB  │
-                                              └─────────────┘
-```
+| Module             | Role                                                                 |
+| ------------------ | -------------------------------------------------------------------- |
+| **stm-common**     | Shared Data Models (POJOs)                                           |
+| **stm-server**     | HTTP Backend with REST API and JDBC persistence                      |
+| **stm-client**     | JavaFX Client (Login, Dashboard, Calendar, AI, Profile)              |
+| **stm-ai-service** | AI Microservice: Natural language → SQL via LLM (Mistral/OpenRouter) |
 
 ---
 
-## 📁 File Structure
+## 🏗️ Architecture
+
+### Global Data Flow
+
+The application offers **two modes** of interaction with the database:
+
+#### Case 1: Direct connection via the server (Classic CRUD)
+
+For standard operations (create, edit, delete tasks via the interface), the client communicates with the server which accesses MySQL directly.
 
 ```
-SmartTaskManager/                    (Root Directory - "Parent")
+┌─────────────────┐     HTTP/JSON      ┌─────────────────┐       JDBC       ┌───────────────┐
+│   Client        │ ──────────────────> │   Server        │ ────────────────> │   MySQL DB    │
+│   (JavaFX)      │ <────────────────── │   (HttpServer)  │ <──────────────── │ (smarttask_db)│
+└─────────────────┘   Dashboard, CRUD   └─────────────────┘                   └───────────────┘
+```
+
+#### Case 2: Natural Language via AI Service
+
+To work more easily with the interface, you can **write in natural language** in a prompt: the application understands your request and executes the operations on the database.
+
+_Example: "Delete overdue tasks" or "Show my priority tasks for the week"_
+
+```
+┌─────────────────┐     WebSocket      ┌───────────────┐     LLM + SQL      ┌───────────────┐
+│   Client        │ ──────────────────> │ stm-ai-service│ ─────────────────> │   MySQL DB    │
+│   (JavaFX)      │   "Prompts" text    │  (FastAPI)    │   Analyze + exec   │ (smarttask_db)│
+└─────────────────┘ <────────────────── └───────────────┘ <───────────────── └───────────────┘
+                       Response / Confirm
+```
+
+### AI Microservice Architecture (stm-ai-service)
+
+The AI service acts as an intelligent bridge between the JavaFX client and the database: it translates natural language into secure SQL operations via an LLM (Mistral via OpenRouter).
+
+**Read-Execute / Write-Confirm Security:**
+
+- **READ**: Immediate execution (SELECT)
+- **WRITE** (INSERT/UPDATE/DELETE): No modification without **double validation** — the AI generates the SQL, the system simulates the impact, and the user confirms in the interface.
+
+**Real-time Feedback (WebSocket):**
+
+> _Analyzing intent..._ → _Reading database..._ → _Summarizing..._
+
+---
+
+## 📁 Project Structure
+
+```
+SmartTaskManager/
+├── pom.xml                          # Maven Parent POM
 │
-├── pom.xml                          (Parent POM : manages common versions)
-│
-├── stm-common/                      (Shared Module : Transfer objects)
-│   ├── pom.xml
+├── stm-common/                      # Shared Models
 │   └── src/main/java/com/smarttask/model/
-│       ├── Task.java                (Plain POJO - no annotations)
-│       ├── User.java                (Plain POJO - no annotations)
-│       ├── Priority.java            (Enumeration : LOW, MEDIUM, HIGH, URGENT)
-│       └── Status.java              (Enumeration : TODO, IN_PROGRESS, DONE, CANCELLED)
+│       ├── Task.java, MainTask.java, SubTask.java
+│       ├── User.java, Priority.java, Status.java
+│       ├── CalendarEvent.java, TaskDependency.java
+│       ├── Comment.java, SharedTask.java, TimeTracking.java
+│       └── ...
 │
-├── stm-server/                      (Backend Module : Custom HTTP API)
-│   ├── pom.xml                      (Dependencies : MySQL, Gson, stm-common)
-│   ├── src/main/resources/
-│   │   ├── database.properties      (CONFIDENTIAL : Contains DB password)
-│   │   └── schema.sql               (SQL script to create database and tables)
-│   └── src/main/java/com/smarttask/server/
-│       ├── MainServer.java          (Entry point : public static void main with HttpServer)
-│       ├── config/
-│       │   └── DatabaseConnection.java   (JDBC connection utility)
-│       ├── dao/                     (Data Access Objects using JDBC)
-│       │   ├── TaskDAO.java         (CRUD for tasks)
-│       │   └── UserDAO.java         (CRUD for users)
-│       └── handler/                 (HTTP Controllers that receive requests)
-│           ├── AuthHandler.java     (Handles /api/auth/login and /api/auth/register)
-│           └── TaskHandler.java     (Handles /api/tasks/* : Full CRUD)
+├── stm-server/                      # REST Backend
+│   ├── src/main/java/com/smarttask/server/
+│   │   ├── MainServer.java          # Entry Point (HttpServer, port 8080)
+│   │   ├── config/                  # DatabaseConnection, SchemaUpdater
+│   │   ├── dao/                     # TaskDAO, UserDAO, CalendarEventDAO
+│   │   └── handler/                 # AuthHandler, TaskHandler, UserHandler
+│   └── src/main/resources/
+│       ├── database.properties      # DB Config (⚠️ do not commit)
+│       └── schema.sql               # Complete Schema + Test Data
 │
-└── stm-client/                      (Frontend Module : JavaFX Interface)
-    ├── pom.xml                      (Dependencies : JavaFX, Gson, HttpClient, stm-common)
-    ├── src/main/resources/
-    │   ├── fxml/                    (FXML files for views)
-    │   │   ├── login.fxml           (Login/registration view)
-    │   │   └── dashboard.fxml       (Main view with task list)
-    │   └── css/
-    │       └── styles.css           (CSS styles for the interface)
-    └── src/main/java/com/smarttask/client/
-        ├── App.java                 (JavaFX entry point : extends Application)
-        ├── view/
-        │   └── controller/          (JavaFX UI Controllers)
-        │       ├── LoginController.java    (Manages login view)
-        │       └── DashboardController.java (Manages dashboard view)
-        └── service/                 (Services that call the API via HTTP)
-            ├── AuthService.java     (login() and register() methods)
-            └── TaskService.java     (CRUD methods for tasks)
+├── stm-client/                      # JavaFX Interface
+│   ├── src/main/java/com/smarttask/client/
+│   │   ├── App.java
+│   │   ├── service/                 # AuthService, TaskService, UserService, PlannerManager
+│   │   └── view/controller/         # Login, Dashboard, Calendar, AI, Profile
+│   └── src/main/resources/
+│       ├── fxml/                    # login, dashboard, calendar, ai-view, profile, etc.
+│       └── css/
+│
+└── stm-ai-service/                  # AI Microservice (Python)
+    ├── app/
+    │   ├── main.py                  # FastAPI + WebSocket /ai/stream
+    │   ├── database.py              # MySQL Connection
+    │   ├── core/config.py           # Environment Variables
+    │   ├── rag/prompts.py           # System Prompts (SQL Security)
+    │   ├── services/
+    │   │   ├── ai_service.py        # OpenRouter Communication (LLM)
+    │   │   └── query_service.py     # Logic: Intent → SQL → Confirmation
+    │   └── utils/logger.py
+    ├── .env                         # OPENROUTER_API_KEY, DB_*
+    └── requirements.txt
 ```
 
 ---
 
-## 📦 Module Details
+## 📦 Modules
 
-### A. The `stm-common` Module (Shared)
+### stm-common
 
-**Role** : Contains classes (models) used by both the client and the server.
+POJO models shared between client and server (Task, User, CalendarEvent, etc.) to ensure data consistency.
 
-**Why?** Avoids copying the `Task.java` class twice and ensures data consistency.
+### stm-server
 
-**Content** :
+- **MainServer**: Launches the `HttpServer` on port **8080**
+- **config/DatabaseConnection**: JDBC connection management via `database.properties`
+- **dao/**: CRUD for tasks, users, calendar events
+- **handler/**: Routes `/api/auth`, `/api/tasks`, `/api/users`
 
-- `Task.java` : Plain Java object representing a task
-- `User.java` : Plain Java object representing a user
-- `Priority.java` : Enumeration for priority levels
-- `Status.java` : Enumeration for task statuses
+### stm-client
 
-**Note** : These are plain POJOs without any framework annotations. They are simple data transfer objects.
+- **App.java**: JavaFX entry point
+- **Controllers**: Login, Dashboard, Calendar, AI, Profile, MainLayout
+- **Services**: HTTP communication with the server and WebSocket with the AI service
 
----
+### stm-ai-service (Python)
 
-### B. The `stm-server` Module (The Brain)
-
-**Role** : Backend of the application. This is the only place where JDBC and MySQL Driver are present.
-
-#### Structure
-
-1. **`MainServer.java`** : Entry point
-   - Launches the `HttpServer` on port **8080**
-   - Configures routes `/api/auth` and `/api/tasks`
-   - Tests database connection on startup
-
-2. **`config/DatabaseConnection.java`** :
-   - Utility class for managing JDBC connections
-   - Loads database configuration from `database.properties`
-   - Provides `getConnection()` and `closeConnection()` methods
-
-3. **`dao/`** : Data Access Objects
-   - `TaskDAO.java` : CRUD operations on tasks using JDBC
-   - `UserDAO.java` : CRUD operations on users using JDBC
-   - Use PreparedStatements for SQL queries and parameter binding
-
-4. **`handler/`** : HTTP Controllers
-   - `AuthHandler.java` : Handles authentication
-     - `POST /api/auth/register` : Registration
-     - `POST /api/auth/login` : Login
-   - `TaskHandler.java` : Handles task operations
-     - `GET /api/tasks` : List all tasks
-     - `GET /api/tasks/{id}` : Task details
-     - `GET /api/tasks/{id}/user` : User's tasks
-     - `POST /api/tasks` : Create a task
-     - `PUT /api/tasks/{id}` : Update a task
-     - `DELETE /api/tasks/{id}` : Delete a task
-
-**Security** : ⚠️ The `database.properties` file contains the database password. Never commit it to a public repository!
-
----
-
-### C. The `stm-client` Module (The Face)
-
-**Role** : Frontend of the application. This is the only place where JavaFX is present.
-
-#### Structure
-
-1. **`App.java`** : JavaFX entry point
-   - Extends `Application`
-   - Loads the `login.fxml` view on startup
-
-2. **`view/controller/`** : UI Controllers
-   - `LoginController.java` : Manages the login view
-     - Methods : `handleLogin()`, `handleRegister()`
-     - Navigation to dashboard after successful login
-   - `DashboardController.java` : Manages the main view
-     - Displays the task list in a `TableView`
-     - Allows adding, editing, deleting tasks
-     - Methods : `handleAddTask()`, `handleEditTask()`, `handleDeleteTask()`
-
-3. **`service/`** : HTTP communication services
-   - `AuthService.java` : Does **NOT** contain DAOs anymore
-     - Uses `HttpClient` to make requests to `http://localhost:8080`
-     - Methods : `login()`, `register()`
-   - `TaskService.java` : Service for tasks
-     - Methods : `getTasksByUser()`, `createTask()`, `updateTask()`, `deleteTask()`
-     - Uses `HttpClient` to communicate with the API
-
-4. **`resources/`** : UI Resources
-   - `fxml/login.fxml` : Login interface
-   - `fxml/dashboard.fxml` : Main interface
-   - `css/styles.css` : CSS styles for the application
-
-**Security** : ✅ This module contains **no** database passwords.
+- **main.py**: FastAPI, WebSocket `/ai/stream`, routing (prompts vs confirmations)
+- **query_service.py**: Intent analysis, READ/WRITE decision, real-time status
+- **prompts.py**: System prompts to ensure SQL compliance with the schema and filtering by `user_id`
 
 ---
 
 ## ⚙️ Configuration
 
-### 1. Database Configuration
+### Prerequisites
 
-Edit the file `stm-server/src/main/resources/database.properties` :
+- **Java 21** and Maven 3.6+
+- **MySQL 8.0+**
+- **Python 3.10+** (for stm-ai-service)
+- **OpenRouter API Key** (for the AI service)
 
-```properties
-db.url=jdbc:mysql://localhost:3306/smarttaskdb?useSSL=false&serverTimezone=UTC
-db.username=root
-db.password=123456
-db.driver=com.mysql.cj.jdbc.Driver
-```
+### 1. Database
 
-**Important** : Replace `123456` with your MySQL password.
-
-### 2. Database Creation
-
-Create the MySQL database and tables by running the SQL script :
+Create the database and tables:
 
 ```bash
 mysql -u root -p < stm-server/src/main/resources/schema.sql
 ```
 
-Or manually execute the SQL commands in `stm-server/src/main/resources/schema.sql` :
+The schema creates the `smarttask_db` database with tables: users, tasks, task_tags, task_dependencies, comments, calendar_event, time_tracking, shared_tasks, notifications, productivity_insights, etc.
 
-```sql
-CREATE DATABASE IF NOT EXISTS smarttaskdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+### 2. Server Configuration (database.properties)
 
-USE smarttaskdb;
+File `stm-server/src/main/resources/database.properties`:
 
--- Users table
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Tasks table
-CREATE TABLE IF NOT EXISTS tasks (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    priority ENUM('LOW', 'MEDIUM', 'HIGH', 'URGENT') NOT NULL DEFAULT 'MEDIUM',
-    status ENUM('TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED') NOT NULL DEFAULT 'TODO',
-    due_date DATETIME,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id BIGINT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id),
-    INDEX idx_status (status),
-    INDEX idx_priority (priority)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```properties
+db.url=jdbc:mysql://localhost:3306/smarttask_db?useSSL=false&serverTimezone=UTC
+db.username=root
+db.password=YOUR_PASSWORD
+db.driver=com.mysql.cj.jdbc.Driver
 ```
 
-### 3. Maven Configuration
+### 3. AI Service Configuration (.env)
 
-The parent `pom.xml` manages common versions :
+File `stm-ai-service/.env`:
 
-```xml
-<properties>
-    <mysql.version>8.0.33</mysql.version>
-    <gson.version>2.10.1</gson.version>
-    <javafx.version>17.0.2</javafx.version>
-    <httpclient.version>4.5.14</httpclient.version>
-</properties>
+```env
+OPENROUTER_API_KEY=sk-or-your-key...
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=smarttask_db
 ```
 
 ---
 
-## 🚀 Compilation and Execution
+## 🚀 Build and Run
 
-### Prerequisites
-
-- Java 17 or higher
-- Maven 3.6+
-- MySQL 8.0+
-- MySQL running
-
-### Compilation
-
-At the project root :
+### Compilation (Java)
 
 ```bash
 mvn clean install
 ```
 
-This command compiles all modules in order :
-
-1. `stm-common`
-2. `stm-server`
-3. `stm-client`
-
-### Server Execution
-
-```bash
-cd stm-server
-mvn exec:java
-```
-
-Or directly :
+### Start Server
 
 ```bash
 mvn exec:java -pl stm-server
 ```
 
-The server starts on `http://localhost:8080`.
+The server listens on `http://localhost:8080`.
 
-### Client Execution
-
-In another terminal :
-
-```bash
-cd stm-client
-mvn javafx:run
-```
-
-Or directly from the root :
+### Start Client
 
 ```bash
 mvn javafx:run -pl stm-client
 ```
 
-## 🚀 Seamless Development with Nodemon
-
-To avoid manually restarting Maven compilation commands after every code change, you can use **Nodemon**. Although initially designed for Node.js, Nodemon can watch any type of file and execute custom commands.
-
-### 1. Installation
-
-Make sure you have Node.js installed, then install Nodemon globally:
+### Start AI Service
 
 ```bash
-sudo npm install -g nodemon
+cd stm-ai-service
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 2. Usage
+WebSocket available at `ws://localhost:8000/ai/stream`.
 
-Open separate terminals for each service and use the following commands. These commands specify the watch directories and strict flags directly, eliminating the need for a config file.
+### Development with Nodemon (Optional)
 
-**For the Server:**
+To automatically reload on changes:
 
 ```bash
+# Server
 nodemon --watch stm-server/src --watch stm-common/src -e "*" --exec "mvn compile exec:java -pl stm-server"
-```
 
-The server will restart automatically if you modify server code or shared models.
-
-**For the Client (JavaFX):**
-
-```bash
+# Client
 nodemon --watch stm-client/src --watch stm-common/src -e "*" --exec "mvn compile javafx:run -pl stm-client"
 ```
 
-The GUI will relaunch automatically on every change to Java, FXML, or CSS files.
-
-**For Python Scripts:**
-
-```bash
-nodemon --exec "python main.py"
-```
-
-### 💡 Why use Nodemon here?
-
-- **Time saving**: Maven incremental compilation is triggered as soon as a file is saved.
-- **Multi-module**: It watches changes in `stm-common` and propagates recompilation to dependent modules (server and client).
-- **Flexibility**: Works for all file types specified in the command arguments.
+---
 
 ## 🌐 REST API
 
 ### Authentication
 
-#### Registration
-
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "username": "john",
-  "password": "secret",
-  "email": "john@example.com"
-}
-```
-
-**Response** (201 Created) :
-
-```json
-{
-  "id": 1,
-  "username": "john",
-  "email": "john@example.com"
-}
-```
-
-#### Login
-
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "username": "john",
-  "password": "secret"
-}
-```
-
-**Response** (200 OK) :
-
-```json
-{
-  "id": 1,
-  "username": "john",
-  "email": "john@example.com"
-}
-```
+| Method | Endpoint             | Description |
+| ------ | -------------------- | ----------- |
+| POST   | `/api/auth/register` | Register    |
+| POST   | `/api/auth/login`    | Login       |
 
 ### Tasks
 
-#### List all tasks
-
-```http
-GET /api/tasks
-```
-
-#### List user's tasks
-
-```http
-GET /api/tasks/{userId}/user
-```
-
-#### Get a task
-
-```http
-GET /api/tasks/{taskId}
-```
-
-#### Create a task
-
-```http
-POST /api/tasks
-Content-Type: application/json
-
-{
-  "title": "Do the shopping",
-  "description": "Buy milk and bread",
-  "priority": "HIGH",
-  "status": "TODO",
-  "user": {
-    "id": 1
-  }
-}
-```
-
-#### Update a task
-
-```http
-PUT /api/tasks/{taskId}
-Content-Type: application/json
-
-{
-  "title": "Do the shopping",
-  "description": "Buy milk, bread and eggs",
-  "priority": "URGENT",
-  "status": "IN_PROGRESS"
-}
-```
-
-#### Delete a task
-
-```http
-DELETE /api/tasks/{taskId}
-```
+| Method | Endpoint               | Description   |
+| ------ | ---------------------- | ------------- |
+| GET    | `/api/tasks`           | List tasks    |
+| GET    | `/api/tasks/{id}`      | Task details  |
+| GET    | `/api/tasks/{id}/user` | User's tasks  |
+| POST   | `/api/tasks`           | Create a task |
+| PUT    | `/api/tasks/{id}`      | Update a task |
+| DELETE | `/api/tasks/{id}`      | Delete a task |
 
 ---
 
 ## 📝 Important Notes
 
-1. **Security** : The database password is stored in plain text in `database.properties`. For production, use environment variables or an external configuration file.
-
-2. **CORS** : HTTP handlers include `Access-Control-Allow-Origin: *` to allow cross-origin requests. For production, restrict this.
-
-3. **Error Handling** : Errors are currently displayed in the console. For production, implement a logging system (Log4j, SLF4J).
-
-4. **Validation** : Data validations are minimal. Add more robust validations for production.
-
-5. **Password** : Passwords are stored in plain text. For production, use hashing (BCrypt, Argon2).
-
-6. **Connection Management** : The current implementation creates a new connection for each database operation. For production, consider using a connection pool (HikariCP, C3P0).
-
----
-
-## 🔧 Development
-
-### Dependency Structure
-
-```
-SmartTaskManager (parent)
-├── stm-common (no dependencies - plain POJOs)
-├── stm-server (depends on stm-common, MySQL, Gson)
-└── stm-client (depends on stm-common, JavaFX, Gson, HttpClient)
-```
-
-### Adding New Features
-
-1. **New model** : Add it in `stm-common/src/main/java/com/smarttask/model/`
-2. **New DAO** : Add it in `stm-server/src/main/java/com/smarttask/server/dao/` using JDBC
-3. **New handler** : Add it in `stm-server/src/main/java/com/smarttask/server/handler/` and register it in `MainServer.java`
-4. **New client service** : Add it in `stm-client/src/main/java/com/smarttask/client/service/`
-5. **New view** : Create the FXML file in `stm-client/src/main/resources/fxml/` and the corresponding controller
-
-### JDBC Best Practices
-
-- Always use `PreparedStatement` to prevent SQL injection
-- Always close connections, statements, and result sets in finally blocks or use try-with-resources
-- Use transactions for operations that modify multiple tables
-- Handle SQL exceptions appropriately
+1. **Security**: `database.properties` and `.env` contain secrets. Do not commit them. Use environment variables in production.
+2. **Passwords**: Currently in plain text. In production: hashing (BCrypt, Argon2).
+3. **CORS**: `Access-Control-Allow-Origin: *` in handlers. Restrict in production.
+4. **Connection Pool**: For production, consider HikariCP or equivalent.
