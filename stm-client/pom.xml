@@ -56,6 +56,12 @@
             <artifactId>materialfx</artifactId>
             <version>11.13.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.smarttask</groupId>
+            <artifactId>stm-server</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -65,8 +71,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <release>17</release>
                 </configuration>
             </plugin>
             <plugin>
