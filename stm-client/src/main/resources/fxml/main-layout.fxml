@@ -66,8 +66,8 @@
                            <Label text="Y" textFill="WHITE" style="-fx-font-weight: bold;"/>
                         </StackPane>
                         <VBox>
-                           <Label fx:id="userLabel" text="Yazid ESSOKTANI" styleClass="user-name" />
-                           <Label fx:id="userEmailLabel" text="essoktani.yazid@gmail.com" styleClass="user-email" />
+                           <Label fx:id="userLabel" text="" styleClass="user-name" />
+                           <Label fx:id="userEmailLabel" text="" styleClass="user-email" />
                         </VBox>
                      </children>
                   </HBox>

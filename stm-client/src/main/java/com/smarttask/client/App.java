@@ -17,8 +17,8 @@ public class App extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Load login view
-        // FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+        // FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
         Parent root = loader.load();
 
         primaryStage.setTitle("SmartTaskManager ");

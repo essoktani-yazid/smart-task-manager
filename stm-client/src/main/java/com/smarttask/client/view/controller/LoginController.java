@@ -110,6 +110,11 @@ public class LoginController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
             Parent root = loader.load();
+            
+            // Injecter l'utilisateur dans le contrôleur principal
+            MainLayoutController controller = loader.getController();
+            controller.setCurrentUser(user);
+            
             Stage stage = (Stage) loginButton.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.centerOnScreen();
