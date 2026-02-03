@@ -3,6 +3,7 @@ package com.smarttask.server;
 import com.smarttask.server.config.DatabaseConnection;
 import com.smarttask.server.handler.AuthHandler;
 import com.smarttask.server.handler.TaskHandler;
+import com.smarttask.server.handler.TeamHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class MainServer {
             server.createContext("/api/auth", new AuthHandler());
             server.createContext("/api/tasks", new TaskHandler());
             server.createContext("/api/users", new com.smarttask.server.handler.UserHandler());
+            server.createContext("/api/teams", new TeamHandler());
 
             // Start server
             server.setExecutor(null); // Uses default thread pool
