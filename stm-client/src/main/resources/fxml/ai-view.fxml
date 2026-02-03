@@ -26,14 +26,11 @@
             <Region prefHeight="80" />
             
             <HBox fx:id="cardsContainer" alignment="CENTER" spacing="20" maxWidth="850">
-            
-                <!-- CREATE -->
                 <Button styleClass="card-glass" onAction="#handleSuggestion" HBox.hgrow="ALWAYS" maxWidth="Infinity">
                     <graphic>
                         <VBox spacing="5" alignment="TOP_LEFT">
                             <StackPane styleClass="card-icon-container">
-                                <SVGPath content="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                         styleClass="card-svg-path, icon-rocket"/>
+                                <SVGPath content="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" styleClass="card-svg-path, icon-rocket"/>
                             </StackPane>
                             <Label text="Create Task" styleClass="card-title"/>
                             <Label text="New task with details" styleClass="card-desc"/>
@@ -42,28 +39,24 @@
                     <userData>Create a new task with title 'New Project' and high priority.</userData>
                 </Button>
 
-                <!-- READ -->
                 <Button styleClass="card-glass" onAction="#handleSuggestion" HBox.hgrow="ALWAYS" maxWidth="Infinity">
                     <graphic>
                         <VBox spacing="5" alignment="TOP_LEFT">
                             <StackPane styleClass="card-icon-container">
-                                <SVGPath content="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" 
-                                         styleClass="card-svg-path, icon-bolt"/>
+                                <SVGPath content="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" styleClass="card-svg-path, icon-bolt"/>
                             </StackPane>
                             <Label text="Read Tasks" styleClass="card-title"/>
-                            <Label text="Show my TODO tasks with high priority" styleClass="card-desc"/>
+                            <Label text="Show my TODO tasks" styleClass="card-desc"/>
                         </VBox>
                     </graphic>
                     <userData>Show all my TODO tasks with high priority.</userData>
                 </Button>
 
-                <!-- UPDATE -->
                 <Button styleClass="card-glass" onAction="#handleSuggestion" HBox.hgrow="ALWAYS" maxWidth="Infinity">
                     <graphic>
                         <VBox spacing="5" alignment="TOP_LEFT">
                             <StackPane styleClass="card-icon-container">
-                                <SVGPath content="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"
-                                         styleClass="card-svg-path, icon-megaphone"/>
+                                <SVGPath content="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" styleClass="card-svg-path, icon-megaphone"/>
                             </StackPane>
                             <Label text="Update Task" styleClass="card-title"/>
                             <Label text="Modify task details" styleClass="card-desc"/>
@@ -72,13 +65,11 @@
                     <userData>Update the task 'New Project' to completed status.</userData>
                 </Button>
 
-                <!-- DELETE -->
                 <Button styleClass="card-glass" onAction="#handleSuggestion" HBox.hgrow="ALWAYS" maxWidth="Infinity">
                     <graphic>
                         <VBox spacing="5" alignment="TOP_LEFT">
                             <StackPane styleClass="card-icon-container">
-                                <SVGPath content="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-                                          styleClass="card-svg-path, icon-brain"/>
+                                <SVGPath content="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" styleClass="card-svg-path, icon-brain"/>
                             </StackPane>
                             <Label text="Delete Task" styleClass="card-title"/>
                             <Label text="Remove a task" styleClass="card-desc"/>
@@ -86,7 +77,6 @@
                     </graphic>
                     <userData>Delete the task with title 'New Project'.</userData>
                 </Button>
-
             </HBox>
         </VBox>
 
@@ -106,8 +96,14 @@
                 
                 <Separator styleClass="response-separator"/>
                 
+                <HBox fx:id="statusContainer" visible="false" managed="false" alignment="CENTER_LEFT" spacing="8" styleClass="status-pill" maxWidth="350">
+                    <SVGPath fx:id="statusIcon" content="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8A8 8 0 0 1 12 20Z" 
+                             styleClass="icon-spinner" />
+                    <Label fx:id="statusLabel" text="Thinking..." styleClass="status-label"/>
+                </HBox>
+
                 <ScrollPane fx:id="responseScroll" fitToWidth="true" styleClass="response-scroll" VBox.vgrow="ALWAYS">
-                    <TextFlow fx:id="aiResponseFlow" styleClass="response-text-flow" lineSpacing="5" />
+                    <TextFlow fx:id="aiResponseFlow" styleClass="response-text-flow" lineSpacing="6" />
                 </ScrollPane>
 
                 <HBox fx:id="confirmationBox" visible="false" managed="false" spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
@@ -117,7 +113,6 @@
             </VBox>
             
             <Button text="← New Search" onAction="#resetView" styleClass="btn-back"/>
-            
             <Region prefHeight="80" />
         </VBox>
 

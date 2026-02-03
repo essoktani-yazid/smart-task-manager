@@ -16,6 +16,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -38,10 +39,16 @@ public class AIController {
     @FXML private Label typingTitle;
     @FXML private TextArea userInput;
     @FXML private Label userQuestionLabel;
+    
     @FXML private TextFlow aiResponseFlow;
     @FXML private ScrollPane responseScroll;
     
-    // Zone de confirmation (Cachée par défaut)
+    // Zone de Statut (Spinner)
+    @FXML private HBox statusContainer;
+    @FXML private SVGPath statusIcon;
+    @FXML private Label statusLabel;
+    
+    // Zone de confirmation
     @FXML private HBox confirmationBox;
     @FXML private Button confirmBtn;
     @FXML private Button cancelBtn;
@@ -59,14 +66,14 @@ public class AIController {
     private final Gson gson = new Gson();
     
     // --- ÉTAT ---
-    private Text statusNode; // Le texte qui affiche "Thinking..." ou "Reading DB..."
     private boolean isGenerating = false;
     private boolean isBoldMode = false;
-    private String pendingSqlQuery = null; // Stocke la requête en attente de validation
+    private String pendingSqlQuery = null;
+    private Rectangle cursorNode; // Le curseur clignotant
 
     @FXML
     public void initialize() {
-        // 1. Initialisation de l'interface
+        // 1. Initialisation de l'interface : Cacher les éléments non nécessaires
         homeContainer.setVisible(true);
         resultContainer.setVisible(false);
         resultContainer.setManaged(false);
@@ -74,6 +81,11 @@ public class AIController {
         if (confirmationBox != null) {
             confirmationBox.setVisible(false);
             confirmationBox.setManaged(false);
+        }
+        
+        if (statusContainer != null) {
+            statusContainer.setVisible(false);
+            statusContainer.setManaged(false);
         }
 
         // 2. Configuration des comportements
@@ -105,15 +117,12 @@ public class AIController {
         String message = userInput.getText();
         if (message == null || message.trim().isEmpty()) return;
 
-        // Si on est déjà en train de générer, le bouton sert de STOP
+        // Si génération en cours, le bouton agit comme STOP
         if (isGenerating) {
-            if (webSocket != null) {
-                webSocket.sendText("__STOP__", true);
-            }
-            // On ne retourne pas, on permet à l'utilisateur d'enchaîner une nouvelle question directement
+            if (webSocket != null) webSocket.sendText("__STOP__", true);
         }
 
-        // Reset de l'UI pour la nouvelle question
+        // Reset UI pour la nouvelle question
         userQuestionLabel.setText(message);
         aiResponseFlow.getChildren().clear();
         userInput.clear();
@@ -127,12 +136,16 @@ public class AIController {
         
         isBoldMode = false;
 
-        // Affichage du statut initial
-        statusNode = new Text("Thinking...");
-        statusNode.getStyleClass().add("ai-text-italic");
-        aiResponseFlow.getChildren().add(statusNode);
+        // ACTIVATION DU SPINNER (Status Pill)
+        if (statusContainer != null) {
+            statusContainer.setVisible(true);
+            statusContainer.setManaged(true);
+            statusLabel.setText("Thinking...");
+            if (!statusIcon.getStyleClass().contains("spinning")) {
+                statusIcon.getStyleClass().add("spinning");
+            }
+        }
 
-        // Transition visuelle
         performSearchTransition();
         setGeneratingState(true);
 
@@ -142,14 +155,13 @@ public class AIController {
             payload.addProperty("prompt", message);
             webSocket.sendText(gson.toJson(payload), true);
         } else {
-            // Tentative de reconnexion si perdu
             handleFinalResponse("⚠️ Service disconnected. Reconnecting...", true);
             connectToAiService();
             setGeneratingState(false);
         }
     }
 
-    // --- RÉCEPTION ET TRAITEMENT DES MESSAGES ---
+    // --- RÉCEPTION ET TRAITEMENT (ROBUSTE) ---
 
     private void processIncomingJson(String jsonString) {
         System.out.println("DEBUG JSON: " + jsonString);
@@ -157,35 +169,51 @@ public class AIController {
         try {
             JsonObject response = gson.fromJson(jsonString, JsonObject.class);
 
-            // CAS 1 : Mise à jour de statut (ex: "Analyzing intent...")
+            // CAS 1 : Mise à jour de statut (ex: "Calculating impact...")
             if (response.has("status")) {
                 String statusText = response.get("status").getAsString();
                 Platform.runLater(() -> {
-                    if (statusNode != null) {
-                        statusNode.setText("🤖 " + statusText);
-                    }
+                    if (statusLabel != null) statusLabel.setText(statusText);
                 });
-                return; // On s'arrête là, ce n'est pas encore la réponse finale
+                return; 
             }
 
-            // CAS 2 : Réponse finale ou demande de confirmation
-            String displayMessage = response.has("display_message") ? response.get("display_message").getAsString() : "";
-            boolean requiresConfirmation = response.has("requires_confirmation") && response.get("requires_confirmation").getAsBoolean();
-            String sqlQuery = response.has("sql_to_execute") ? response.get("sql_to_execute").getAsString() : "";
+            // CAS 2 : Réponse finale
+            // Extraction sécurisée pour éviter UnsupportedOperationException sur JsonNull
+            String displayMessage = "";
+            if (response.has("display_message") && !response.get("display_message").isJsonNull()) {
+                displayMessage = response.get("display_message").getAsString();
+            }
+
+            boolean requiresConfirmation = false;
+            if (response.has("requires_confirmation") && !response.get("requires_confirmation").isJsonNull()) {
+                requiresConfirmation = response.get("requires_confirmation").getAsBoolean();
+            }
+
+            String sqlQuery = "";
+            if (response.has("sql_to_execute") && !response.get("sql_to_execute").isJsonNull()) {
+                sqlQuery = response.get("sql_to_execute").getAsString();
+            }
+
+            // Variables finales pour le thread UI
+            String finalDisplayMessage = displayMessage;
+            boolean finalRequiresConfirmation = requiresConfirmation;
+            String finalSqlQuery = sqlQuery;
 
             Platform.runLater(() -> {
-                // On supprime le texte de statut
-                aiResponseFlow.getChildren().remove(statusNode);
-                statusNode = null;
+                // Arrêt du spinner
+                if (statusContainer != null) {
+                    statusContainer.setVisible(false);
+                    statusContainer.setManaged(false);
+                    statusIcon.getStyleClass().remove("spinning");
+                }
                 
-                // La génération est finie (ou en pause pour confirmation)
                 setGeneratingState(false);
 
-                // Animation type "Machine à écrire"
-                animateText(displayMessage, () -> {
-                    // Si une confirmation est requise, on affiche les boutons APRÈS le texte
-                    if (requiresConfirmation) {
-                        this.pendingSqlQuery = sqlQuery;
+                // Animation Rich Text (Machine à écrire + Code highlighting)
+                animateText(finalDisplayMessage, () -> {
+                    if (finalRequiresConfirmation) {
+                        this.pendingSqlQuery = finalSqlQuery;
                         if (confirmationBox != null) {
                             confirmationBox.setVisible(true);
                             confirmationBox.setManaged(true);
@@ -197,10 +225,11 @@ public class AIController {
 
         } catch (Exception e) {
             e.printStackTrace();
+            Platform.runLater(() -> handleFinalResponse("❌ Internal Error: " + e.getMessage(), true));
         }
     }
 
-    // --- ACTIONS DE CONFIRMATION ---
+    // --- ACTIONS DE CONFIRMATION (AVEC FEEDBACK CAPSULES) ---
 
     @FXML
     private void handleConfirm() {
@@ -209,14 +238,10 @@ public class AIController {
             payload.addProperty("action", "CONFIRM");
             payload.addProperty("sql", pendingSqlQuery);
             
-            if (webSocket != null) {
-                webSocket.sendText(gson.toJson(payload), true);
-            }
+            if (webSocket != null) webSocket.sendText(gson.toJson(payload), true);
 
-            // Feedback immédiat
-            Text successText = new Text("\n\n✅ Confirmation envoyée.");
-            successText.getStyleClass().add("ai-text-success");
-            aiResponseFlow.getChildren().add(successText);
+            // Feedback Visuel (Capsule Verte)
+            addFeedbackMessage("Action confirmed successfully.", true);
         }
         hideConfirmation();
     }
@@ -226,14 +251,10 @@ public class AIController {
         JsonObject payload = new JsonObject();
         payload.addProperty("action", "CANCEL");
         
-        if (webSocket != null) {
-            webSocket.sendText(gson.toJson(payload), true);
-        }
+        if (webSocket != null) webSocket.sendText(gson.toJson(payload), true);
 
-        Text cancelText = new Text("\n\n❌ Opération annulée.");
-        cancelText.getStyleClass().add("ai-text-error");
-        aiResponseFlow.getChildren().add(cancelText);
-        
+        // Feedback Visuel (Capsule Rouge)
+        addFeedbackMessage("Action cancelled by user.", false);
         hideConfirmation();
     }
     
@@ -245,70 +266,130 @@ public class AIController {
         pendingSqlQuery = null;
     }
 
-    // --- UTILITAIRES D'AFFICHAGE (MARKDOWN & ANIMATION) ---
+    /**
+     * Ajoute un message stylisé (Capsule/Badge) dans le flux de réponse.
+     */
+    private void addFeedbackMessage(String message, boolean isSuccess) {
+        // Création de l'icône SVG
+        SVGPath icon = new SVGPath();
+        if (isSuccess) {
+            // Check mark
+            icon.setContent("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z");
+            icon.getStyleClass().add("icon-success");
+        } else {
+            // X mark (ou Warning)
+            icon.setContent("M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z");
+            icon.getStyleClass().add("icon-error");
+        }
+
+        // Création du Label (Capsule)
+        Label feedbackLabel = new Label(message);
+        feedbackLabel.setGraphic(icon); 
+        feedbackLabel.getStyleClass().add(isSuccess ? "msg-success" : "msg-error");
+        
+        // Ajout d'un saut de ligne avant
+        aiResponseFlow.getChildren().add(new Text("\n\n"));
+        aiResponseFlow.getChildren().add(feedbackLabel);
+        
+        scrollToBottom();
+    }
+
+    // --- MOTEUR DE RENDU RICH TEXT (CODE & ANIMATION) ---
+
+    private void initCursor() {
+        if (cursorNode == null) {
+            cursorNode = new Rectangle(2, 16); // Curseur type terminal
+            cursorNode.getStyleClass().add("cursor-caret");
+        }
+    }
 
     private void animateText(String fullText, Runnable onFinished) {
+        initCursor();
+        // Reset du curseur
+        aiResponseFlow.getChildren().remove(cursorNode);
+        aiResponseFlow.getChildren().add(cursorNode);
+        if (!cursorNode.getStyleClass().contains("cursor-blink")) {
+            cursorNode.getStyleClass().add("cursor-blink");
+        }
+
         Timeline timeline = new Timeline();
-        // Découpe par espace pour afficher mot par mot
-        String[] words = fullText.split("(?<=\\s)"); 
+        // Regex complexe pour garder les espaces et sauts de ligne lors du split
+        String[] words = fullText.split("(?=[\\s\\n])|(?<=[\\s\\n])"); 
         
         Duration delay = Duration.ZERO;
         for (String word : words) {
-            KeyFrame kf = new KeyFrame(delay, e -> appendMarkdown(word, false));
+            KeyFrame kf = new KeyFrame(delay, e -> {
+                aiResponseFlow.getChildren().remove(cursorNode);
+                appendRichText(word);
+                aiResponseFlow.getChildren().add(cursorNode);
+            });
             timeline.getKeyFrames().add(kf);
-            delay = delay.add(Duration.millis(15)); // Vitesse de frappe (ms)
+            delay = delay.add(Duration.millis(15)); // Vitesse de frappe
         }
         
         timeline.setOnFinished(e -> {
+            aiResponseFlow.getChildren().remove(cursorNode);
             if (onFinished != null) onFinished.run();
         });
         timeline.play();
     }
 
-    private void appendMarkdown(String chunk, boolean isError) {
-        if (isError) {
-            Text errorText = new Text(chunk);
-            errorText.getStyleClass().add("ai-text-error");
-            aiResponseFlow.getChildren().add(errorText);
-            scrollToBottom();
+    private void appendRichText(String chunk) {
+        // 1. Retour ligne
+        if (chunk.equals("\n")) {
+            aiResponseFlow.getChildren().add(new Text("\n"));
             return;
         }
 
-        // Remplacement basique des puces Markdown
-        String processedChunk = chunk.replace("\n- ", "\n • ").replace("\n* ", "\n • ");
-        if (processedChunk.startsWith("- ")) processedChunk = " • " + processedChunk.substring(2);
-
-        // Détection du gras (**text**)
-        String[] parts = processedChunk.split("(\\*\\*)", -1);
-
-        for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            if (part.isEmpty()) {
-                // Si on tombe sur un délimiteur vide, on bascule le mode gras
-                if (i < parts.length - 1) isBoldMode = !isBoldMode;
-                continue;
+        // 2. Nettoyage Markdown basique
+        String text = chunk.replace("- ", "• ").replace("* ", "• ");
+        
+        // 3. Détection CODE PILL (`table`)
+        if (text.contains("`")) {
+            String cleanCode = text.replace("`", "").trim();
+            if (!cleanCode.isEmpty()) {
+                Label codeLabel = new Label(cleanCode);
+                codeLabel.getStyleClass().add("ai-code-pill");
+                aiResponseFlow.getChildren().add(codeLabel);
+                aiResponseFlow.getChildren().add(new Text(" ")); 
             }
+            return;
+        }
 
-            Text textNode = new Text();
-            // Détection des titres (### Titre)
-            if (part.contains("###") || part.trim().startsWith("###")) {
-                textNode.setText(part.replace("###", "").trim() + "\n");
+        // 4. Coloration Syntaxique SQL (Safe vs Danger)
+        String upper = text.toUpperCase().trim();
+        Text textNode = new Text(text);
+        
+        if (upper.matches("DELETE|DROP|REMOVE|TRUNCATE")) {
+            textNode.getStyleClass().add("sql-keyword-danger");
+        } 
+        else if (upper.matches("SELECT|INSERT|UPDATE|CREATE|READ")) {
+            textNode.getStyleClass().add("sql-keyword-safe");
+        }
+        else if (upper.matches("WHERE|FROM|AND|OR|JOIN|LIMIT|ORDER|BY|SET|VALUES")) {
+            textNode.getStyleClass().add("sql-keyword-logic");
+        }
+        else {
+            // 5. Styles Markdown standards (Gras et Titres)
+            if (text.contains("**")) {
+                textNode.setText(text.replace("**", ""));
+                isBoldMode = !isBoldMode; 
+                textNode.getStyleClass().add("ai-text-bold");
+            } else if (text.startsWith("###")) {
+                textNode.setText(text.replace("###", "") + "\n");
                 textNode.getStyleClass().add("ai-text-h3");
             } else {
-                textNode.setText(part);
                 textNode.getStyleClass().add(isBoldMode ? "ai-text-bold" : "ai-text-normal");
             }
-            aiResponseFlow.getChildren().add(textNode);
-            
-            // Bascule après chaque segment
-            if (i < parts.length - 1) isBoldMode = !isBoldMode;
         }
+
+        aiResponseFlow.getChildren().add(textNode);
         scrollToBottom();
     }
     
     private void handleFinalResponse(String text, boolean isError) {
         aiResponseFlow.getChildren().clear(); 
-        appendMarkdown(text, isError);
+        appendRichText(text); 
     }
 
     private void scrollToBottom() {
@@ -340,20 +421,14 @@ public class AIController {
         @Override
         public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
             String text = data.toString();
-            
-            // On ignore les messages vides ou spéciaux
-            if (text.startsWith("{")) {
-                processIncomingJson(text);
-            }
-            // Note: On ne gère pas <END> ici car le JSON complet suffit
-            
+            if (text.startsWith("{")) processIncomingJson(text);
             return WebSocket.Listener.super.onText(webSocket, data, last);
         }
 
         @Override
         public void onError(WebSocket webSocket, Throwable error) {
             Platform.runLater(() -> {
-                if (statusNode != null) statusNode.setText("❌ Erreur de connexion");
+                if (statusLabel != null) statusLabel.setText("❌ Connection Error");
                 setGeneratingState(false);
             });
         }
