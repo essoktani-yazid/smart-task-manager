@@ -477,6 +477,14 @@
     -fx-cursor: hand;
 }
 
+.add-task-button {
+    -fx-background-color: #10b981;  /* Green */
+}
+
+.add-event-button {
+    -fx-background-color: #3b82f6;  /* Blue */
+}
+
 .priority-toggle:hover {
     -fx-opacity: 0.9;
 }

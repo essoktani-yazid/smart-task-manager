@@ -1,6 +1,7 @@
 package com.smarttask.client.service;
 
 
+import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
 import com.smarttask.server.dao.CalendarEventDAO;
 import com.smarttask.server.dao.TaskDAO;
@@ -33,7 +34,7 @@ public class PlannerManager {
     }
     
     public PlannerManager(User currentUser, boolean useDatabaseMode) {
-        this.currentUser = currentUser;
+        this.currentUser = SessionManager.getInstance().getCurrentUser();;
         this.useDatabaseMode = useDatabaseMode;
         
         this.eventDAO = new CalendarEventDAO();
@@ -63,6 +64,8 @@ public class PlannerManager {
                 List<Task> dbTasks = taskDAO.findByUserId(currentUser.getId());
                 tasks.clear();
                 tasks.addAll(dbTasks);
+                System.out.println(currentUser.getId());
+                System.out.println(currentUser.getUsername());
                 System.out.println("✅ Loaded " + dbTasks.size() + " tasks for user " + currentUser.getUsername());
             }
         } catch (Exception e) {

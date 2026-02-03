@@ -15,7 +15,7 @@ import java.sql.SQLException;
  * Launches the server on port 8080 and configures routes.
  */
 public class MainServer {
-    private static final int PORT = 8080;
+    private static final int PORT = 8090;
 
     public static void main(String[] args) {
         try {
