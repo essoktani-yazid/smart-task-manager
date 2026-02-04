@@ -3,123 +3,210 @@ package com.smarttask.client.view.controller;
 import com.smarttask.client.service.AuthService;
 import com.smarttask.client.service.UserService;
 import com.smarttask.model.User;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.util.Duration;
 
 public class ProfileController {
 
+    // --- EN-TÊTE ---
+    @FXML private Text avatarText;
+    @FXML private Label usernameLabel;
+    @FXML private Label roleLabel;
+
+    // --- INFOS PERSO ---
     @FXML private TextField usernameField;
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
     @FXML private TextField emailField;
-    
-    // Password verification section
+    @FXML private Label profileStatusLabel;
+
+    // --- SÉCURITÉ : VÉRIFICATION ---
     @FXML private PasswordField currentPasswordField;
+    @FXML private TextField currentPasswordText; // Le champ visible
     @FXML private Button verifyPasswordButton;
     @FXML private Label verifyStatusLabel;
-    
-    // New password section
+
+    // --- SÉCURITÉ : NOUVEAU MOT DE PASSE ---
     @FXML private VBox newPasswordSection;
     @FXML private PasswordField newPasswordField;
+    @FXML private TextField newPasswordText; // Le champ visible
     @FXML private PasswordField confirmPasswordField;
     @FXML private Button changePasswordButton;
     @FXML private Label passwordStatusLabel;
-    
-    @FXML private Label profileStatusLabel;
 
+    // --- SERVICES ---
     private User currentUser;
     private final UserService userService = new UserService();
     private final AuthService authService = new AuthService();
     private boolean passwordVerified = false;
 
+    @FXML
+    public void initialize() {
+        resetPasswordSection();
+
+        // 1. Validation en temps réel de l'email
+        emailField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.isEmpty()) {
+                clearFieldValidation(emailField);
+            } else if (isValidEmail(newVal)) {
+                setFieldValidation(emailField, true);
+            } else {
+                setFieldValidation(emailField, false);
+            }
+        });
+
+        // 2. Synchronisation pour le Toggle Password (Vérification)
+        setupPasswordSync(currentPasswordField, currentPasswordText);
+
+        // 3. Synchronisation pour le Toggle Password (Nouveau)
+        setupPasswordSync(newPasswordField, newPasswordText);
+    }
+
     public void setCurrentUser(User user) {
         this.currentUser = user;
-        populateFields();
+        if (currentUser != null) {
+            populateFields();
+        }
     }
 
     private void populateFields() {
-        if (currentUser == null) return;
         usernameField.setText(currentUser.getUsername());
         firstNameField.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
         lastNameField.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
         emailField.setText(currentUser.getEmail());
-        
-        // Initialize password section state
+
+        // Initiale Avatar
+        if (avatarText != null) {
+            String initial = (currentUser.getUsername() != null && !currentUser.getUsername().isEmpty())
+                    ? currentUser.getUsername().substring(0, 1).toUpperCase()
+                    : "?";
+            avatarText.setText(initial);
+        }
+        if (usernameLabel != null) usernameLabel.setText(currentUser.getFirstName() + " " + currentUser.getLastName());
+
         resetPasswordSection();
     }
+
+    // --- ACTIONS PROFIL ---
 
     @FXML
     private void handleSaveProfile() {
         if (currentUser == null) return;
 
-        currentUser.setFirstName(firstNameField.getText());
-        currentUser.setLastName(lastNameField.getText());
-        currentUser.setEmail(emailField.getText());
-
-        boolean success = userService.updateUser(currentUser);
-
-        showProfileStatus(success);
-    }
-
-    @FXML
-    private void handleVerifyPassword() {
-        String currentPassword = currentPasswordField.getText();
-        
-        if (currentPassword == null || currentPassword.isEmpty()) {
-            showVerifyStatus(false, "Veuillez entrer votre mot de passe actuel");
+        String email = emailField.getText();
+        if (!isValidEmail(email)) {
+            showStatus(profileStatusLabel, false, "Format d'email invalide");
+            setFieldValidation(emailField, false);
             return;
         }
 
-        boolean verified = authService.verifyPassword(currentUser.getUsername(), currentPassword);
-        
+        currentUser.setFirstName(firstNameField.getText());
+        currentUser.setLastName(lastNameField.getText());
+        currentUser.setEmail(email);
+
+        boolean success = userService.updateUser(currentUser);
+        showStatus(profileStatusLabel, success, success ? "✓ Profil mis à jour" : "✗ Erreur de mise à jour");
+    }
+
+    @FXML
+    private void handleEditAvatar() {
+        // Pour l'instant, simple log ou feedback visuel
+        showStatus(profileStatusLabel, true, "ℹ️ Fonctionnalité d'upload bientôt disponible");
+    }
+
+    // --- ACTIONS MOT DE PASSE ---
+
+    @FXML
+    private void handleVerifyPassword() {
+        String input = currentPasswordField.getText(); // La valeur est sync avec currentPasswordText
+
+        if (input == null || input.isEmpty()) {
+            showStatus(verifyStatusLabel, false, "Entrez votre mot de passe");
+            return;
+        }
+
+        boolean verified = authService.verifyPassword(currentUser.getUsername(), input);
+
         if (verified) {
             passwordVerified = true;
-            showVerifyStatus(true, "✓ Mot de passe vérifié");
+            showStatus(verifyStatusLabel, true, "✓ Identité vérifiée");
             enablePasswordChange();
         } else {
             passwordVerified = false;
-            showVerifyStatus(false, "✗ Mot de passe incorrect");
+            showStatus(verifyStatusLabel, false, "✗ Mot de passe incorrect");
         }
+    }
+
+    // Toggle Visibility : Champ Actuel
+    @FXML
+    private void toggleCurrentPassword() {
+        toggleVisibility(currentPasswordField, currentPasswordText);
+    }
+
+    // Toggle Visibility : Nouveau Champ
+    @FXML
+    private void toggleNewPassword() {
+        toggleVisibility(newPasswordField, newPasswordText);
     }
 
     @FXML
     private void handleChangePassword() {
-        if (!passwordVerified) {
-            showPasswordStatus(false, "Veuillez d'abord vérifier votre mot de passe actuel");
+        if (!passwordVerified) return;
+
+        String newPass = newPasswordField.getText();
+        String confirmPass = confirmPasswordField.getText();
+
+        if (newPass == null || newPass.length() < 6) {
+            showStatus(passwordStatusLabel, false, "Minimum 6 caractères requis");
             return;
         }
 
-        String newPassword = newPasswordField.getText();
-        String confirmPassword = confirmPasswordField.getText();
-
-        if (newPassword == null || newPassword.isEmpty()) {
-            showPasswordStatus(false, "Veuillez entrer un nouveau mot de passe");
+        if (!newPass.equals(confirmPass)) {
+            showStatus(passwordStatusLabel, false, "Les mots de passe ne correspondent pas");
             return;
         }
 
-        if (!newPassword.equals(confirmPassword)) {
-            showPasswordStatus(false, "Les mots de passe ne correspondent pas");
-            return;
-        }
-
-        if (newPassword.length() < 6) {
-            showPasswordStatus(false, "Le mot de passe doit contenir au moins 6 caractères");
-            return;
-        }
-
-        // Update password
-        currentUser.setPassword(newPassword);
+        currentUser.setPassword(newPass);
         boolean success = userService.updateUser(currentUser);
 
         if (success) {
-            showPasswordStatus(true, "Mot de passe modifié avec succès");
-            resetPasswordSection();
+            showStatus(passwordStatusLabel, true, "Mot de passe modifié !");
+            PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+            delay.setOnFinished(e -> resetPasswordSection());
+            delay.play();
         } else {
-            showPasswordStatus(false, "Erreur lors de la modification du mot de passe");
+            showStatus(passwordStatusLabel, false, "Erreur serveur");
+        }
+    }
+
+    // --- LOGIQUE INTERNE ---
+
+    private void setupPasswordSync(PasswordField pass, TextField text) {
+        // Binding bidirectionnel : ce qu'on tape dans l'un va dans l'autre
+        text.textProperty().bindBidirectional(pass.textProperty());
+    }
+
+    private void toggleVisibility(PasswordField pass, TextField text) {
+        // Si le TextField est visible, on le cache et on montre le PasswordField
+        boolean isTextVisible = text.isVisible();
+
+        if (isTextVisible) {
+            text.setVisible(false);
+            text.setManaged(false);
+            pass.setVisible(true);
+            pass.setManaged(true);
+        } else {
+            text.setVisible(true);
+            text.setManaged(true);
+            pass.setVisible(false);
+            pass.setManaged(false);
         }
     }
 
@@ -128,55 +215,58 @@ public class ProfileController {
         newPasswordSection.setOpacity(1.0);
         verifyPasswordButton.setDisable(true);
         currentPasswordField.setDisable(true);
+        currentPasswordText.setDisable(true); // Bloquer aussi le champ visible si ouvert
+        newPasswordField.requestFocus();
     }
 
     private void resetPasswordSection() {
         passwordVerified = false;
+
         currentPasswordField.setText("");
         newPasswordField.setText("");
         confirmPasswordField.setText("");
+
+        // Reset visibilité (remettre en mode caché par défaut)
+        currentPasswordText.setVisible(false); currentPasswordText.setManaged(false);
+        currentPasswordField.setVisible(true); currentPasswordField.setManaged(true);
+
+        newPasswordText.setVisible(false); newPasswordText.setManaged(false);
+        newPasswordField.setVisible(true); newPasswordField.setManaged(true);
+
         currentPasswordField.setDisable(false);
+        currentPasswordText.setDisable(false);
         verifyPasswordButton.setDisable(false);
+
         newPasswordSection.setDisable(true);
         newPasswordSection.setOpacity(0.5);
+
         verifyStatusLabel.setVisible(false);
         passwordStatusLabel.setVisible(false);
     }
 
-    private void showProfileStatus(boolean success) {
-        profileStatusLabel.setVisible(true);
-        if (success) {
-            profileStatusLabel.setText("✓ Profil mis à jour avec succès");
-            profileStatusLabel.getStyleClass().removeAll("error-label");
-            profileStatusLabel.getStyleClass().add("success-label");
-        } else {
-            profileStatusLabel.setText("✗ Erreur lors de la mise à jour du profil");
-            profileStatusLabel.getStyleClass().removeAll("success-label");
-            profileStatusLabel.getStyleClass().add("error-label");
-        }
+    private void showStatus(Label label, boolean success, String message) {
+        label.setText(message);
+        label.setVisible(true);
+        label.getStyleClass().removeAll("status-success", "status-error");
+        label.getStyleClass().add(success ? "status-success" : "status-error");
+
+        PauseTransition pause = new PauseTransition(Duration.seconds(3));
+        pause.setOnFinished(e -> label.setVisible(false));
+        pause.play();
     }
 
-    private void showVerifyStatus(boolean success, String message) {
-        verifyStatusLabel.setVisible(true);
-        verifyStatusLabel.setText(message);
-        if (success) {
-            verifyStatusLabel.getStyleClass().removeAll("error-label");
-            verifyStatusLabel.getStyleClass().add("success-label");
-        } else {
-            verifyStatusLabel.getStyleClass().removeAll("success-label");
-            verifyStatusLabel.getStyleClass().add("error-label");
-        }
+    // --- VALIDATION VISUELLE ---
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
 
-    private void showPasswordStatus(boolean success, String message) {
-        passwordStatusLabel.setVisible(true);
-        passwordStatusLabel.setText(message);
-        if (success) {
-            passwordStatusLabel.getStyleClass().removeAll("error-label");
-            passwordStatusLabel.getStyleClass().add("success-label");
-        } else {
-            passwordStatusLabel.getStyleClass().removeAll("success-label");
-            passwordStatusLabel.getStyleClass().add("error-label");
-        }
+    private void setFieldValidation(TextField field, boolean isValid) {
+        field.getStyleClass().removeAll("field-error", "field-success");
+        field.getStyleClass().add(isValid ? "field-success" : "field-error");
+    }
+
+    private void clearFieldValidation(TextField field) {
+        field.getStyleClass().removeAll("field-error", "field-success");
     }
 }
