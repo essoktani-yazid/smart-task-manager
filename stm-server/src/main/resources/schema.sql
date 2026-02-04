@@ -216,31 +216,49 @@ CREATE TABLE notifications (
 -- ============================================
 
 -- Table Calendar Events
+-- CREATE TABLE calendar_event (
+--     id VARCHAR(36) PRIMARY KEY,
+--     title VARCHAR(200) NOT NULL,
+--     description TEXT,
+--     start_time DATETIME NOT NULL,
+--     end_time DATETIME NOT NULL,
+--     location VARCHAR(200),
+--     color VARCHAR(20) DEFAULT '#3788d8',
+--     is_all_day BOOLEAN DEFAULT FALSE,
+--     user_id VARCHAR(36) NOT NULL,
+--     task_id VARCHAR(36),
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     google_event_id VARCHAR(255),
+--     event_type ENUM('MEETING', 'TASK', 'REMINDER', 'PERSONAL', 'WORK') DEFAULT 'TASK',
+--     recurrence_pattern TEXT,
+--
+--     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+--     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+--
+--     INDEX idx_user_id (user_id),
+--     INDEX idx_start_time (start_time),
+--     INDEX idx_end_time (end_time),
+--     INDEX idx_task_id (task_id),
+--     INDEX idx_event_type (event_type),
+--     INDEX idx_is_all_day (is_all_day)
+-- );
+
 CREATE TABLE calendar_event (
-    id VARCHAR(36) PRIMARY KEY,
-    title VARCHAR(200) NOT NULL,
-    description TEXT,
-    start_time DATETIME NOT NULL,
-    end_time DATETIME NOT NULL,
-    location VARCHAR(200),
-    color VARCHAR(20) DEFAULT '#3788d8',
-    is_all_day BOOLEAN DEFAULT FALSE,
-    user_id VARCHAR(36) NOT NULL,
-    task_id VARCHAR(36),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    google_event_id VARCHAR(255),
-    event_type ENUM('MEETING', 'TASK', 'REMINDER', 'PERSONAL', 'WORK') DEFAULT 'TASK',
-    recurrence_pattern TEXT,
-    
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,
-    
-    INDEX idx_user_id (user_id),
-    INDEX idx_start_time (start_time),
-    INDEX idx_end_time (end_time),
-    INDEX idx_task_id (task_id),
-    INDEX idx_event_type (event_type),
-    INDEX idx_is_all_day (is_all_day)
+                                id VARCHAR(36) PRIMARY KEY,
+                                title VARCHAR(200) NOT NULL,
+                                description TEXT,
+                                event_date DATE NOT NULL,
+                                start_time TIME NOT NULL,
+                                end_time TIME NOT NULL,
+                                priority VARCHAR(20) DEFAULT 'STANDARD',
+                                completed BOOLEAN DEFAULT FALSE,
+                                event_type VARCHAR(30) DEFAULT 'ONE_TIME_EVENT',
+                                periodic_type VARCHAR(20),
+                                days_in_week VARCHAR(50),
+                                place_in_month VARCHAR(20),
+                                yearly_date DATE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Table AI Models (Pour stocker les modèles d'IA)
@@ -364,6 +382,52 @@ CREATE TABLE user_productivity_settings (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
     INDEX idx_user_id (user_id)
+);
+
+-- Table Teams
+CREATE TABLE teams (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    color VARCHAR(20) DEFAULT '#3788d8',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    owner_id VARCHAR(36) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    UNIQUE KEY unique_team_name (name),
+    INDEX idx_owner_id (owner_id),
+    INDEX idx_is_active (is_active)
+);
+
+-- Table Team Members (Many-to-Many: users ↔ teams)
+CREATE TABLE team_members (
+    team_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    role ENUM('MEMBER', 'ADMIN', 'OWNER') DEFAULT 'MEMBER',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (team_id, user_id),
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+    INDEX idx_user_id (user_id),
+    INDEX idx_role (role)
+);
+
+-- Table Team Projects
+CREATE TABLE team_projects (
+    team_id VARCHAR(36) NOT NULL,
+    project_id VARCHAR(36) NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (team_id, project_id),
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+
+    INDEX idx_project_id (project_id)
 );
 
 -- ============================================
@@ -514,21 +578,21 @@ INSERT INTO task_tags (task_id, tag_name) VALUES
 ('t008', 'email');
 
 -- Événements calendrier
-INSERT INTO calendar_event (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
-('e001', 'Réunion équipe', 'Revue hebdomadaire',
- DATE_ADD(NOW(), INTERVAL 1 DAY),
- DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 DAY), INTERVAL 1 HOUR),
- '550e8400-e29b-41d4-a716-446655440000', 't001', '#FF6B6B'),
-
-('e002', 'Développement NLP', 'Session focus',
- DATE_ADD(NOW(), INTERVAL 2 DAY),
- DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 DAY), INTERVAL 3 HOUR),
- '550e8400-e29b-41d4-a716-446655440000', 't002', '#4ECDC4'),
-
-('e003', 'Rendez-vous médical', 'Contrôle annuel',
- DATE_ADD(NOW(), INTERVAL 3 DAY),
- DATE_ADD(DATE_ADD(NOW(), INTERVAL 3 DAY), INTERVAL 1 HOUR),
- '550e8400-e29b-41d4-a716-446655440002', 't007', '#45B7D1');
+# INSERT INTO calendar_event (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
+# ('e001', 'Réunion équipe', 'Revue hebdomadaire',
+#  DATE_ADD(NOW(), INTERVAL 1 DAY),
+#  DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 DAY), INTERVAL 1 HOUR),
+#  '550e8400-e29b-41d4-a716-446655440000', 't001', '#FF6B6B'),
+#
+# ('e002', 'Développement NLP', 'Session focus',
+#  DATE_ADD(NOW(), INTERVAL 2 DAY),
+#  DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 DAY), INTERVAL 3 HOUR),
+#  '550e8400-e29b-41d4-a716-446655440000', 't002', '#4ECDC4'),
+#
+# ('e003', 'Rendez-vous médical', 'Contrôle annuel',
+#  DATE_ADD(NOW(), INTERVAL 3 DAY),
+#  DATE_ADD(DATE_ADD(NOW(), INTERVAL 3 DAY), INTERVAL 1 HOUR),
+#  '550e8400-e29b-41d4-a716-446655440002', 't007', '#45B7D1');
 
 -- Suivi du temps
 INSERT INTO time_tracking (id, task_id, user_id, start_time, end_time, duration_ms, focus_score) VALUES
@@ -576,6 +640,6 @@ CREATE INDEX idx_tasks_search ON tasks(title, description(100));
 CREATE INDEX idx_tasks_user_status ON tasks(user_id, status);
 CREATE INDEX idx_tasks_user_priority ON tasks(user_id, priority);
 CREATE INDEX idx_time_tracking_date_range ON time_tracking(start_time, end_time);
-CREATE INDEX idx_calendar_events_date_range ON calendar_event(start_time, end_time);
+-- CREATE INDEX idx_calendar_events_date_range ON calendar_event(start_time, end_time);
 CREATE FULLTEXT INDEX idx_tasks_fulltext ON tasks(title, description);
 CREATE FULLTEXT INDEX idx_comments_fulltext ON comments(content);

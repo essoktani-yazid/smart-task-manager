@@ -1,6 +1,7 @@
 package com.smarttask.client.view.controller;
 
 import com.smarttask.client.service.AuthService;
+import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.User;
 import javafx.animation.*;
 import javafx.fxml.FXML;
@@ -86,7 +87,8 @@ public class LoginController {
         }
 
         User user = authService.login(username, password);
-        if (user != null) navigateToDashboard(user);
+        if (user != null){ SessionManager.getInstance().setCurrentUser(user);
+            navigateToDashboard(user);}
         else showError(loginErrorLabel, "Identifiants incorrects");
     }
 

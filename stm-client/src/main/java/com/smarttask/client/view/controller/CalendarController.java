@@ -1,5 +1,6 @@
 package com.smarttask.client.view.controller;
 
+import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
 
 import com.smarttask.client.service.PlannerManager;
@@ -91,12 +92,17 @@ public class CalendarController implements Initializable {
      * TODO: Replace with your actual session management
      */
     private User getCurrentUser() {
-        // TEMPORARY: Create a mock user
-        // Replace this with your actual SessionManager.getCurrentUser()
-        User user = new User();
-        user.setId("user-1"); // Use String ID to match TaskDAO
-        user.setUsername("current_user");
-        user.setEmail("user@example.com");
+        User user = SessionManager.getInstance().getCurrentUser();
+
+        if (user == null) {
+            System.err.println("⚠️ WARNING: No user in session!");
+        } else {
+            System.out.println("✅ Retrieved user from session:");
+            System.out.println("   ID: " + user.getId());
+            System.out.println("   Username: " + user.getUsername());
+            System.out.println("   Email: " + user.getEmail());
+        }
+
         return user;
     }
 
@@ -105,6 +111,7 @@ public class CalendarController implements Initializable {
      */
     public void setCurrentUser(User user) {
         this.currentUser = user;
+        SessionManager.getInstance().setCurrentUser(user);
         this.plannerManager = new PlannerManager(user);
         updateView();
     }
@@ -250,6 +257,24 @@ public class CalendarController implements Initializable {
                             "-fx-background-radius: 10;"  // Reduced from 12
             );
             headerRow.getChildren().add(completedBadge);
+        }
+        // ✨ USER BADGE (only for tasks)
+        if (item.getItemType() == PlannerItemType.TASK) {
+            TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
+            String username = adapter.getTask().getUser() != null
+                    ? adapter.getTask().getUser().getUsername()
+                    : "Unknown";
+
+            Label userBadge = new Label("👤 " + username);
+            userBadge.setStyle(
+                    "-fx-text-fill: #0369a1; " +
+                            "-fx-font-size: 9; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-background-color: #e0f2fe; " +
+                            "-fx-padding: 3 8; " +
+                            "-fx-background-radius: 10;"
+            );
+            headerRow.getChildren().add(userBadge);
         }
 
         Region spacer = new Region();
@@ -861,6 +886,13 @@ public class CalendarController implements Initializable {
         }
 
         row.getChildren().addAll(timeLabel, itemsArea);
+        itemsArea.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) {
+                showAddItemMenuAtTime(itemsArea, date, hour, e.getScreenX(), e.getScreenY());
+                e.consume();
+            }
+        });
+
         return row;
     }
 
@@ -911,6 +943,20 @@ public class CalendarController implements Initializable {
                             "-fx-background-radius: 6;"  // Reduced from 8
             );
             headerBox.getChildren().add(privateLabel);
+            TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
+            String username = adapter.getTask().getUser() != null
+                    ? adapter.getTask().getUser().getUsername()
+                    : "?";
+
+            Label userLabel = new Label("👤 " + username);
+            userLabel.setStyle(
+                    "-fx-text-fill: white; " +
+                            "-fx-font-size: 9; " +
+                            "-fx-background-color: rgba(255,255,255,0.25); " +
+                            "-fx-padding: 2 5; " +
+                            "-fx-background-radius: 6;"
+            );
+            headerBox.getChildren().add(userLabel);
         }
 
         // Title - SMALLER
@@ -1132,8 +1178,12 @@ public class CalendarController implements Initializable {
         }
 
         column.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
+//            if (e.getClickCount() == 2) {
+//                showAddItemMenu(column, date, e.getScreenX(), e.getScreenY());
+//            }
+            if (e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) {
                 showAddItemMenu(column, date, e.getScreenX(), e.getScreenY());
+                e.consume();  // ← CRITICAL: prevent propagation
             }
         });
 
@@ -1282,8 +1332,12 @@ public class CalendarController implements Initializable {
         }
 
         cell.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
+//            if (e.getClickCount() == 2) {
+//                showAddItemMenu(cell, date, e.getScreenX(), e.getScreenY());
+//            }
+            if (e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) {
                 showAddItemMenu(cell, date, e.getScreenX(), e.getScreenY());
+                e.consume();  // ← CRITICAL: prevent propagation
             }
         });
 
@@ -1659,6 +1713,50 @@ public class CalendarController implements Initializable {
         );
 
         statusSection.getChildren().addAll(statusLabel, statusCombo);
+        // ============= CREATED BY SECTION =============
+        VBox createdBySection = new VBox(8);
+        Label createdByLabel = new Label("Created By");
+        createdByLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        HBox userInfoBox = new HBox(10);
+        userInfoBox.setAlignment(Pos.CENTER_LEFT);
+        userInfoBox.setPadding(new Insets(10));
+        userInfoBox.setStyle(
+                "-fx-background-color: #f0f9ff; " +
+                        "-fx-border-color: #bae6fd; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-border-width: 1;"
+        );
+
+// User icon
+        Label userIcon = new Label("👤");
+        userIcon.setStyle("-fx-font-size: 18;");
+
+// User details
+        VBox userDetails = new VBox(2);
+
+        String displayUsername = existingAdapter != null && existingAdapter.getTask().getUser() != null
+                ? existingAdapter.getTask().getUser().getUsername()
+                : (currentUser != null ? currentUser.getUsername() : "Unknown");
+
+        Label usernameLabel = new Label(displayUsername);
+        usernameLabel.setStyle(
+                "-fx-text-fill: #0369a1; " +
+                        "-fx-font-size: 14; " +
+                        "-fx-font-weight: 700;"
+        );
+
+        Label roleLabel = new Label("Task Owner");
+        roleLabel.setStyle(
+                "-fx-text-fill: #64748b; " +
+                        "-fx-font-size: 11; " +
+                        "-fx-font-weight: 500;"
+        );
+
+        userDetails.getChildren().addAll(usernameLabel, roleLabel);
+        userInfoBox.getChildren().addAll(userIcon, userDetails);
+        createdBySection.getChildren().addAll(createdByLabel, userInfoBox);
 
         // Populate if editing
         if (existingAdapter != null) {
@@ -1689,7 +1787,8 @@ public class CalendarController implements Initializable {
                 descSection,
                 dateTimeBox,
                 prioritySection,
-                statusSection
+                statusSection,
+                createdBySection
         );
 
         // Combine header and content

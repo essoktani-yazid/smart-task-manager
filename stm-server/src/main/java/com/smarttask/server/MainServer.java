@@ -3,6 +3,7 @@ package com.smarttask.server;
 import com.smarttask.server.config.DatabaseConnection;
 import com.smarttask.server.handler.AuthHandler;
 import com.smarttask.server.handler.TaskHandler;
+import com.smarttask.server.handler.TeamHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.sql.SQLException;
  * Launches the server on port 8080 and configures routes.
  */
 public class MainServer {
-    private static final int PORT = 8080;
+    private static final int PORT = 8090;
 
     public static void main(String[] args) {
         try {
@@ -36,6 +37,7 @@ public class MainServer {
             server.createContext("/api/auth", new AuthHandler());
             server.createContext("/api/tasks", new TaskHandler());
             server.createContext("/api/users", new com.smarttask.server.handler.UserHandler());
+            server.createContext("/api/teams", new TeamHandler());
 
             // Start server
             server.setExecutor(null); // Uses default thread pool
