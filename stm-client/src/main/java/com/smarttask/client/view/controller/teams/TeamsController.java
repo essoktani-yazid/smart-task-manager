@@ -1,5 +1,8 @@
 package com.smarttask.client.view.controller.teams;
 
+import com.smarttask.client.service.TeamService;
+import com.smarttask.model.Team;
+import com.smarttask.model.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -9,41 +12,77 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.List;
 
 public class TeamsController {
 
-	@FXML
-	private FlowPane teamsFlow;
+    @FXML
+    private FlowPane teamsFlow;
 
-	@FXML
-	private void initialize() {
-		System.out.println("teams view loaded");
-	}
+    private User currentUser;
+    private final TeamService teamService = new TeamService();
 
-	@FXML
-	private void handleCreateTeam() {
-		try {
-			FXMLLoader loader = new FXMLLoader(
-				getClass().getResource("/fxml/teams/create-team-dialog.fxml")
-			);
+    public void setCurrentUser(User currentUser) {
+        this.currentUser = currentUser;
+        loadTeams();
+    }
 
-			Parent root = loader.load();
+    @FXML
+    private void initialize() {
+        System.out.println("teams view loaded");
+    }
 
-			Stage dialogStage = new Stage();
-			dialogStage.initModality(Modality.APPLICATION_MODAL);
-			dialogStage.setTitle("Create team");
+    @FXML
+    private void handleCreateTeam() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/teams/create-team-dialog.fxml")
+            );
 
-			Scene scene = new Scene(root);
-			dialogStage.setScene(scene);
+            Parent root = loader.load();
 
-			CreateTeamDialogController controller = loader.getController();
-			controller.setDialogStage(dialogStage);
+            Stage dialogStage = new Stage();
+            dialogStage.initModality(Modality.APPLICATION_MODAL);
+            dialogStage.setTitle("Create team");
 
-			dialogStage.showAndWait();
+            Scene scene = new Scene(root);
+            dialogStage.setScene(scene);
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+            CreateTeamDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.setCurrentUser(currentUser); // injection de l'utilisateur courant
+            controller.setOnTeamCreated(this::loadTeams); // callback pour rafraîchir la vue
+
+            dialogStage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Charge toutes les équipes de l'utilisateur courant et les affiche dans le FlowPane.
+     */
+    private void loadTeams() {
+        if (currentUser == null) return;
+
+        teamsFlow.getChildren().clear();
+
+        List<Team> teams = teamService.getMyTeams(currentUser.getId());
+        for (Team team : teams) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/teams/team-card.fxml"));
+                Parent card = loader.load();
+
+                TeamCardController cardController = loader.getController();
+                cardController.setTeam(team);
+                cardController.setCurrentUser(currentUser);
+
+                teamsFlow.getChildren().add(card);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
 

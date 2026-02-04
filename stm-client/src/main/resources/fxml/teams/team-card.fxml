@@ -1,29 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Rectangle?>
 
 <HBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.smarttask.client.view.controller.teams.TeamCardController"
       spacing="16"
       alignment="CENTER_LEFT"
-      styleClass="team-card">
+      styleClass="team-card"
+      prefHeight="80">
 
-    <!-- Icon -->
-    <StackPane fx:id="colorBadge"
-               styleClass="team-badge">
+    <!-- Color Badge -->
+    <StackPane styleClass="team-badge">
+        <Rectangle fx:id="colorRect" width="40" height="40" arcWidth="8" arcHeight="8"/>
         <Label text="👥" styleClass="team-icon"/>
     </StackPane>
 
     <!-- Info -->
-    <VBox spacing="4">
-        <Label fx:id="teamName"
+    <VBox spacing="4" HBox.hgrow="ALWAYS">
+        <Label fx:id="nameLabel"
                text="Nom de l'équipe"
                styleClass="team-name"/>
-        <Label fx:id="teamDescription"
+        <Label fx:id="descriptionLabel"
                text="Description de l'équipe"
                styleClass="team-desc"/>
     </VBox>
+
+    <!-- Actions -->
+    <HBox spacing="8">
+        <Button fx:id="btnViewMembers" text="Members" styleClass="btn-primary"/>
+        <Button fx:id="btnDeleteTeam" text="Delete" styleClass="btn-danger"/>
+    </HBox>
 
 </HBox>
 
