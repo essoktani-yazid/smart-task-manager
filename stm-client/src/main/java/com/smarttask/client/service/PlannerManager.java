@@ -220,8 +220,8 @@ public class PlannerManager {
         
         if (useDatabaseMode) {
             try {
-                String id = taskDAO.save(task);
-                System.out.println("✅ Task added: " + task.getTitle() + " (ID: " + id + ")");
+                taskDAO.save(task);
+                System.out.println("✅ Task added: " + task.getTitle() + " (ID: " + task.getId() + ")");
             } catch (Exception e) {
                 System.err.println("❌ Failed to add task to database: " + e.getMessage());
                 tasks.remove(task);

@@ -36,6 +36,15 @@ public class MainServer {
             server.createContext("/api/auth", new AuthHandler());
             server.createContext("/api/tasks", new TaskHandler());
             server.createContext("/api/users", new com.smarttask.server.handler.UserHandler());
+            server.createContext("/api/projects", new com.smarttask.server.handler.ProjectsHandler());
+            server.createContext("/api/comments", new com.smarttask.server.handler.CommentHandler());
+            server.createContext("/api/comment-attachments", new com.smarttask.server.handler.CommentAttachmentHandler());
+            server.createContext("/api/tags", new com.smarttask.server.handler.TaskTagHandler());
+            server.createContext("/api/dependencies", new com.smarttask.server.handler.DependencyHandler());
+            server.createContext("/api/shared-tasks", new com.smarttask.server.handler.SharedTaskHandler());
+            server.createContext("/api/notifications", new com.smarttask.server.handler.NotificationHandler());
+            server.createContext("/api/attachments", new com.smarttask.server.handler.AttachmentHandler());
+            server.createContext("/api/timetracking", new com.smarttask.server.handler.TimeTrackingHandler());
 
             // Start server
             server.setExecutor(null); // Uses default thread pool
@@ -53,7 +62,31 @@ public class MainServer {
             System.out.println("  POST /api/tasks - Create a task");
             System.out.println("  PUT  /api/tasks/{id} - Update a task");
             System.out.println("  DELETE /api/tasks/{id} - Delete a task");
-            System.out.println("================================");
+            System.out.println("  GET  /api/projects - List all projects");
+            System.out.println("  GET  /api/projects/{id} - Project details");
+            System.out.println("  GET  /api/projects/{id}/user - User's projects");
+            System.out.println("  POST /api/projects - Create a project");
+            System.out.println("  PUT  /api/projects/{id} - Update a project");
+            System.out.println("  DELETE /api/projects/{id} - Delete a project");
+            System.out.println("  GET  /api/comments/task/{id} - Task comments");
+            System.out.println("  POST /api/comments - Add comment");
+            System.out.println("  PUT  /api/comments/{id} - Update comment");
+            System.out.println("  DELETE /api/comments/{id} - Delete comment");
+            System.out.println("  GET  /api/dependencies/successor/{id} - Predecessor tasks");
+            System.out.println("  GET  /api/dependencies/predecessor/{id} - Successor tasks");
+            System.out.println("  POST /api/dependencies - Add dependency");
+            System.out.println("  DELETE /api/dependencies/{id} - Remove dependency");
+            System.out.println("  POST /api/shared-tasks - Share task");
+            System.out.println("  GET  /api/shared-tasks/task/{id} - Task shares");
+            System.out.println("  GET  /api/shared-tasks/user/{id} - User shared tasks");
+            System.out.println("  PUT  /api/shared-tasks/{taskId}/{userId} - Update permission");
+            System.out.println("  DELETE /api/shared-tasks/{taskId}/{userId} - Revoke sharing");
+            System.out.println("  GET  /api/notifications/user/{id} - User notifications");
+            System.out.println("  GET  /api/notifications/user/{id}/unread - Unread notifications");
+            System.out.println("  POST /api/notifications - Create notification");
+            System.out.println("  PUT  /api/notifications/{id}/read - Mark as read");
+            System.out.println("  PUT  /api/notifications/read-all - Mark all as read");
+            System.out.println("  DELETE /api/notifications/{id} - Delete notification");
 
             // Add shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

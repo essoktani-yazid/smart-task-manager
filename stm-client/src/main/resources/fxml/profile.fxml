@@ -3,13 +3,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Text?>
+<?import javafx.scene.shape.SVGPath?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.Cursor?>
 
 <ScrollPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.smarttask.client.view.controller.ProfileController"
             styleClass="profile-scroll"
+            stylesheets="@../css/profile.css"
             fitToWidth="true">
 
     <VBox styleClass="profile-container" spacing="25">
@@ -17,107 +19,97 @@
             <Insets top="30" right="30" bottom="30" left="30"/>
         </padding>
 
-        <!-- Page Header -->
-        <HBox styleClass="profile-page-header" alignment="CENTER_LEFT" spacing="15">
+        <HBox styleClass="profile-page-header" alignment="CENTER_LEFT">
             <Text text="Mon Profil" styleClass="profile-page-title"/>
         </HBox>
 
-        <!-- Profile Information Card -->
         <VBox styleClass="profile-card" spacing="20">
             <padding>
                 <Insets top="30" right="30" bottom="30" left="30"/>
             </padding>
 
-            <!-- Card Header with Avatar -->
             <HBox styleClass="profile-header" alignment="CENTER_LEFT" spacing="20">
-                <StackPane styleClass="avatar-large">
-                    <Text text="?" styleClass="avatar-text"/>
+                <StackPane styleClass="avatar-wrapper">
+                    <StackPane styleClass="avatar-large">
+                        <Text fx:id="avatarText" text="?" styleClass="avatar-text"/>
+                    </StackPane>
+                    <Button styleClass="avatar-edit-btn" onAction="#handleEditAvatar" StackPane.alignment="BOTTOM_RIGHT">
+                        <graphic>
+                            <SVGPath content="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" scaleX="0.7" scaleY="0.7" fill="white"/>
+                        </graphic>
+                        <tooltip><Tooltip text="Modifier la photo"/></tooltip>
+                    </Button>
                 </StackPane>
-                <VBox spacing="5">
-                    <Label text="Username" styleClass="profile-username"/>
-                    <Label text="Membre" styleClass="profile-role"/>
+
+                <VBox spacing="5" alignment="CENTER_LEFT">
+                    <Label fx:id="usernameLabel" text="Chargement..." styleClass="profile-username"/>
+                    <Label fx:id="roleLabel" text="Membre" styleClass="profile-role"/>
                 </VBox>
             </HBox>
 
             <Separator/>
 
-            <!-- Section Header -->
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Text text="📋" styleClass="section-icon"/>
-                <Label text="Informations Personnelles" styleClass="section-header"/>
-            </HBox>
-
-            <!-- Profile Fields -->
             <GridPane vgap="20" hgap="20" styleClass="profile-grid">
                 <columnConstraints>
                     <ColumnConstraints minWidth="150" prefWidth="180"/>
                     <ColumnConstraints hgrow="ALWAYS"/>
                 </columnConstraints>
 
-                <!-- Username (Read-only) -->
-                <Label text="Nom d'utilisateur" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <Label text="Nom d'utilisateur" styleClass="field-label" GridPane.rowIndex="0" labelFor="$usernameField"/>
                 <TextField fx:id="usernameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="0" editable="false" disable="true"/>
 
-                <!-- First Name -->
-                <Label text="Prénom" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                <TextField fx:id="firstNameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="Votre prénom"/>
+                <Label text="Prénom" styleClass="field-label" GridPane.rowIndex="1" labelFor="$firstNameField"/>
+                <TextField fx:id="firstNameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                <!-- Last Name -->
-                <Label text="Nom" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                <TextField fx:id="lastNameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="2" promptText="Votre nom"/>
+                <Label text="Nom" styleClass="field-label" GridPane.rowIndex="2" labelFor="$lastNameField"/>
+                <TextField fx:id="lastNameField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
-                <!-- Email -->
-                <Label text="Email" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                <TextField fx:id="emailField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="3" promptText="votre.email@example.com"/>
+                <Label text="Email" styleClass="field-label" GridPane.rowIndex="3" labelFor="$emailField"/>
+                <TextField fx:id="emailField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
             </GridPane>
 
-            <!-- Save Button -->
             <HBox alignment="CENTER_LEFT" spacing="15">
-                <Button text="Sauvegarder les Modifications" styleClass="primary-btn" onAction="#handleSaveProfile"/>
+                <Button text="Sauvegarder les modifications" styleClass="primary-btn" onAction="#handleSaveProfile"/>
                 <Label fx:id="profileStatusLabel" visible="false" styleClass="status-label"/>
             </HBox>
         </VBox>
 
-        <!-- Password Management Card -->
         <VBox styleClass="profile-card password-card" spacing="20">
             <padding>
                 <Insets top="30" right="30" bottom="30" left="30"/>
             </padding>
 
-            <!-- Section Header -->
             <HBox alignment="CENTER_LEFT" spacing="10">
                 <Text text="🔒" styleClass="section-icon"/>
-                <Label text="Gestion du Mot de Passe" styleClass="section-header"/>
+                <Label text="Sécurité" styleClass="section-header"/>
             </HBox>
 
-            <Label text="Pour modifier votre mot de passe, veuillez d'abord vérifier votre mot de passe actuel." styleClass="section-subtitle"/>
+            <Label text="Vérifiez votre mot de passe actuel avant d'en changer." styleClass="section-subtitle"/>
 
             <Separator/>
 
-            <!-- Step 1: Current Password Verification -->
             <VBox spacing="15" styleClass="password-step">
-                <Label text="Étape 1 : Vérification" styleClass="step-label"/>
-                
+                <Label text="1. Vérification d'identité" styleClass="step-label"/>
                 <HBox spacing="10" alignment="CENTER_LEFT">
-                    <VBox HBox.hgrow="ALWAYS" spacing="5">
-                        <Label text="Mot de passe actuel" styleClass="field-label"/>
-                        <PasswordField fx:id="currentPasswordField" styleClass="form-field" promptText="Entrez votre mot de passe actuel"/>
-                    </VBox>
-                    <Button fx:id="verifyPasswordButton" text="Vérifier" styleClass="secondary-btn" onAction="#handleVerifyPassword">
-                        <VBox.margin>
-                            <Insets top="22" right="0" bottom="0" left="0"/>
-                        </VBox.margin>
-                    </Button>
-                </HBox>
+                    <StackPane HBox.hgrow="ALWAYS">
+                        <TextField fx:id="currentPasswordText" styleClass="form-field, password-input" promptText="Mot de passe actuel" visible="false" managed="false"/>
+                        <PasswordField fx:id="currentPasswordField" styleClass="form-field, password-input" promptText="Mot de passe actuel"/>
 
+                        <Button fx:id="toggleCurrentBtn" styleClass="icon-btn-eye" StackPane.alignment="CENTER_RIGHT" onAction="#toggleCurrentPassword">
+                            <graphic><SVGPath content="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" scaleX="0.8" scaleY="0.8" styleClass="eye-icon"/></graphic>
+                            <padding><Insets right="10"/></padding>
+                        </Button>
+                    </StackPane>
+
+                    <Button fx:id="verifyPasswordButton" text="Vérifier" styleClass="secondary-btn" onAction="#handleVerifyPassword"/>
+                </HBox>
                 <Label fx:id="verifyStatusLabel" visible="false" styleClass="status-label"/>
             </VBox>
 
             <Separator/>
 
-            <!-- Step 2: New Password Entry (Initially Disabled) -->
             <VBox fx:id="newPasswordSection" spacing="15" styleClass="password-step" disable="true" opacity="0.5">
-                <Label text="Étape 2 : Nouveau Mot de Passe" styleClass="step-label"/>
+                <Label text="2. Définir le nouveau mot de passe" styleClass="step-label"/>
 
                 <GridPane vgap="15" hgap="20">
                     <columnConstraints>
@@ -125,15 +117,25 @@
                         <ColumnConstraints hgrow="ALWAYS"/>
                     </columnConstraints>
 
-                    <Label text="Nouveau mot de passe" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                    <PasswordField fx:id="newPasswordField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="Minimum 6 caractères"/>
+                    <Label text="Nouveau mot de passe" styleClass="field-label" GridPane.rowIndex="0"/>
+                    <StackPane GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <TextField fx:id="newPasswordText" styleClass="form-field, password-input" visible="false" managed="false" promptText="6 caractères min."/>
+                        <PasswordField fx:id="newPasswordField" styleClass="form-field, password-input" promptText="6 caractères min."/>
 
-                    <Label text="Confirmer le mot de passe" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                    <PasswordField fx:id="confirmPasswordField" styleClass="form-field" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="Ressaisissez le mot de passe"/>
+                        <Button fx:id="toggleNewBtn" styleClass="icon-btn-eye" StackPane.alignment="CENTER_RIGHT" onAction="#toggleNewPassword">
+                            <graphic><SVGPath content="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" scaleX="0.8" scaleY="0.8" styleClass="eye-icon"/></graphic>
+                            <padding><Insets right="10"/></padding>
+                        </Button>
+                    </StackPane>
+
+                    <Label text="Confirmer" styleClass="field-label" GridPane.rowIndex="1"/>
+                    <StackPane GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <PasswordField fx:id="confirmPasswordField" styleClass="form-field, password-input" promptText="Répétez le mot de passe"/>
+                    </StackPane>
                 </GridPane>
 
                 <HBox alignment="CENTER_LEFT" spacing="15">
-                    <Button fx:id="changePasswordButton" text="Modifier le Mot de Passe" styleClass="primary-btn" onAction="#handleChangePassword"/>
+                    <Button fx:id="changePasswordButton" text="Modifier le mot de passe" styleClass="primary-btn" onAction="#handleChangePassword"/>
                     <Label fx:id="passwordStatusLabel" visible="false" styleClass="status-label"/>
                 </HBox>
             </VBox>

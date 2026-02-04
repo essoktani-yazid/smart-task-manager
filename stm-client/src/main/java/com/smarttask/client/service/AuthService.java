@@ -1,6 +1,7 @@
 package com.smarttask.client.service;
 
 import com.google.gson.Gson;
+import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.User;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -18,7 +19,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class AuthService {
     private static final String BASE_URL = "http://localhost:8090/api/auth";
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtils.getGson();
 
     /**
      * Tente de connecter un utilisateur.
