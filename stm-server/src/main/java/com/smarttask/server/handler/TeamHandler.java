@@ -1,6 +1,7 @@
 package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.smarttask.model.Team;
 import com.smarttask.model.TeamMember;
 import com.smarttask.server.dao.TeamDAO;
@@ -13,11 +14,32 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class TeamHandler implements HttpHandler {
 
     private final TeamDAO teamDAO = new TeamDAO();
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(
+                LocalDateTime.class,
+                (com.google.gson.JsonSerializer<LocalDateTime>) (src, type, ctx) ->
+                    src == null ? null :
+                    new com.google.gson.JsonPrimitive(
+                        src.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    )
+            )
+            .registerTypeAdapter(
+                LocalDateTime.class,
+                (com.google.gson.JsonDeserializer<LocalDateTime>) (json, type, ctx) ->
+                    json == null || json.isJsonNull()
+                        ? null
+                        : LocalDateTime.parse(
+                            json.getAsString(),
+                            DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                        )
+            )
+            .create();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -26,17 +48,22 @@ public class TeamHandler implements HttpHandler {
         String query = exchange.getRequestURI().getQuery();
 
         try {
-            if (path.equals("/teams") && method.equals("GET")) {
+			System.out.println("handling");
+			System.out.println(method);
+			System.out.println(path);
+			System.out.println(query);
+            if (path.equals("/api/teams") && method.equals("GET")) {
                 handleGetUserTeams(exchange, query);
                 return;
             }
 
-            if (path.equals("/teams") && method.equals("POST")) {
+            if (path.equals("/api/teams") && method.equals("POST")) {
+				System.out.println("Creating");
                 handleCreateTeam(exchange);
                 return;
             }
 
-            if (path.matches("/teams/[^/]+")) {
+            if (path.matches("/api/teams/[^/]+")) {
                 String teamId = path.split("/")[2];
 
                 switch (method) {
@@ -47,7 +74,7 @@ public class TeamHandler implements HttpHandler {
                 return;
             }
 
-            if (path.matches("/teams/[^/]+/members")) {
+            if (path.matches("/api/teams/[^/]+/members")) {
                 String teamId = path.split("/")[2];
 
                 switch (method) {

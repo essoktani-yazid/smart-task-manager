@@ -2,6 +2,7 @@ package com.smarttask.client.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.smarttask.client.util.GsonUtil;
 import com.smarttask.model.Team;
 import com.smarttask.model.TeamMember;
 import org.apache.http.client.methods.*;
@@ -20,7 +21,7 @@ import java.util.Optional;
 public class TeamService {
 
     private static final String BASE_URL = "http://localhost:8080/api/teams";
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.createLocalDateTimeGsonAdapter();
 
     /** Get teams where user is owner or member */
     public List<Team> getMyTeams(String userId) {

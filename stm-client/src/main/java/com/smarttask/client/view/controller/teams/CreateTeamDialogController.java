@@ -10,7 +10,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.util.function.Consumer;
+import java.lang.Runnable;
 
 public class CreateTeamDialogController {
 
@@ -26,7 +26,7 @@ public class CreateTeamDialogController {
     private Stage dialogStage;
     private User currentUser;
     private final TeamService teamService = new TeamService();
-    private Consumer<Void> onTeamCreated; // callback pour notifier TeamsController
+    private Runnable onTeamCreated; // callback pour notifier TeamsController
 
     @FXML
     private void initialize() {
@@ -41,7 +41,7 @@ public class CreateTeamDialogController {
         this.currentUser = currentUser;
     }
 
-    public void setOnTeamCreated(Consumer<Void> callback) {
+    public void setOnTeamCreated(Runnable callback) {
         this.onTeamCreated = callback;
     }
 
@@ -62,7 +62,6 @@ public class CreateTeamDialogController {
             System.err.println("Le nom de l'équipe est requis");
             return;
         }
-
         Team team = new Team();
         team.setName(name);
         team.setDescription(description);
@@ -73,7 +72,7 @@ public class CreateTeamDialogController {
         if (success) {
             System.out.println("Team created: " + name);
             if (onTeamCreated != null) {
-                onTeamCreated.accept(null); // rafraîchir TeamsController
+                onTeamCreated.run();
             }
             dialogStage.close();
         } else {

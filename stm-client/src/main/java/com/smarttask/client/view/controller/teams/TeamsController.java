@@ -36,7 +36,7 @@ public class TeamsController {
     private void handleCreateTeam() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/teams/create-team-dialog.fxml")
+                getClass().getResource("/fxml/teams/create-team-dialog.fxml")
             );
 
             Parent root = loader.load();

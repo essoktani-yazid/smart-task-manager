@@ -1,5 +1,6 @@
 package com.smarttask.client.view.controller;
 
+import com.smarttask.client.view.controller.teams.TeamsController;
 import com.smarttask.model.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -110,6 +111,8 @@ public class MainLayoutController {
                 ((DashboardController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof ProfileController && currentUser != null) {
                 ((ProfileController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof TeamsController && currentUser != null) {
+                ((TeamsController) controller).setCurrentUser(currentUser);
             }
 
             contentPane.getChildren().clear();
