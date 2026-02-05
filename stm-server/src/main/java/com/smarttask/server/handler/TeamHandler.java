@@ -1,0 +1,176 @@
+package com.smarttask.server.handler;
+
+import com.google.gson.Gson;
+import com.smarttask.model.Team;
+import com.smarttask.model.TeamMember;
+import com.smarttask.server.dao.TeamDAO;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+
+public class TeamHandler implements HttpHandler {
+
+    private final TeamDAO teamDAO = new TeamDAO();
+    private final Gson gson = new Gson();
+
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        String method = exchange.getRequestMethod();
+        String path = exchange.getRequestURI().getPath();
+        String query = exchange.getRequestURI().getQuery();
+
+        try {
+            if (path.equals("/teams") && method.equals("GET")) {
+                handleGetUserTeams(exchange, query);
+                return;
+            }
+
+            if (path.equals("/teams") && method.equals("POST")) {
+                handleCreateTeam(exchange);
+                return;
+            }
+
+            if (path.matches("/teams/[^/]+")) {
+                String teamId = path.split("/")[2];
+
+                switch (method) {
+                    case "GET" -> handleGetTeam(exchange, teamId);
+                    case "PUT" -> handleUpdateTeam(exchange, teamId);
+                    case "DELETE" -> handleDeleteTeam(exchange, teamId);
+                }
+                return;
+            }
+
+            if (path.matches("/teams/[^/]+/members")) {
+                String teamId = path.split("/")[2];
+
+                switch (method) {
+                    case "GET" -> handleGetMembers(exchange, teamId);
+                    case "POST" -> handleAddMember(exchange, teamId);
+                    case "PUT" -> handleUpdateMember(exchange, teamId);
+                    case "DELETE" -> handleRemoveMember(exchange, teamId, query);
+                }
+                return;
+            }
+
+            sendResponse(exchange, 404, "Not found");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendResponse(exchange, 500, "Internal server error");
+        }
+    }
+
+    private void handleGetUserTeams(HttpExchange exchange, String query) throws IOException {
+        String userId = getQueryParam(query, "userId");
+
+        if (userId == null) {
+            sendResponse(exchange, 400, "Missing userId");
+            return;
+        }
+
+        List<Team> teams = teamDAO.findByUser(userId);
+        sendJson(exchange, 200, teams);
+    }
+
+    private void handleGetTeam(HttpExchange exchange, String teamId) throws IOException {
+        Optional<Team> team = teamDAO.findById(teamId);
+
+        if (team.isEmpty()) {
+            sendResponse(exchange, 404, "Team not found");
+            return;
+        }
+
+        sendJson(exchange, 200, team.get());
+    }
+
+    private void handleCreateTeam(HttpExchange exchange) throws IOException {
+        Team team = readBody(exchange, Team.class);
+        String id = teamDAO.create(team);
+        sendResponse(exchange, 201, id);
+    }
+
+    private void handleUpdateTeam(HttpExchange exchange, String teamId) throws IOException {
+        Team team = readBody(exchange, Team.class);
+        team.setId(teamId);
+        teamDAO.update(team);
+        sendResponse(exchange, 204, "");
+    }
+
+    private void handleDeleteTeam(HttpExchange exchange, String teamId) throws IOException {
+        teamDAO.deactivate(teamId);
+        sendResponse(exchange, 204, "");
+    }
+
+    private void handleGetMembers(HttpExchange exchange, String teamId) throws IOException {
+        List<TeamMember> members = teamDAO.findMembers(teamId);
+        sendJson(exchange, 200, members);
+    }
+
+    private void handleAddMember(HttpExchange exchange, String teamId) throws IOException {
+        TeamMember member = readBody(exchange, TeamMember.class);
+        teamDAO.addMember(teamId, member.getUserId(), member.getRole());
+        sendResponse(exchange, 201, "");
+    }
+
+    private void handleUpdateMember(HttpExchange exchange, String teamId) throws IOException {
+        TeamMember member = readBody(exchange, TeamMember.class);
+        teamDAO.updateMemberRole(teamId, member.getUserId(), member.getRole());
+        sendResponse(exchange, 204, "");
+    }
+
+    private void handleRemoveMember(HttpExchange exchange, String teamId, String query) throws IOException {
+        String userId = getQueryParam(query, "userId");
+
+        if (userId == null) {
+            sendResponse(exchange, 400, "Missing userId");
+            return;
+        }
+
+        teamDAO.removeMember(teamId, userId);
+        sendResponse(exchange, 204, "");
+    }
+
+    private <T> T readBody(HttpExchange exchange, Class<T> clazz) throws IOException {
+        try (InputStream is = exchange.getRequestBody()) {
+            String json = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            return gson.fromJson(json, clazz);
+        }
+    }
+
+    private void sendJson(HttpExchange exchange, int status, Object data) throws IOException {
+        byte[] response = gson.toJson(data).getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(status, response.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response);
+        }
+    }
+
+    private void sendResponse(HttpExchange exchange, int status, String message) throws IOException {
+        byte[] response = message.getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(status, response.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response);
+        }
+    }
+
+    private String getQueryParam(String query, String key) {
+        if (query == null) return null;
+
+        for (String param : query.split("&")) {
+            String[] parts = param.split("=");
+            if (parts.length == 2 && parts[0].equals(key)) {
+                return parts[1];
+            }
+        }
+        return null;
+    }
+}
+
