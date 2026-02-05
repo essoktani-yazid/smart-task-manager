@@ -1,39 +1,111 @@
 package com.smarttask.client.service;
 
-import com.google.gson.Gson;
+import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.User;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Service to manage user operations.
+ * Uses standard java.net.http.HttpClient for consistency.
  */
 public class UserService {
-    private static final String BASE_URL = "http://localhost:8080/api/users";
-    private final Gson gson = new Gson();
+
+    // Assurez-vous que le port correspond à votre stm-server (8080 ou autre)
+    private static final String BASE_URL = "http://localhost:8090/api/users";
+
+    private final HttpClient client;
+
+    public UserService() {
+        this.client = HttpClient.newHttpClient();
+    }
 
     /**
-     * Updates user profile.
+     * Récupère tous les utilisateurs (Pour la liste d'assignation).
+     * @return Une liste d'utilisateurs.
+     */
+    public List<User> findAll() throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            User[] users = GsonUtils.getGson().fromJson(response.body(), User[].class);
+            return Arrays.asList(users);
+        } else {
+            // En cas d'erreur serveur, on retourne une liste vide ou on log
+            System.err.println("Erreur lors de la récupération des users : " + response.statusCode());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Récupère un utilisateur par son ID.
+     */
+    public User findById(String id) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/" + id))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            return GsonUtils.getGson().fromJson(response.body(), User.class);
+        }
+        return null;
+    }
+
+    /**
+     * Met à jour le profil d'un utilisateur.
      */
     public boolean updateUser(User user) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPut request = new HttpPut(BASE_URL + "/" + user.getId());
-            request.setHeader("Content-Type", "application/json");
+        try {
+            String json = GsonUtils.getGson().toJson(user);
 
-            String json = gson.toJson(user);
-            request.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/" + user.getId()))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                return response.getStatusLine().getStatusCode() == 200;
-            }
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Créer un nouvel utilisateur (Si besoin pour une interface d'admin).
+     */
+    public User createUser(User user) throws IOException, InterruptedException {
+        String json = GsonUtils.getGson().toJson(user);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 201 || response.statusCode() == 200) {
+            return GsonUtils.getGson().fromJson(response.body(), User.class);
+        }
+        throw new IOException("Erreur création user: " + response.body());
     }
 }

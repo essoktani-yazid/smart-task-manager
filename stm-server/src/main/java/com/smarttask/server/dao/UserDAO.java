@@ -117,21 +117,25 @@ public class UserDAO {
     /**
      * Retrieves all users.
      */
-    public List<User> findAll() {
-        String sql = "SELECT * FROM users";
-        List<User> users = new ArrayList<>();
+    // Dans UserDAO.java
+    public java.util.List<com.smarttask.model.User> findAll() {
+        java.util.List<com.smarttask.model.User> users = new java.util.ArrayList<>();
+        String sql = "SELECT id, username, email FROM users"; // On ne récupère pas le mot de passe !
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+        try (java.sql.Connection conn = com.smarttask.server.config.DatabaseConnection.getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(sql);
+             java.sql.ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                users.add(mapResultSetToUser(rs));
+                com.smarttask.model.User u = new com.smarttask.model.User();
+                u.setId(rs.getString("id"));
+                u.setUsername(rs.getString("username"));
+                u.setEmail(rs.getString("email"));
+                users.add(u);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
         return users;
     }
 

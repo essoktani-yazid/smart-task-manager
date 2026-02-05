@@ -1,0 +1,379 @@
+/* ==================== PROJET ==================== */
+
+/* Cartes de projets avec grille */
+.project-card {
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 2);
+    -fx-cursor: hand;
+}
+
+.project-card:hover {
+    -fx-border-color: #d1d5db;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 6, 0, 0, 3);
+}
+
+.project-card-selected {
+    -fx-border-color: #4f46e5;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(79,70,229,0.3), 8, 0, 0, 4);
+}
+
+.project-card-color-bar {
+    -fx-min-height: 4;
+    -fx-padding: 0 0 10 0;
+}
+
+.project-card-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+    -fx-padding: 8 0;
+}
+
+.project-card-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b7280;
+    -fx-padding: 5 0;
+    -fx-wrap-text: true;
+}
+
+.project-card-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+    -fx-padding: 8 0 0 0;
+}
+
+/* Description modal professionnelle au hover */
+.project-description-tooltip {
+    -fx-border-color: #1f2937;
+    -fx-border-radius: 8;
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+    -fx-padding: 12;
+    -fx-font-size: 12px;
+    -fx-max-width: 320;
+    -fx-wrap-text: true;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 12, 0, 2, 2);
+    -fx-border-width: 1;
+}
+
+.project-description-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #60a5fa;
+    -fx-padding: 0 0 8 0;
+}
+
+/* ==================== SOUS-TÂCHES - TABLE ==================== */
+
+.subtask-table {
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-background-color: white;
+}
+
+.subtask-table-column-header {
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+    -fx-font-size: 12px;
+}
+
+.subtask-due-date {
+    -fx-font-size: 12px;
+    -fx-font-family: monospace;
+}
+
+.subtask-overdue {
+    -fx-text-fill: #dc2626;
+    -fx-font-weight: bold;
+}
+
+.subtask-today {
+    -fx-text-fill: #f59e0b;
+}
+
+.subtask-future {
+    -fx-text-fill: #6b7280;
+}
+
+/* ==================== COMMENTAIRES ET ATTACHEMENTS ==================== */
+
+.comment-cell-container {
+    -fx-padding: 10;
+    -fx-border-color: #f3f4f6;
+    -fx-border-radius: 6;
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 6;
+    -fx-border-width: 1;
+}
+
+.comment-avatar {
+    -fx-text-fill: white;
+    -fx-background-color: #4f46e5;
+    -fx-border-radius: 50;
+    -fx-background-radius: 50;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+    -fx-alignment: center;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.comment-author {
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+    -fx-font-size: 13px;
+}
+
+.comment-date {
+    -fx-text-fill: #9ca3af;
+    -fx-font-size: 11px;
+}
+
+.comment-content {
+    -fx-font-size: 13px;
+    -fx-text-fill: #374151;
+    -fx-wrap-text: true;
+    -fx-line-spacing: 2;
+}
+
+/* Attachements cliquables */
+.attachment-item {
+    -fx-border-color: #e0e7ff;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-background-color: #f0f4ff;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+
+.attachment-item:hover {
+    -fx-border-color: #c7d2fe;
+    -fx-background-color: #e0e7ff;
+    -fx-effect: dropshadow(three-pass-box, rgba(79,70,229,0.2), 4, 0, 0, 2);
+}
+
+.attachment-icon {
+    -fx-font-size: 18px;
+    -fx-text-fill: #6366f1;
+}
+
+.attachment-name {
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+    -fx-font-size: 13px;
+}
+
+.attachment-size {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+/* Zone upload fichiers */
+.upload-zone {
+    -fx-border-color: #dbeafe;
+    -fx-border-style: dashed;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-color: #f0f9ff;
+    -fx-background-radius: 8;
+    -fx-padding: 20;
+    -fx-cursor: hand;
+}
+
+.upload-zone:hover {
+    -fx-border-color: #0ea5e9;
+    -fx-background-color: #e0f2fe;
+}
+
+/* ==================== FORMULAIRES ==================== */
+
+.form-root {
+    -fx-font-family: 'Segoe UI', 'Roboto', sans-serif;
+    -fx-font-size: 12px;
+}
+
+.form-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+    -fx-padding: 10 0 20 0;
+}
+
+.form-section {
+    -fx-padding: 15;
+    -fx-border-color: #f3f4f6;
+    -fx-border-radius: 8;
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 8;
+}
+
+.form-section-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+    -fx-padding: 10 0 8 0;
+}
+
+.form-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+    -fx-font-size: 12px;
+}
+
+.form-field {
+    -fx-padding: 8 12;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-border-color: #d1d5db;
+    -fx-background-color: white;
+    -fx-font-size: 12px;
+}
+
+.form-field:focused {
+    -fx-border-color: #4f46e5;
+    -fx-border-width: 2;
+    -fx-padding: 7 11;
+}
+
+/* ==================== BOUTONS ==================== */
+
+.primary-action-button {
+    -fx-background-color: #4f46e5;
+    -fx-text-fill: white;
+    -fx-padding: 10 20;
+    -fx-font-weight: bold;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+
+.primary-action-button:hover {
+    -fx-background-color: #4338ca;
+    -fx-effect: dropshadow(three-pass-box, rgba(79,70,229,0.3), 6, 0, 0, 2);
+}
+
+.secondary-action-button {
+    -fx-background-color: white;
+    -fx-text-fill: #4f46e5;
+    -fx-border-color: #c7d2fe;
+    -fx-padding: 10 20;
+    -fx-font-weight: bold;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+
+.secondary-action-button:hover {
+    -fx-background-color: #f0f4ff;
+    -fx-border-color: #a5b4fc;
+}
+
+.danger-action-button {
+    -fx-background-color: #fef2f2;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #fecaca;
+    -fx-padding: 10 20;
+    -fx-font-weight: bold;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+
+.danger-action-button:hover {
+    -fx-background-color: #fee2e2;
+    -fx-border-color: #fca5a5;
+}
+
+/* ==================== TAGS ET BADGES ==================== */
+
+.tag-badge {
+    -fx-background-color: #e0e7ff;
+    -fx-text-fill: #4f46e5;
+    -fx-padding: 4 10;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.mini-badge-high {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #991b1b;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 3 8;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.mini-badge-medium {
+    -fx-background-color: #fef3c7;
+    -fx-text-fill: #92400e;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 3 8;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.mini-badge-low {
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1e40af;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 3 8;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+/* ==================== STATUS LABELS ==================== */
+
+.status-todo {
+    -fx-background-color: #e5e7eb;
+    -fx-text-fill: #374151;
+}
+
+.status-in-progress {
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1e40af;
+}
+
+.status-completed {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
+.status-cancelled {
+    -fx-background-color: #ede9fe;
+    -fx-text-fill: #6b21a8;
+}
+
+/* ==================== SCROLLBAR ==================== */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button {
+    -fx-padding: 0;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #d1d5db;
+    -fx-background-radius: 5;
+    -fx-padding: 5;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #9ca3af;
+}

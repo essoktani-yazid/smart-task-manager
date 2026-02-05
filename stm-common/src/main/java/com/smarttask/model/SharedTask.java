@@ -39,13 +39,13 @@ public class SharedTask {
 
     public java.util.Date getSharedAt() { return sharedAt; }
     public void setSharedAt(java.util.Date sharedAt) { this.sharedAt = sharedAt; }
-}
-
-// Permission levels for shared tasks
-enum PermissionLevel {
-    READ,
-    WRITE,
-    ADMIN
+    
+    // Permission levels for shared tasks
+    public static enum PermissionLevel {
+        READ,
+        WRITE,
+        ADMIN
+    }
 }
 
 // Composite ID for SharedTask (plain model, no JPA annotations)

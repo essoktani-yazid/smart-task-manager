@@ -1,0 +1,68 @@
+/* Style pour les cartes de projet */
+.project-card {
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 2);
+    -fx-cursor: hand;
+}
+
+.project-card:hover {
+    -fx-border-color: #d1d5db;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 6, 0, 0, 3);
+}
+
+.project-card-selected {
+    -fx-border-color: #4f46e5;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(79,70,229,0.3), 6, 0, 0, 3);
+}
+
+.project-card-color-bar {
+    -fx-min-height: 4;
+    -fx-padding: 0 0 10 0;
+}
+
+.project-card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.project-card-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+/* Style pour la description modal au hover */
+.project-description-tooltip {
+    -fx-border-color: #374151;
+    -fx-border-radius: 8;
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+    -fx-padding: 12;
+    -fx-font-size: 12px;
+    -fx-max-width: 300;
+    -fx-wrap-text: true;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 2, 2);
+}
+
+.project-info-panel {
+    -fx-border-color: #f3f4f6;
+    -fx-border-radius: 8;
+    -fx-background-color: #f9fafb;
+    -fx-padding: 15;
+}
+
+.project-form-section {
+    -fx-padding: 10 0;
+}
+
+.form-section-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+    -fx-padding: 10 0 8 0;
+}

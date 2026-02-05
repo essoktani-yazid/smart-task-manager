@@ -1,6 +1,7 @@
 package com.smarttask.client.view.controller;
 
 import com.google.gson.Gson;
+import com.smarttask.client.util.GsonUtils;
 import com.google.gson.JsonObject;
 import javafx.animation.*;
 import javafx.application.Platform;
@@ -56,7 +57,7 @@ public class AIController {
 
     // --- OBJETS UTILITAIRES ---
     private WebSocket webSocket;
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtils.getGson();
     
     // --- ÉTAT ---
     private Text statusNode; // Le texte qui affiche "Thinking..." ou "Reading DB..."

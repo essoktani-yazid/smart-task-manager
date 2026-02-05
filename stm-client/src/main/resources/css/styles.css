@@ -157,3 +157,100 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 25, 0, 0, 10);
     -fx-background-radius: 15px;
 }
+
+/* =============================================================================
+   COMMENTS & TAGS STYLING
+   ============================================================================= */
+
+/* Style pour la ListView des commentaires */
+.comments-list {
+    -fx-control-inner-background: rgba(59,130,246,0.05);
+    -fx-background-color: rgba(59,130,246,0.05);
+}
+
+.comment-cell {
+    -fx-background-color: white;
+    -fx-border-color: #dbeafe;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 10;
+    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.1), 4, 0, 0, 1);
+}
+
+.comment-author {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e40af;
+    -fx-font-size: 12;
+}
+
+.comment-content {
+    -fx-text-fill: #334155;
+    -fx-font-size: 12;
+    -fx-padding: 6 0 0 0;
+}
+
+.comment-timestamp {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 10;
+    -fx-padding: 4 0 0 0;
+}
+
+/* Style pour les Tags */
+.tag-label {
+    -fx-background-color: linear-gradient(to right, #6366f1, #8b5cf6);
+    -fx-text-fill: white;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 4 12;
+    -fx-font-size: 11;
+    -fx-font-weight: 600;
+}
+
+.tag-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 4;
+}
+
+.tag-container {
+    -fx-spacing: 6;
+    -fx-padding: 6;
+    -fx-background-color: rgba(99,102,241,0.05);
+    -fx-border-color: #e0e7ff;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+/* =============================================================================
+   ACTION BUTTONS IN TABLES
+   ============================================================================= */
+
+.action-button {
+    -fx-padding: 4 8;
+    -fx-font-size: 11;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.action-button-edit {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+.action-button-edit:hover {
+    -fx-background-color: #2563eb;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.action-button-delete {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
+.action-button-delete:hover {
+    -fx-background-color: #dc2626;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
