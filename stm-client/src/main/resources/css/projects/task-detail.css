@@ -1,0 +1,151 @@
+/* --- COMMENTAIRES --- */
+.comment-cell-container {
+    -fx-padding: 8 0 12 0;
+    -fx-border-color: transparent transparent #f3f4f6 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.comment-avatar {
+    -fx-background-color: #4f46e5; /* Indigo */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-max-width: 28px;
+    -fx-max-height: 28px;
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+}
+
+.comment-author {
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+    -fx-text-fill: #111827;
+}
+
+.comment-date {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+.comment-content {
+    -fx-padding: 0 0 0 38; /* Alignement sous le nom (avatar width + gap) */
+    -fx-text-fill: #374151;
+    -fx-font-size: 13px;
+}
+
+/* --- ATTACHMENTS --- */
+.attachment-item {
+    -fx-padding: 10;
+    -fx-border-color: #e0e7ff;
+    -fx-border-radius: 6;
+    -fx-background-color: #f0f4ff;
+    -fx-background-radius: 6;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+}
+
+.attachment-item:hover {
+    -fx-background-color: #e0e7ff;
+    -fx-border-color: #c7d2fe;
+    -fx-effect: dropshadow(three-pass-box, rgba(99,102,241,0.2), 4, 0, 0, 2);
+}
+
+.attachment-icon {
+    -fx-font-size: 16px;
+    -fx-text-fill: #6366f1;
+}
+
+.attachment-name {
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+    -fx-font-size: 13px;
+}
+
+.attachment-size {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9ca3af;
+}
+
+/* --- UPLOAD BUTTON --- */
+.attachment-button {
+    -fx-background-color: white;
+    -fx-text-fill: #6366f1;
+    -fx-border-color: #e0e7ff;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.attachment-button:hover {
+    -fx-background-color: #f0f4ff;
+    -fx-border-color: #c7d2fe;
+}
+
+/* --- TAGS --- */
+.tag-badge {
+    -fx-background-color: #e0f2fe; /* Sky 100 */
+    -fx-text-fill: #0284c7;        /* Sky 600 */
+    -fx-font-weight: 600;
+    -fx-font-size: 11px;
+    -fx-padding: 4 10;
+    -fx-background-radius: 12px;
+}
+
+/* --- MINI BADGES PRIORITÉ (Sous-tâches) --- */
+.mini-badge-high { -fx-text-fill: #ef4444; -fx-font-weight: bold; -fx-font-size: 10px; }
+.mini-badge-medium { -fx-text-fill: #f59e0b; -fx-font-weight: bold; -fx-font-size: 10px; }
+.mini-badge-low { -fx-text-fill: #3b82f6; -fx-font-weight: bold; -fx-font-size: 10px; }
+
+/* --- SUBTASK TABLE --- */
+.subtask-table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+}
+
+.subtask-table-view .column-header {
+    -fx-background-color: #f9fafb;
+    -fx-text-fill: #374151;
+    -fx-font-weight: bold;
+    -fx-padding: 8;
+    -fx-font-size: 12px;
+}
+
+.subtask-table-view .table-row-cell {
+    -fx-padding: 8;
+    -fx-border-color: transparent transparent #f3f4f6 transparent;
+}
+
+.subtask-table-view .table-row-cell:hover {
+    -fx-background-color: #f9fafb;
+}
+
+.subtask-table-view .table-row-cell:selected {
+    -fx-background-color: #ede9fe;
+}
+
+/* --- DUE DATE COLUMN --- */
+.subtask-due-date {
+    -fx-font-size: 12px;
+    -fx-font-family: monospace;
+}
+
+.subtask-overdue {
+    -fx-text-fill: #dc2626;
+    -fx-font-weight: bold;
+}
+
+.subtask-today {
+    -fx-text-fill: #f59e0b;
+}
+
+.subtask-future {
+    -fx-text-fill: #6b7280;
+}
+.mini-badge-low { -fx-text-fill: #10b981; -fx-font-weight: bold; -fx-font-size: 10px; }

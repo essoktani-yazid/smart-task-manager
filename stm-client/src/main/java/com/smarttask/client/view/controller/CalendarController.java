@@ -4,6 +4,7 @@ import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
 
 import com.smarttask.client.service.PlannerManager;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -17,6 +18,11 @@ import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.StringConverter;
+
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.shape.Line;
+import javafx.scene.paint.Color;
+import java.util.stream.Collectors;
 
 import java.net.URL;
 import java.time.*;
@@ -33,6 +39,46 @@ public class CalendarController implements Initializable {
     public enum ViewType {
         DAY, WEEK, MONTH, YEAR
     }
+    // Primary Colors
+    private static final String M3_PRIMARY = "#4f46e5";
+    private static final String M3_PRIMARY_CONTAINER = "#eef2ff";
+    private static final String M3_ON_PRIMARY = "#ffffff";
+
+    // Surface Colors
+    private static final String M3_SURFACE = "#ffffff";
+    private static final String M3_SURFACE_CONTAINER = "#f8f9fe";
+    private static final String M3_SURFACE_VARIANT = "#f1f5f9";
+
+    // On Surface
+    private static final String M3_ON_SURFACE = "#0f172a";
+    private static final String M3_ON_SURFACE_VARIANT = "#475569";
+    private static final String M3_OUTLINE = "#e2e8f0";
+
+    // Priority Colors
+    private static final String PRIORITY_URGENT = "#dc2626";
+    private static final String PRIORITY_URGENT_CONTAINER = "#fef2f2";
+    private static final String PRIORITY_IMPORTANT = "#ea580c";
+    private static final String PRIORITY_IMPORTANT_CONTAINER = "#fff7ed";
+    private static final String PRIORITY_STANDARD = "#4f46e5";
+    private static final String PRIORITY_STANDARD_CONTAINER = "#eef2ff";
+    private static final String PRIORITY_OPTIONAL = "#64748b";
+    private static final String PRIORITY_OPTIONAL_CONTAINER = "#f1f5f9";
+
+    // Type Colors
+    private static final String TASK_COLOR = "#059669";
+    private static final String TASK_CONTAINER = "#ecfdf5";
+    private static final String EVENT_COLOR = "#4f46e5";
+    private static final String EVENT_CONTAINER = "#eef2ff";
+
+    // Corner Radii
+    private static final int CORNER_XL = 28;
+    private static final int CORNER_LG = 16;
+    private static final int CORNER_MD = 12;
+    private static final int CORNER_SM = 8;
+
+    private static final int HOUR_HEIGHT = 60;
+
+    private GoogleCalendarSettingsPanel googleCalendarPanel;
 
     // FXML Components
     @FXML private Label currentDateLabel;
@@ -48,15 +94,28 @@ public class CalendarController implements Initializable {
     @FXML private Button addEventButton;  // Existing: Add Event button
     @FXML private StackPane calendarContainer;
     @FXML private ListView<PlannerItem> upcomingItemsList;  // CHANGED: now PlannerItem
-    @FXML private CheckBox filterOptional;
-    @FXML private CheckBox filterStandard;
-    @FXML private CheckBox filterImportant;
-    @FXML private CheckBox filterUrgent;
-    @FXML private CheckBox showCompleted;
+    // NEW (add these):
+    @FXML private CheckMenuItem filterOptional;
+    @FXML private CheckMenuItem filterStandard;
+    @FXML private CheckMenuItem filterImportant;
+    @FXML private CheckMenuItem filterUrgent;
+    @FXML private CheckMenuItem showCompleted;
+    @FXML private CheckMenuItem showTasks;
+    @FXML private CheckMenuItem showEvents;
+
+    // Optional: MenuButton references if you want to show active filter indicators
+    @FXML private MenuButton typeFilterBtn;
+    @FXML private MenuButton priorityFilterBtn;
+    @FXML private MenuButton statusFilterBtn;
 
     // NEW: Type filters
-    @FXML private CheckBox showTasks;
-    @FXML private CheckBox showEvents;
+//    @FXML private CheckBox showTasks;
+//    @FXML private CheckBox showEvents;
+
+    @FXML private Label taskCountLabel;
+    @FXML private Label eventCountLabel;
+    @FXML private Label completedCountLabel;
+    @FXML private VBox googleCalendarContainer;
 
     // State
     private LocalDate currentDate = LocalDate.now();
@@ -84,6 +143,23 @@ public class CalendarController implements Initializable {
         setupViewToggle();
         setupFilterListeners();
         setupUpcomingItemsList();
+        updateFilterButtonLabels();
+        setupPersistentFilterDropdowns();
+        setupGoogleCalendarPanel();
+        updateView();
+    }
+
+    @FXML
+    private void handleClearFilters() {
+        // Reset all filters to selected (show everything)
+        if (showTasks != null) showTasks.setSelected(true);
+        if (showEvents != null) showEvents.setSelected(true);
+        if (filterUrgent != null) filterUrgent.setSelected(true);
+        if (filterImportant != null) filterImportant.setSelected(true);
+        if (filterStandard != null) filterStandard.setSelected(true);
+        if (filterOptional != null) filterOptional.setSelected(true);
+        if (showCompleted != null) showCompleted.setSelected(true);
+
         updateView();
     }
 
@@ -117,6 +193,100 @@ public class CalendarController implements Initializable {
     }
 
     /**
+     * Setup Google Calendar integration panel
+     */
+    private void setupGoogleCalendarPanel() {
+        if (googleCalendarContainer != null && plannerManager != null) {
+
+            // Create the settings panel
+            googleCalendarPanel = new GoogleCalendarSettingsPanel(
+                    plannerManager.getGoogleCalendarService()
+            );
+
+            // Set up action callbacks
+            googleCalendarPanel.setOnConnectAction(() -> {
+                // Enable Google sync through PlannerManager
+                plannerManager.enableGoogleSync();
+            });
+
+            googleCalendarPanel.setOnDisconnectAction(() -> {
+                // Disable Google sync
+                plannerManager.disableGoogleSync();
+            });
+
+            googleCalendarPanel.setOnSyncAction(() -> {
+                // Sync all items
+                plannerManager.syncAllToGoogle();
+            });
+
+            // Add to container
+            googleCalendarContainer.getChildren().add(googleCalendarPanel);
+
+            System.out.println("✅ Google Calendar panel initialized");
+        }
+    }
+
+
+//    **
+//            * Create a small sync status indicator for the header
+// */
+    private HBox createSyncStatusIndicator() {
+        HBox indicator = new HBox(6);
+        indicator.setAlignment(Pos.CENTER_LEFT);
+        indicator.setPadding(new Insets(4, 10, 4, 10));
+        indicator.setStyle(
+                "-fx-background-color: #f0fdf4; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-border-color: #bbf7d0; " +
+                        "-fx-border-radius: 12;"
+        );
+
+        // Animated dot
+        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
+        dot.setFill(javafx.scene.paint.Color.web("#22c55e"));
+
+        Label text = new Label("Synced");
+        text.setStyle("-fx-font-size: 10; -fx-font-weight: 600; -fx-text-fill: #16a34a;");
+
+        indicator.getChildren().addAll(dot, text);
+        indicator.setVisible(false); // Hidden by default
+
+        // Listen for sync status changes
+        plannerManager.addGoogleSyncListener((status, message) -> {
+            Platform.runLater(() -> {
+                switch (status) {
+                    case CONNECTED, SYNCED:
+                        indicator.setVisible(true);
+                        text.setText("Synced");
+                        dot.setFill(javafx.scene.paint.Color.web("#22c55e"));
+                        break;
+                    case SYNCING:
+                        indicator.setVisible(true);
+                        text.setText("Syncing...");
+                        dot.setFill(javafx.scene.paint.Color.web("#3b82f6"));
+                        break;
+                    case DISCONNECTED:
+                        indicator.setVisible(false);
+                        break;
+                    case ERROR:
+                        indicator.setVisible(true);
+                        text.setText("Sync Error");
+                        dot.setFill(javafx.scene.paint.Color.web("#ef4444"));
+                        indicator.setStyle(
+                                "-fx-background-color: #fef2f2; " +
+                                        "-fx-background-radius: 12; " +
+                                        "-fx-border-color: #fecaca; " +
+                                        "-fx-border-radius: 12;"
+                        );
+                        break;
+                }
+            });
+        });
+
+        return indicator;
+    }
+
+    /**
      * HELPER METHOD: Check if item is completed
      * Handles both Tasks and Events
      */
@@ -140,25 +310,149 @@ public class CalendarController implements Initializable {
                 updateView();
             });
 
-            if (monthViewButton != null) {
-                monthViewButton.setSelected(true);
+//            if (monthViewButton != null) {
+//                monthViewButton.setSelected(true);
+//            }
+
+            // In setupViewToggle():
+                if (weekViewButton != null) {
+                    weekViewButton.setSelected(true);  // Changed from monthViewButton
+                }
+        }
+    }
+
+    private void setupPersistentFilterDropdowns() {
+        // Make each MenuButton's dropdown stay open
+        setupPersistentMenuButton(typeFilterBtn);
+        setupPersistentMenuButton(priorityFilterBtn);
+        setupPersistentMenuButton(statusFilterBtn);
+    }
+
+    /**
+     * Configure a MenuButton to keep its dropdown open when items are selected
+     */
+    private void setupPersistentMenuButton(MenuButton menuButton) {
+        if (menuButton == null) return;
+
+        // For each CheckMenuItem, prevent the menu from closing when clicked
+        for (MenuItem item : menuButton.getItems()) {
+            if (item instanceof CheckMenuItem checkItem) {
+                // Store the original handler
+                checkItem.setOnAction(event -> {
+                    // Toggle the selection (this happens automatically)
+                    // But we need to consume the event to prevent menu from closing
+
+                    // Re-show the menu to keep it open
+                    Platform.runLater(() -> {
+                        if (!menuButton.isShowing()) {
+                            menuButton.show();
+                        }
+                    });
+
+                    // Update the view
+                    updateView();
+
+                    // Consume the event
+                    event.consume();
+                });
             }
+        }
+    }
+
+    private void updateSidebarStats() {
+        if (plannerManager == null) return;
+
+        // Get all tasks and events
+        List<Task> allTasks = plannerManager.getAllTasks();
+        List<CalendarEvent> allEvents = plannerManager.getAllEvents();
+
+        // Count active (non-completed) items
+        long activeTaskCount = allTasks.stream()
+                .filter(t -> t.getStatus() != Status.COMPLETED)
+                .count();
+
+        long activeEventCount = allEvents.stream()
+                .filter(e -> !e.isCompleted())
+                .count();
+
+        // Count completed items
+        long completedTaskCount = allTasks.stream()
+                .filter(t -> t.getStatus() == Status.COMPLETED)
+                .count();
+
+        long completedEventCount = allEvents.stream()
+                .filter(CalendarEvent::isCompleted)
+                .count();
+
+        // Update labels (check for null to avoid errors)
+        if (taskCountLabel != null) {
+            taskCountLabel.setText(String.valueOf(activeTaskCount));
+        }
+
+        if (eventCountLabel != null) {
+            eventCountLabel.setText(String.valueOf(activeEventCount));
+        }
+
+        if (completedCountLabel != null) {
+            completedCountLabel.setText(String.valueOf(completedTaskCount + completedEventCount));
         }
     }
 
     private void setupFilterListeners() {
-        CheckBox[] filters = {
+        // All CheckMenuItems - same API as CheckBox!
+        CheckMenuItem[] filters = {
                 filterOptional, filterStandard, filterImportant, filterUrgent,
                 showCompleted, showTasks, showEvents
         };
 
-        for (CheckBox cb : filters) {
-            if (cb != null) {
-                cb.selectedProperty().addListener((obs, oldVal, newVal) -> updateView());
+        for (CheckMenuItem item : filters) {
+            if (item != null) {
+                item.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                    updateView();
+                    updateFilterButtonLabels(); // Optional: update button text to show active count
+                });
             }
         }
     }
 
+    private void updateFilterButtonLabels() {
+        // Type filter
+        if (typeFilterBtn != null) {
+            int typeCount = 0;
+            if (showTasks != null && showTasks.isSelected()) typeCount++;
+            if (showEvents != null && showEvents.isSelected()) typeCount++;
+
+            if (typeCount == 2) {
+                typeFilterBtn.setText("Type ▾");
+            } else {
+                typeFilterBtn.setText("Type (" + typeCount + ") ▾");
+            }
+        }
+
+        // Priority filter
+        if (priorityFilterBtn != null) {
+            int priorityCount = 0;
+            if (filterUrgent != null && filterUrgent.isSelected()) priorityCount++;
+            if (filterImportant != null && filterImportant.isSelected()) priorityCount++;
+            if (filterStandard != null && filterStandard.isSelected()) priorityCount++;
+            if (filterOptional != null && filterOptional.isSelected()) priorityCount++;
+
+            if (priorityCount == 4) {
+                priorityFilterBtn.setText("Priority ▾");
+            } else {
+                priorityFilterBtn.setText("Priority (" + priorityCount + ") ▾");
+            }
+        }
+
+        // Status filter
+        if (statusFilterBtn != null) {
+            if (showCompleted != null && showCompleted.isSelected()) {
+                statusFilterBtn.setText("Status ▾");
+            } else {
+                statusFilterBtn.setText("Status (filtered) ▾");
+            }
+        }
+    }
 
 
     /**
@@ -170,96 +464,393 @@ public class CalendarController implements Initializable {
     /**
      * ENHANCED: Create beautiful card for upcoming items with settings menu
      */
-    private VBox createEnhancedEventCard(PlannerItem item) {
-        VBox container = new VBox(8);  // Reduced from 10
-        container.setPadding(new Insets(12, 14, 12, 14));  // Reduced from 16, 18
-        container.setMinHeight(85);  // Reduced from 100
-        container.setMaxWidth(Double.MAX_VALUE);
+//    private VBox createEnhancedEventCard(PlannerItem item) {
+//        VBox container = new VBox(8);  // Reduced from 10
+//        container.setPadding(new Insets(12, 14, 12, 14));  // Reduced from 16, 18
+//        container.setMinHeight(85);  // Reduced from 100
+//        container.setMaxWidth(Double.MAX_VALUE);
+//
+//        // Get color based on priority
+//        String baseColor = item.getColor();
+//        String itemType = item.getItemType() == PlannerItemType.TASK ? "TASK" : "EVENT";
+//
+//        // Create BEAUTIFUL gradient background - more subtle and professional
+//        String gradientStart = baseColor + "35"; // 21% opacity - visible but elegant
+//        String gradientEnd = baseColor + "15";   // 8% opacity - subtle fade
+//        String borderColor = baseColor;
+//
+//        // Different styles for tasks vs events
+//        String borderStyle = item.getItemType() == PlannerItemType.TASK ? "dashed" : "solid";
+//        String borderRadius = "10";  // Slightly smaller radius
+//        String shadowColor = "rgba(0, 0, 0, 0.1)";  // Lighter shadow
+//
+//        container.setStyle(
+//                "-fx-background-color: linear-gradient(to bottom right, " + gradientStart + ", " + gradientEnd + "); " +
+//                        "-fx-background-radius: " + borderRadius + "; " +
+//                        "-fx-border-radius: " + borderRadius + "; " +
+//                        "-fx-border-color: " + borderColor + "; " +
+//                        "-fx-border-width: 0 0 0 4; " +  // Reduced from 5
+//                        "-fx-border-style: " + borderStyle + "; " +
+//                        "-fx-effect: dropshadow(gaussian, " + shadowColor + ", 6, 0, 0, 2); " +  // Smaller shadow
+//                        "-fx-cursor: hand;"
+//        );
+//
+//        // ============= HEADER ROW =============
+//        HBox headerRow = new HBox(6);  // Reduced from 8
+//        headerRow.setAlignment(Pos.CENTER_LEFT);
+//
+//        // Type badge with icon - SMALLER
+//        String typeIcon = item.getItemType() == PlannerItemType.TASK ? "📋" : "📅";
+//        String typeText = item.getItemType() == PlannerItemType.TASK ? "Task" : "Event";
+//        Label typeLabel = new Label(typeIcon + " " + typeText);
+//        typeLabel.setStyle(
+//                "-fx-text-fill: white; " +
+//                        "-fx-font-size: 10; " +  // Reduced from 11
+//                        "-fx-font-weight: bold; " +
+//                        "-fx-background-color: " + borderColor + "; " +
+//                        "-fx-padding: 3 10; " +  // Reduced from 5 12
+//                        "-fx-background-radius: 12; " +  // Reduced from 15
+//                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1);"  // Smaller shadow
+//        );
+//
+//        // Private/Public badge - SMALLER
+//        if (item.getItemType() == PlannerItemType.TASK) {
+//            Label privateLabel = new Label("🔒 Private");
+//            privateLabel.setStyle(
+//                    "-fx-text-fill: #64748b; " +
+//                            "-fx-font-size: 9; " +  // Reduced from 10
+//                            "-fx-font-weight: 600; " +
+//                            "-fx-background-color: #f1f5f9; " +
+//                            "-fx-padding: 3 8; " +  // Reduced from 4 10
+//                            "-fx-background-radius: 10;"  // Reduced from 12
+//            );
+//            headerRow.getChildren().add(privateLabel);
+//        } else {
+//            Label publicLabel = new Label("🌍 Public");
+//            publicLabel.setStyle(
+//                    "-fx-text-fill: #059669; " +
+//                            "-fx-font-size: 9; " +  // Reduced from 10
+//                            "-fx-font-weight: 600; " +
+//                            "-fx-background-color: #d1fae5; " +
+//                            "-fx-padding: 3 8; " +  // Reduced from 4 10
+//                            "-fx-background-radius: 10;"  // Reduced from 12
+//            );
+//            headerRow.getChildren().add(publicLabel);
+//        }
+//
+//        // Completion badge - SMALLER
+//        boolean isCompleted = checkItemCompletion(item);
+//        if (isCompleted) {
+//            Label completedBadge = new Label("✓ Completed");
+//            completedBadge.setStyle(
+//                    "-fx-text-fill: #10b981; " +
+//                            "-fx-font-size: 9; " +  // Reduced from 10
+//                            "-fx-font-weight: bold; " +
+//                            "-fx-background-color: #d1fae5; " +
+//                            "-fx-padding: 3 8; " +  // Reduced from 4 10
+//                            "-fx-background-radius: 10;"  // Reduced from 12
+//            );
+//            headerRow.getChildren().add(completedBadge);
+//        }
+//        // ✨ USER BADGE (only for tasks)
+//        if (item.getItemType() == PlannerItemType.TASK) {
+//            TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
+//            String username = adapter.getTask().getUser() != null
+//                    ? adapter.getTask().getUser().getUsername()
+//                    : "Unknown";
+//
+//            Label userBadge = new Label("👤 " + username);
+//            userBadge.setStyle(
+//                    "-fx-text-fill: #0369a1; " +
+//                            "-fx-font-size: 9; " +
+//                            "-fx-font-weight: 600; " +
+//                            "-fx-background-color: #e0f2fe; " +
+//                            "-fx-padding: 3 8; " +
+//                            "-fx-background-radius: 10;"
+//            );
+//            headerRow.getChildren().add(userBadge);
+//        }
+//
+//        Region spacer = new Region();
+//        HBox.setHgrow(spacer, Priority.ALWAYS);
+//
+//        // Settings menu button - SMALLER
+//        Button settingsButton = createModernSettingsButton(item);
+//
+//        headerRow.getChildren().addAll(typeLabel, spacer, settingsButton);
+//
+//        // ============= TITLE ============= SMALLER
+//        Label titleLabel = new Label(item.getTitle());
+//        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 14));  // Reduced from 16
+//        titleLabel.setStyle("-fx-text-fill: #1e293b;");
+//        titleLabel.setWrapText(true);
+//        if (isCompleted) {
+//            titleLabel.setStyle(
+//                    "-fx-text-fill: #94a3b8; " +
+//                            "-fx-strikethrough: true; " +
+//                            "-fx-opacity: 0.7;"
+//            );
+//        }
+//
+//        // ============= TIME AND DATE ROW ============= SMALLER & MORE COMPACT
+//        HBox timeRow = new HBox(12);  // Reduced from 15
+//        timeRow.setAlignment(Pos.CENTER_LEFT);
+//        timeRow.setStyle("-fx-padding: 6 0 0 0;");  // Reduced from 8
+//
+//        // Date section - SMALLER
+//        HBox dateSection = new HBox(5);  // Reduced from 6
+//        dateSection.setAlignment(Pos.CENTER_LEFT);
+//
+//        Label dateIcon = new Label("📅");
+//        dateIcon.setStyle("-fx-font-size: 11;");  // Reduced from 13
+//
+//        String dateText = item.getDate().format(DateTimeFormatter.ofPattern("EEE, MMM d, yyyy"));
+//        Label dateLabel = new Label(dateText);
+//        dateLabel.setStyle(
+//                "-fx-text-fill: #475569; " +
+//                        "-fx-font-size: 11; " +  // Reduced from 12
+//                        "-fx-font-weight: 600;"
+//        );
+//
+//        dateSection.getChildren().addAll(dateIcon, dateLabel);
+//
+//        // Time section - SMALLER
+//        HBox timeSection = new HBox(5);  // Reduced from 6
+//        timeSection.setAlignment(Pos.CENTER_LEFT);
+//
+//        Label timeIcon = new Label("🕐");
+//        timeIcon.setStyle("-fx-font-size: 11;");  // Reduced from 13
+//
+//        String timeText = item.getStartTime().format(timeFormatter) +
+//                " - " + item.getEndTime().format(timeFormatter);
+//        Label timeLabel = new Label(timeText);
+//        timeLabel.setStyle(
+//                "-fx-text-fill: #475569; " +
+//                        "-fx-font-size: 11; " +  // Reduced from 12
+//                        "-fx-font-weight: 600;"
+//        );
+//
+//        timeSection.getChildren().addAll(timeIcon, timeLabel);
+//
+//        timeRow.getChildren().addAll(dateSection, timeSection);
+//
+//        // ============= PRIORITY INDICATOR ============= SMALLER
+//        HBox priorityRow = new HBox(6);  // Reduced from 8
+//        priorityRow.setAlignment(Pos.CENTER_LEFT);
+//        priorityRow.setStyle("-fx-padding: 3 0 0 0;");  // Reduced from 4
+//
+//        // Priority dot with glow effect - SMALLER
+//        javafx.scene.shape.Circle priorityDot = new javafx.scene.shape.Circle(4);  // Reduced from 5
+//        priorityDot.setFill(javafx.scene.paint.Color.web(borderColor));
+//        priorityDot.setStyle("-fx-effect: dropshadow(gaussian, " + borderColor + "80, 3, 0, 0, 0);");  // Smaller glow
+//
+//        String priorityText = getPriorityText(item.getPriorityLevel());
+//        Label priorityLabel = new Label(priorityText + " Priority");
+//        priorityLabel.setStyle(
+//                "-fx-text-fill: #64748b; " +
+//                        "-fx-font-size: 10; " +  // Reduced from 11
+//                        "-fx-font-weight: 700; " +
+//                        "-fx-letter-spacing: 0.3px;"  // Reduced from 0.5px
+//        );
+//
+//        priorityRow.getChildren().addAll(priorityDot, priorityLabel);
+//
+//        container.getChildren().addAll(headerRow, titleLabel, timeRow, priorityRow);
+//
+//        // ============= HOVER ANIMATION ============= MORE SUBTLE
+//        final String defaultStyle = container.getStyle();
+//        final String hoverStyle = defaultStyle.replace(
+//                "dropshadow(gaussian, " + shadowColor + ", 6, 0, 0, 2)",
+//                "dropshadow(gaussian, " + shadowColor + ", 8, 0, 0, 3)"  // Subtle increase
+//        );
+//
+//        container.setOnMouseEntered(e -> {
+//            container.setStyle(hoverStyle);
+//        });
+//
+//        container.setOnMouseExited(e -> {
+//            container.setStyle(defaultStyle);
+//        });
+//
+//        return container;
+//    }
 
-        // Get color based on priority
-        String baseColor = item.getColor();
-        String itemType = item.getItemType() == PlannerItemType.TASK ? "TASK" : "EVENT";
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════════════════════════
+     * STREAMLINED UPCOMING CARD - Replace the createEnhancedEventCard method in CalendarController
+     * ═══════════════════════════════════════════════════════════════════════════════════════════════
+     *
+     * This creates a cleaner, more professional card design with:
+     * - Subtle left border accent (not heavy gradients)
+     * - Minimal badge usage
+     * - Clear visual hierarchy
+     * - Smooth hover effects
+     */
 
-        // Create BEAUTIFUL gradient background - more subtle and professional
-        String gradientStart = baseColor + "35"; // 21% opacity - visible but elegant
-        String gradientEnd = baseColor + "15";   // 8% opacity - subtle fade
-        String borderColor = baseColor;
+    /**
+     * Create a streamlined, professional card for the sidebar
+     */
+    private VBox createStreamlinedCard(PlannerItem item) {
+        VBox card = new VBox(0);
+        card.setPadding(new Insets(16, 18, 16, 18));
+        card.setMaxWidth(Double.MAX_VALUE);
 
-        // Different styles for tasks vs events
-        String borderStyle = item.getItemType() == PlannerItemType.TASK ? "dashed" : "solid";
-        String borderRadius = "10";  // Slightly smaller radius
-        String shadowColor = "rgba(0, 0, 0, 0.1)";  // Lighter shadow
+        boolean isTask = item.getItemType() == PlannerItemType.TASK;
+        boolean isCompleted = checkItemCompletion(item);
+        String accentColor = getAccentColor(item);
 
-        container.setStyle(
-                "-fx-background-color: linear-gradient(to bottom right, " + gradientStart + ", " + gradientEnd + "); " +
-                        "-fx-background-radius: " + borderRadius + "; " +
-                        "-fx-border-radius: " + borderRadius + "; " +
-                        "-fx-border-color: " + borderColor + "; " +
-                        "-fx-border-width: 0 0 0 4; " +  // Reduced from 5
-                        "-fx-border-style: " + borderStyle + "; " +
-                        "-fx-effect: dropshadow(gaussian, " + shadowColor + ", 6, 0, 0, 2); " +  // Smaller shadow
-                        "-fx-cursor: hand;"
+        // Base card styling with left accent border
+        String baseStyle = String.format(
+                "-fx-background-color: #ffffff; " +
+                        "-fx-background-radius: 16; " +
+                        "-fx-border-radius: 16; " +
+                        "-fx-border-width: 0 0 0 4; " +
+                        "-fx-border-color: %s; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0, 0, 2); " +
+                        "-fx-cursor: hand;",
+                accentColor
         );
+        card.setStyle(baseStyle);
 
-        // ============= HEADER ROW =============
-        HBox headerRow = new HBox(6);  // Reduced from 8
+        // ════════════════════════════════════════════════════════════════════════════
+        // HEADER ROW: Type badge + Visibility + Settings
+        // ════════════════════════════════════════════════════════════════════════════
+        HBox headerRow = new HBox(8);
         headerRow.setAlignment(Pos.CENTER_LEFT);
 
-        // Type badge with icon - SMALLER
-        String typeIcon = item.getItemType() == PlannerItemType.TASK ? "📋" : "📅";
-        String typeText = item.getItemType() == PlannerItemType.TASK ? "Task" : "Event";
-        Label typeLabel = new Label(typeIcon + " " + typeText);
-        typeLabel.setStyle(
-                "-fx-text-fill: white; " +
-                        "-fx-font-size: 10; " +  // Reduced from 11
-                        "-fx-font-weight: bold; " +
-                        "-fx-background-color: " + borderColor + "; " +
-                        "-fx-padding: 3 10; " +  // Reduced from 5 12
-                        "-fx-background-radius: 12; " +  // Reduced from 15
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1);"  // Smaller shadow
-        );
+        // Type badge (Task/Event)
+        Label typeBadge = new Label(isTask ? "Task" : "Event");
+        typeBadge.setStyle(String.format(
+                "-fx-font-size: 10; " +
+                        "-fx-font-weight: 700; " +
+                        "-fx-padding: 4 10; " +
+                        "-fx-background-radius: 20; " +
+                        "-fx-background-color: %s; " +
+                        "-fx-text-fill: %s;",
+                isTask ? "#d1fae5" : "#e0e7ff",
+                isTask ? "#047857" : "#4338ca"
+        ));
+        headerRow.getChildren().add(typeBadge);
 
-        // Private/Public badge - SMALLER
-        if (item.getItemType() == PlannerItemType.TASK) {
-            Label privateLabel = new Label("🔒 Private");
-            privateLabel.setStyle(
-                    "-fx-text-fill: #64748b; " +
-                            "-fx-font-size: 9; " +  // Reduced from 10
+        // Visibility badge (only show if private - tasks)
+        if (isTask) {
+            Label visibilityBadge = new Label("Private");
+            visibilityBadge.setStyle(
+                    "-fx-font-size: 10; " +
                             "-fx-font-weight: 600; " +
+                            "-fx-padding: 4 8; " +
+                            "-fx-background-radius: 20; " +
                             "-fx-background-color: #f1f5f9; " +
-                            "-fx-padding: 3 8; " +  // Reduced from 4 10
-                            "-fx-background-radius: 10;"  // Reduced from 12
+                            "-fx-text-fill: #64748b;"
             );
-            headerRow.getChildren().add(privateLabel);
-        } else {
-            Label publicLabel = new Label("🌍 Public");
-            publicLabel.setStyle(
-                    "-fx-text-fill: #059669; " +
-                            "-fx-font-size: 9; " +  // Reduced from 10
-                            "-fx-font-weight: 600; " +
-                            "-fx-background-color: #d1fae5; " +
-                            "-fx-padding: 3 8; " +  // Reduced from 4 10
-                            "-fx-background-radius: 10;"  // Reduced from 12
-            );
-            headerRow.getChildren().add(publicLabel);
+            headerRow.getChildren().add(visibilityBadge);
         }
 
-        // Completion badge - SMALLER
-        boolean isCompleted = checkItemCompletion(item);
+        // Completed badge (if completed)
         if (isCompleted) {
-            Label completedBadge = new Label("✓ Completed");
+            Label completedBadge = new Label("✓ Done");
             completedBadge.setStyle(
-                    "-fx-text-fill: #10b981; " +
-                            "-fx-font-size: 9; " +  // Reduced from 10
-                            "-fx-font-weight: bold; " +
+                    "-fx-font-size: 10; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-padding: 4 8; " +
+                            "-fx-background-radius: 20; " +
                             "-fx-background-color: #d1fae5; " +
-                            "-fx-padding: 3 8; " +  // Reduced from 4 10
-                            "-fx-background-radius: 10;"  // Reduced from 12
+                            "-fx-text-fill: #047857;"
             );
             headerRow.getChildren().add(completedBadge);
         }
-        // ✨ USER BADGE (only for tasks)
-        if (item.getItemType() == PlannerItemType.TASK) {
+
+        Region headerSpacer = new Region();
+        HBox.setHgrow(headerSpacer, Priority.ALWAYS);
+        headerRow.getChildren().add(headerSpacer);
+
+        // Settings button
+        Button settingsBtn = createMinimalSettingsButton(item);
+        headerRow.getChildren().add(settingsBtn);
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // TITLE
+        // ════════════════════════════════════════════════════════════════════════════
+        Label titleLabel = new Label(item.getTitle());
+        titleLabel.setWrapText(true);
+        titleLabel.setMaxWidth(Double.MAX_VALUE);
+        titleLabel.setPadding(new Insets(12, 0, 10, 0));
+
+        if (isCompleted) {
+            titleLabel.setStyle(
+                    "-fx-font-size: 15; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-text-fill: #94a3b8; " +
+                            "-fx-strikethrough: true;"
+            );
+        } else {
+            titleLabel.setStyle(
+                    "-fx-font-size: 15; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-text-fill: #1e293b;"
+            );
+        }
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // META ROW: Date and Time
+        // ════════════════════════════════════════════════════════════════════════════
+        HBox metaRow = new HBox(16);
+        metaRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Date
+        HBox dateBox = new HBox(6);
+        dateBox.setAlignment(Pos.CENTER_LEFT);
+        Label dateIcon = new Label("📅");
+        dateIcon.setStyle("-fx-font-size: 12;");
+        Label dateText = new Label(formatDate(item.getDate()));
+        dateText.setStyle("-fx-font-size: 12; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        dateBox.getChildren().addAll(dateIcon, dateText);
+
+        // Time
+        HBox timeBox = new HBox(6);
+        timeBox.setAlignment(Pos.CENTER_LEFT);
+        Label timeIcon = new Label("🕐");
+        timeIcon.setStyle("-fx-font-size: 12;");
+        Label timeText = new Label(
+                item.getStartTime().format(timeFormatter) + " - " +
+                        item.getEndTime().format(timeFormatter)
+        );
+        timeText.setStyle("-fx-font-size: 12; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        timeBox.getChildren().addAll(timeIcon, timeText);
+
+        metaRow.getChildren().addAll(dateBox, timeBox);
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // FOOTER ROW: Priority indicator + User (for tasks)
+        // ════════════════════════════════════════════════════════════════════════════
+        HBox footerRow = new HBox(12);
+        footerRow.setAlignment(Pos.CENTER_LEFT);
+        footerRow.setPadding(new Insets(10, 0, 0, 0));
+
+        // Priority indicator
+        HBox priorityBox = new HBox(6);
+        priorityBox.setAlignment(Pos.CENTER_LEFT);
+
+        // Priority dot
+        Region priorityDot = new Region();
+        priorityDot.setMinSize(8, 8);
+        priorityDot.setMaxSize(8, 8);
+        priorityDot.setStyle(String.format(
+                "-fx-background-color: %s; -fx-background-radius: 4;",
+                accentColor
+        ));
+
+        Label priorityText = new Label(getPriorityText(item.getPriorityLevel()));
+        priorityText.setStyle(
+                "-fx-font-size: 11; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-text-fill: #94a3b8;"
+        );
+        priorityBox.getChildren().addAll(priorityDot, priorityText);
+        footerRow.getChildren().add(priorityBox);
+
+        // User badge (for tasks only)
+        if (isTask) {
             TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
             String username = adapter.getTask().getUser() != null
                     ? adapter.getTask().getUser().getUsername()
@@ -267,120 +858,151 @@ public class CalendarController implements Initializable {
 
             Label userBadge = new Label("👤 " + username);
             userBadge.setStyle(
-                    "-fx-text-fill: #0369a1; " +
-                            "-fx-font-size: 9; " +
-                            "-fx-font-weight: 600; " +
-                            "-fx-background-color: #e0f2fe; " +
+                    "-fx-font-size: 11; " +
+                            "-fx-font-weight: 500; " +
                             "-fx-padding: 3 8; " +
-                            "-fx-background-radius: 10;"
+                            "-fx-background-radius: 12; " +
+                            "-fx-background-color: #f0f9ff; " +
+                            "-fx-text-fill: #0369a1;"
             );
-            headerRow.getChildren().add(userBadge);
+            footerRow.getChildren().add(userBadge);
         }
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        // ════════════════════════════════════════════════════════════════════════════
+        // ASSEMBLE CARD
+        // ════════════════════════════════════════════════════════════════════════════
+        card.getChildren().addAll(headerRow, titleLabel, metaRow, footerRow);
 
-        // Settings menu button - SMALLER
-        Button settingsButton = createModernSettingsButton(item);
-
-        headerRow.getChildren().addAll(typeLabel, spacer, settingsButton);
-
-        // ============= TITLE ============= SMALLER
-        Label titleLabel = new Label(item.getTitle());
-        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 14));  // Reduced from 16
-        titleLabel.setStyle("-fx-text-fill: #1e293b;");
-        titleLabel.setWrapText(true);
-        if (isCompleted) {
-            titleLabel.setStyle(
-                    "-fx-text-fill: #94a3b8; " +
-                            "-fx-strikethrough: true; " +
-                            "-fx-opacity: 0.7;"
-            );
-        }
-
-        // ============= TIME AND DATE ROW ============= SMALLER & MORE COMPACT
-        HBox timeRow = new HBox(12);  // Reduced from 15
-        timeRow.setAlignment(Pos.CENTER_LEFT);
-        timeRow.setStyle("-fx-padding: 6 0 0 0;");  // Reduced from 8
-
-        // Date section - SMALLER
-        HBox dateSection = new HBox(5);  // Reduced from 6
-        dateSection.setAlignment(Pos.CENTER_LEFT);
-
-        Label dateIcon = new Label("📅");
-        dateIcon.setStyle("-fx-font-size: 11;");  // Reduced from 13
-
-        String dateText = item.getDate().format(DateTimeFormatter.ofPattern("EEE, MMM d, yyyy"));
-        Label dateLabel = new Label(dateText);
-        dateLabel.setStyle(
-                "-fx-text-fill: #475569; " +
-                        "-fx-font-size: 11; " +  // Reduced from 12
-                        "-fx-font-weight: 600;"
+        // ════════════════════════════════════════════════════════════════════════════
+        // HOVER EFFECT
+        // ════════════════════════════════════════════════════════════════════════════
+        String hoverStyle = String.format(
+                "-fx-background-color: #fafbfc; " +
+                        "-fx-background-radius: 16; " +
+                        "-fx-border-radius: 16; " +
+                        "-fx-border-width: 0 0 0 4; " +
+                        "-fx-border-color: %s; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0, 0, 4); " +
+                        "-fx-cursor: hand;",
+                accentColor
         );
 
-        dateSection.getChildren().addAll(dateIcon, dateLabel);
+        card.setOnMouseEntered(e -> card.setStyle(hoverStyle));
+        card.setOnMouseExited(e -> card.setStyle(baseStyle));
 
-        // Time section - SMALLER
-        HBox timeSection = new HBox(5);  // Reduced from 6
-        timeSection.setAlignment(Pos.CENTER_LEFT);
-
-        Label timeIcon = new Label("🕐");
-        timeIcon.setStyle("-fx-font-size: 11;");  // Reduced from 13
-
-        String timeText = item.getStartTime().format(timeFormatter) +
-                " - " + item.getEndTime().format(timeFormatter);
-        Label timeLabel = new Label(timeText);
-        timeLabel.setStyle(
-                "-fx-text-fill: #475569; " +
-                        "-fx-font-size: 11; " +  // Reduced from 12
-                        "-fx-font-weight: 600;"
-        );
-
-        timeSection.getChildren().addAll(timeIcon, timeLabel);
-
-        timeRow.getChildren().addAll(dateSection, timeSection);
-
-        // ============= PRIORITY INDICATOR ============= SMALLER
-        HBox priorityRow = new HBox(6);  // Reduced from 8
-        priorityRow.setAlignment(Pos.CENTER_LEFT);
-        priorityRow.setStyle("-fx-padding: 3 0 0 0;");  // Reduced from 4
-
-        // Priority dot with glow effect - SMALLER
-        javafx.scene.shape.Circle priorityDot = new javafx.scene.shape.Circle(4);  // Reduced from 5
-        priorityDot.setFill(javafx.scene.paint.Color.web(borderColor));
-        priorityDot.setStyle("-fx-effect: dropshadow(gaussian, " + borderColor + "80, 3, 0, 0, 0);");  // Smaller glow
-
-        String priorityText = getPriorityText(item.getPriorityLevel());
-        Label priorityLabel = new Label(priorityText + " Priority");
-        priorityLabel.setStyle(
-                "-fx-text-fill: #64748b; " +
-                        "-fx-font-size: 10; " +  // Reduced from 11
-                        "-fx-font-weight: 700; " +
-                        "-fx-letter-spacing: 0.3px;"  // Reduced from 0.5px
-        );
-
-        priorityRow.getChildren().addAll(priorityDot, priorityLabel);
-
-        container.getChildren().addAll(headerRow, titleLabel, timeRow, priorityRow);
-
-        // ============= HOVER ANIMATION ============= MORE SUBTLE
-        final String defaultStyle = container.getStyle();
-        final String hoverStyle = defaultStyle.replace(
-                "dropshadow(gaussian, " + shadowColor + ", 6, 0, 0, 2)",
-                "dropshadow(gaussian, " + shadowColor + ", 8, 0, 0, 3)"  // Subtle increase
-        );
-
-        container.setOnMouseEntered(e -> {
-            container.setStyle(hoverStyle);
+        // Double-click to edit
+        card.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                if (isTask) {
+                    showTaskDialog((TaskPlannerAdapter) item);
+                } else {
+                    showEventDialog((EventPlannerAdapter) item);
+                }
+            }
         });
 
-        container.setOnMouseExited(e -> {
-            container.setStyle(defaultStyle);
-        });
-
-        return container;
+        return card;
     }
 
+    /**
+     * Get accent color based on priority
+     */
+    private String getAccentColor(PlannerItem item) {
+        return switch (item.getPriorityLevel()) {
+            case 3 -> "#ef4444"; // Urgent - Red
+            case 2 -> "#f97316"; // Important - Orange
+            case 1 -> "#3b82f6"; // Standard - Blue
+            default -> "#94a3b8"; // Optional - Gray
+        };
+    }
+
+    /**
+     * Format date in a friendly way
+     */
+    private String formatDate(LocalDate date) {
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+
+        if (date.equals(today)) {
+            return "Today";
+        } else if (date.equals(tomorrow)) {
+            return "Tomorrow";
+        } else if (date.isBefore(today.plusWeeks(1))) {
+            return date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.getDefault());
+        } else {
+            return date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
+        }
+    }
+
+    /**
+     * Create minimal settings button
+     */
+    private Button createMinimalSettingsButton(PlannerItem item) {
+        Button btn = new Button("•••");
+        btn.setStyle(
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #94a3b8; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 4 8; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-cursor: hand;"
+        );
+
+        btn.setOnMouseEntered(e -> btn.setStyle(
+                "-fx-background-color: #f1f5f9; " +
+                        "-fx-text-fill: #475569; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 4 8; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-cursor: hand;"
+        ));
+
+        btn.setOnMouseExited(e -> btn.setStyle(
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #94a3b8; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 4 8; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-cursor: hand;"
+        ));
+
+        btn.setOnAction(e -> showEnhancedItemMenu(btn, item));
+
+        return btn;
+    }
+
+    /**
+     * Update the setupUpcomingItemsList to use the new card style
+     */
+    private void setupUpcomingItemsList() {
+        if (upcomingItemsList != null) {
+            upcomingItemsList.setCellFactory(listView -> new ListCell<>() {
+                @Override
+                protected void updateItem(PlannerItem item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                        setGraphic(null);
+                        setStyle("-fx-background-color: transparent;");
+                    } else {
+                        VBox card = createStreamlinedCard(item);
+                        setGraphic(card);
+                        setStyle("-fx-background-color: transparent; -fx-padding: 0 0 8 0;");
+                    }
+                }
+            });
+
+            // Remove default selection styling
+            upcomingItemsList.setStyle(
+                    "-fx-background-color: transparent; " +
+                            "-fx-background-insets: 0; " +
+                            "-fx-padding: 0;"
+            );
+        }
+    }
     /**
      * ✨ NEW: Show add menu with specific time
      */
@@ -690,23 +1312,23 @@ public class CalendarController implements Initializable {
         };
     }
 
-    private void setupUpcomingItemsList() {
-        if (upcomingItemsList != null) {
-            upcomingItemsList.setCellFactory(listView -> new ListCell<>() {
-                @Override
-                protected void updateItem(PlannerItem item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        VBox container = createEnhancedEventCard(item);
-                        setGraphic(container);
-                    }
-                }
-            });
-        }
-    }
+//    private void setupUpcomingItemsList() {
+//        if (upcomingItemsList != null) {
+//            upcomingItemsList.setCellFactory(listView -> new ListCell<>() {
+//                @Override
+//                protected void updateItem(PlannerItem item, boolean empty) {
+//                    super.updateItem(item, empty);
+//                    if (empty || item == null) {
+//                        setText(null);
+//                        setGraphic(null);
+//                    } else {
+//                        VBox container = createEnhancedEventCard(item);
+//                        setGraphic(container);
+//                    }
+//                }
+//            });
+//        }
+//    }
 
     private void updateUpcomingItems() {
         if (upcomingItemsList != null) {
@@ -759,7 +1381,6 @@ public class CalendarController implements Initializable {
     private boolean isShowCompleted() {
         return showCompleted != null && showCompleted.isSelected();
     }
-
     private void updateView() {
         if (calendarContainer == null) return;
 
@@ -772,6 +1393,8 @@ public class CalendarController implements Initializable {
 
         updateDateLabel();
         updateUpcomingItems();
+
+        updateSidebarStats();
     }
 
     private void updateDateLabel() {
@@ -829,30 +1452,452 @@ public class CalendarController implements Initializable {
     }
 
     // VIEW RENDERING METHODS (keeping existing implementations)
-    private void renderDayView() {
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setFitToWidth(true);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+//    private void renderDayView() {
+//        ScrollPane scrollPane = new ScrollPane();
+//        scrollPane.setFitToWidth(true);
+//        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+//        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+//
+//        VBox dayContainer = new VBox();
+//        dayContainer.setStyle("-fx-background-color: white;");
+//
+//        GridPane timeGrid = new GridPane();
+//        timeGrid.setVgap(0);
+//        timeGrid.setHgap(0);
+//
+//        for (int hour = 0; hour < 24; hour++) {
+//            HBox hourRow = createDayViewHourRow(hour, currentDate);
+//            timeGrid.add(hourRow, 0, hour);
+//        }
+//
+//        dayContainer.getChildren().add(timeGrid);
+//        scrollPane.setContent(dayContainer);
+//        scrollPane.setVvalue(8.0 / 24.0);
+//
+//        calendarContainer.getChildren().setAll(scrollPane);
+//    }
 
-        VBox dayContainer = new VBox();
+    private void renderDayView() {
+        // Create main container
+        HBox dayContainer = new HBox(0);
         dayContainer.setStyle("-fx-background-color: white;");
 
-        GridPane timeGrid = new GridPane();
-        timeGrid.setVgap(0);
-        timeGrid.setHgap(0);
+        // Time labels column (left side)
+        VBox timeColumn = new VBox(0);
+        timeColumn.setMinWidth(55);
+        timeColumn.setPrefWidth(55);
+        timeColumn.setStyle("-fx-background-color: #fafbfc; -fx-border-color: #f1f5f9; -fx-border-width: 0 1 0 0;");
 
+        // Events area (right side) - uses AnchorPane for absolute positioning
+        AnchorPane eventsArea = new AnchorPane();
+        eventsArea.setStyle("-fx-background-color: white;");
+        HBox.setHgrow(eventsArea, Priority.ALWAYS);
+
+        int totalHeight = 24 * HOUR_HEIGHT;
+        eventsArea.setMinHeight(totalHeight);
+        eventsArea.setPrefHeight(totalHeight);
+
+        // Draw hour rows and grid lines
         for (int hour = 0; hour < 24; hour++) {
-            HBox hourRow = createDayViewHourRow(hour, currentDate);
-            timeGrid.add(hourRow, 0, hour);
+            // Time label
+            HBox timeRow = new HBox();
+            timeRow.setMinHeight(HOUR_HEIGHT);
+            timeRow.setPrefHeight(HOUR_HEIGHT);
+            timeRow.setAlignment(Pos.TOP_RIGHT);
+            timeRow.setPadding(new Insets(0, 8, 0, 0));
+
+            Label timeLabel = new Label(String.format("%02d:00", hour));
+            timeLabel.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 11; -fx-font-weight: 500;");
+            timeRow.getChildren().add(timeLabel);
+            timeColumn.getChildren().add(timeRow);
+
+            // Hour grid line
+            Line hourLine = new Line();
+            hourLine.setStartX(0);
+            hourLine.setEndX(3000);
+            hourLine.setStartY(hour * HOUR_HEIGHT);
+            hourLine.setEndY(hour * HOUR_HEIGHT);
+            hourLine.setStroke(Color.web("#e2e8f0"));
+            hourLine.setStrokeWidth(1);
+            eventsArea.getChildren().add(hourLine);
+
+            // Create drop zone for each hour
+            Pane dropZone = createHourDropZone(hour, HOUR_HEIGHT);
+            AnchorPane.setTopAnchor(dropZone, (double) hour * HOUR_HEIGHT);
+            AnchorPane.setLeftAnchor(dropZone, 0.0);
+            AnchorPane.setRightAnchor(dropZone, 0.0);
+            eventsArea.getChildren().add(dropZone);
         }
 
-        dayContainer.getChildren().add(timeGrid);
-        scrollPane.setContent(dayContainer);
-        scrollPane.setVvalue(8.0 / 24.0);
+        // Get items for current date
+        List<PlannerItem> dayItems = plannerManager.getItemsForDate(currentDate).stream()
+                .filter(this::matchesFilters)
+                .filter(this::matchesTypeFilter)
+                .filter(i -> isShowCompleted() || !checkItemCompletion(i))
+                .sorted(Comparator.comparing(PlannerItem::getStartTime))
+                .collect(Collectors.toList());
+
+        // Calculate overlapping groups and position items side by side
+        List<List<PlannerItem>> overlapGroups = calculateOverlapGroups(dayItems);
+
+        for (List<PlannerItem> group : overlapGroups) {
+            positionItemsInGroup(group, eventsArea);
+        }
+
+        // Double-click to add item
+        eventsArea.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2 && e.getButton() == MouseButton.PRIMARY) {
+                int clickedHour = (int) (e.getY() / HOUR_HEIGHT);
+                clickedHour = Math.max(0, Math.min(23, clickedHour));
+                showAddItemMenuAtTime(eventsArea, currentDate, clickedHour, e.getScreenX(), e.getScreenY());
+                e.consume();
+            }
+        });
+
+        dayContainer.getChildren().addAll(timeColumn, eventsArea);
+
+        // Wrap in ScrollPane
+        ScrollPane scrollPane = new ScrollPane(dayContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: white; -fx-background-color: white;");
+
+        // Scroll to 7 AM by default
+        scrollPane.setVvalue(7.0 / 24.0);
 
         calendarContainer.getChildren().setAll(scrollPane);
     }
+
+// ════════════════════════════════════════════════════════════════════════════
+// CREATE DROP ZONE FOR EACH HOUR
+// ════════════════════════════════════════════════════════════════════════════
+
+    private Pane createHourDropZone(int hour, int hourHeight) {
+        Pane dropZone = new Pane();
+        dropZone.setMinHeight(hourHeight);
+        dropZone.setPrefHeight(hourHeight);
+        dropZone.setStyle("-fx-background-color: transparent;");
+
+        // Drag over
+        dropZone.setOnDragOver(e -> {
+            if (e.getGestureSource() != dropZone && draggedItem != null) {
+                e.acceptTransferModes(TransferMode.MOVE);
+            }
+            e.consume();
+        });
+
+        // Drag entered - highlight
+        dropZone.setOnDragEntered(e -> {
+            if (e.getGestureSource() != dropZone && draggedItem != null) {
+                dropZone.setStyle("-fx-background-color: rgba(59, 130, 246, 0.1); -fx-border-color: #3b82f6; -fx-border-width: 1; -fx-border-style: dashed;");
+            }
+            e.consume();
+        });
+
+        // Drag exited - remove highlight
+        dropZone.setOnDragExited(e -> {
+            dropZone.setStyle("-fx-background-color: transparent;");
+            e.consume();
+        });
+
+        // Drop
+        dropZone.setOnDragDropped(e -> {
+            Dragboard db = e.getDragboard();
+            boolean success = false;
+
+            if (db.hasString() && draggedItem != null) {
+                // Calculate duration to preserve it
+                long minutes = Duration.between(
+                        draggedItem.getStartTime(),
+                        draggedItem.getEndTime()
+                ).toMinutes();
+
+                LocalTime newStartTime = LocalTime.of(hour, 0);
+                LocalTime newEndTime = newStartTime.plusMinutes(minutes);
+
+                // Make sure end time doesn't go past midnight
+                if (newEndTime.isBefore(newStartTime)) {
+                    newEndTime = LocalTime.of(23, 59);
+                }
+
+                if (draggedItem.getItemType() == PlannerItemType.TASK) {
+                    TaskPlannerAdapter adapter = (TaskPlannerAdapter) draggedItem;
+                    adapter.setDate(currentDate);
+                    adapter.setStartTime(newStartTime);
+                    adapter.setEndTime(newEndTime);
+                    plannerManager.updateTask(adapter.getTask());
+                } else {
+                    EventPlannerAdapter adapter = (EventPlannerAdapter) draggedItem;
+                    adapter.setDate(currentDate);
+                    adapter.setStartTime(newStartTime);
+                    adapter.setEndTime(newEndTime);
+                    plannerManager.updateEvent(adapter.getEvent());
+                }
+
+                success = true;
+                updateView();
+            }
+
+            e.setDropCompleted(success);
+            e.consume();
+        });
+
+        return dropZone;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+// CALCULATE OVERLAPPING GROUPS
+// ════════════════════════════════════════════════════════════════════════════
+
+    private List<List<PlannerItem>> calculateOverlapGroups(List<PlannerItem> items) {
+        List<List<PlannerItem>> groups = new ArrayList<>();
+
+        if (items.isEmpty()) return groups;
+
+        List<PlannerItem> sortedItems = new ArrayList<>(items);
+        sortedItems.sort(Comparator.comparing(PlannerItem::getStartTime));
+
+        List<PlannerItem> currentGroup = new ArrayList<>();
+        LocalTime groupEnd = LocalTime.MIN;
+
+        for (PlannerItem item : sortedItems) {
+            LocalTime itemStart = item.getStartTime();
+            LocalTime itemEnd = item.getEndTime();
+
+            if (currentGroup.isEmpty() || itemStart.isBefore(groupEnd)) {
+                currentGroup.add(item);
+                if (itemEnd.isAfter(groupEnd)) {
+                    groupEnd = itemEnd;
+                }
+            } else {
+                groups.add(new ArrayList<>(currentGroup));
+                currentGroup.clear();
+                currentGroup.add(item);
+                groupEnd = itemEnd;
+            }
+        }
+
+        if (!currentGroup.isEmpty()) {
+            groups.add(currentGroup);
+        }
+
+        return groups;
+    }
+
+// ════════════════════════════════════════════════════════════════════════════
+// POSITION ITEMS SIDE BY SIDE - COMPACT VERSION
+// ════════════════════════════════════════════════════════════════════════════
+
+    private void positionItemsInGroup(List<PlannerItem> group, AnchorPane container) {
+        if (group.isEmpty()) return;
+
+        int groupSize = group.size();
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CONFIGURABLE SIZING - Adjust these values to control card size
+        // ══════════════════════════════════════════════════════════════════════
+        double maxItemWidth = 280;   // Maximum width for a single item
+        double minItemWidth = 120;   // Minimum width
+        double itemGap = 6;          // Gap between items
+        double leftMargin = 12;      // Left margin from time column
+        double rightMargin = 20;     // Right margin
+
+        for (int i = 0; i < groupSize; i++) {
+            PlannerItem item = group.get(i);
+            final int index = i;
+
+            // Calculate vertical position based on time
+            double startMinutes = item.getStartTime().getHour() * 60 + item.getStartTime().getMinute();
+            double endMinutes = item.getEndTime().getHour() * 60 + item.getEndTime().getMinute();
+
+            double top = (startMinutes / 60.0) * HOUR_HEIGHT;
+            double height = ((endMinutes - startMinutes) / 60.0) * HOUR_HEIGHT;
+            height = Math.max(height, 28); // Minimum height
+
+            // Create the item card with initial width
+            VBox itemCard = createCompactDayViewCard(item, maxItemWidth, height);
+
+            // Position
+            AnchorPane.setTopAnchor(itemCard, top + 2); // Small offset from grid line
+
+            // Dynamic width calculation based on container size
+            container.widthProperty().addListener((obs, oldVal, newVal) -> {
+                double containerWidth = newVal.doubleValue();
+                double availableWidth = containerWidth - leftMargin - rightMargin;
+
+                // Calculate item width
+                double itemWidth;
+                if (groupSize == 1) {
+                    // Single item: use max width or available, whichever is smaller
+                    itemWidth = Math.min(maxItemWidth, availableWidth);
+                } else {
+                    // Multiple items: divide space
+                    itemWidth = (availableWidth - (itemGap * (groupSize - 1))) / groupSize;
+                    itemWidth = Math.min(itemWidth, maxItemWidth);
+                    itemWidth = Math.max(itemWidth, minItemWidth);
+                }
+
+                double left = leftMargin + (index * (itemWidth + itemGap));
+
+                itemCard.setPrefWidth(itemWidth);
+                itemCard.setMaxWidth(itemWidth);
+                AnchorPane.setLeftAnchor(itemCard, left);
+            });
+
+            // Set initial position
+            double initialWidth = Math.min(maxItemWidth, 300);
+            double initialLeft = leftMargin + (i * (initialWidth + itemGap));
+            itemCard.setPrefWidth(initialWidth);
+            itemCard.setMaxWidth(initialWidth);
+            AnchorPane.setLeftAnchor(itemCard, initialLeft);
+
+            container.getChildren().add(itemCard);
+        }
+    }
+
+// ════════════════════════════════════════════════════════════════════════════
+// CREATE COMPACT DAY VIEW CARD
+// ════════════════════════════════════════════════════════════════════════════
+
+    private VBox createCompactDayViewCard(PlannerItem item, double width, double height) {
+        VBox card = new VBox(1);
+        card.setPrefWidth(width);
+        card.setMaxWidth(width);
+        card.setPrefHeight(height);
+        card.setMinHeight(28);
+        card.setPadding(new Insets(5, 8, 5, 10));
+        card.setAlignment(Pos.TOP_LEFT);
+
+        boolean isTask = item.getItemType() == PlannerItemType.TASK;
+        boolean isCompleted = checkItemCompletion(item);
+        String baseColor = item.getColor();
+
+        // Compact card styling with left accent border
+        String normalStyle = String.format(
+                "-fx-background-color: linear-gradient(to right, %s 0%%, %sE8 100%%); " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-border-radius: 5; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 3, 0, 0, 1);",
+                baseColor + "F0",
+                baseColor
+        );
+        card.setStyle(normalStyle);
+
+        // Title row with icon
+        HBox titleRow = new HBox(4);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Small type indicator
+        Label typeIndicator = new Label(isTask ? "▪" : "▪");
+        typeIndicator.setStyle("-fx-text-fill: white; -fx-font-size: 8;");
+
+        // Title
+        Label titleLabel = new Label(item.getTitle());
+        titleLabel.setMaxWidth(width - 30);
+
+        if (isCompleted) {
+            titleLabel.setStyle(
+                    "-fx-font-size: 11; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-text-fill: rgba(255,255,255,0.65); " +
+                            "-fx-strikethrough: true;"
+            );
+        } else {
+            titleLabel.setStyle(
+                    "-fx-font-size: 11; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-text-fill: white;"
+            );
+        }
+
+        titleRow.getChildren().addAll(typeIndicator, titleLabel);
+        card.getChildren().add(titleRow);
+
+        // Time label (show if enough height)
+        if (height >= 38) {
+            String timeText = item.getStartTime().format(timeFormatter) + " - " +
+                    item.getEndTime().format(timeFormatter);
+            Label timeLabel = new Label(timeText);
+            timeLabel.setStyle(
+                    "-fx-font-size: 9; " +
+                            "-fx-text-fill: rgba(255,255,255,0.8);"
+            );
+            card.getChildren().add(timeLabel);
+        }
+
+        // User badge for tasks (show if enough height)
+        if (height >= 55 && isTask) {
+            TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
+            String username = adapter.getTask().getUser() != null
+                    ? adapter.getTask().getUser().getUsername()
+                    : "";
+            if (!username.isEmpty()) {
+                Label userLabel = new Label("👤 " + username);
+                userLabel.setStyle("-fx-font-size: 8; -fx-text-fill: rgba(255,255,255,0.7);");
+                card.getChildren().add(userLabel);
+            }
+        }
+
+        // Hover effect
+        String hoverStyle = String.format(
+                "-fx-background-color: linear-gradient(to right, %s 0%%, %s 100%%); " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-border-radius: 5; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2);",
+                baseColor,
+                baseColor + "D0"
+        );
+
+        card.setOnMouseEntered(e -> card.setStyle(hoverStyle));
+        card.setOnMouseExited(e -> card.setStyle(normalStyle));
+
+        // Double-click to edit
+        card.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                if (isTask) {
+                    showTaskDialog((TaskPlannerAdapter) item);
+                } else {
+                    showEventDialog((EventPlannerAdapter) item);
+                }
+                e.consume();
+            }
+        });
+
+        // Context menu
+        setupItemContextMenu(card, item);
+
+        // ══════════════════════════════════════════════════════════════════════
+        // DRAG SOURCE SETUP
+        // ══════════════════════════════════════════════════════════════════════
+        card.setOnDragDetected(e -> {
+            Dragboard db = card.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(item.getId());
+            db.setContent(content);
+
+            // Store reference
+            draggedItem = item;
+            draggedItemCard = card;
+
+            // Visual feedback
+            card.setOpacity(0.5);
+
+            e.consume();
+        });
+
+        card.setOnDragDone(e -> {
+            card.setOpacity(1.0);
+            draggedItem = null;
+            draggedItemCard = null;
+            e.consume();
+        });
+
+        return card;
+    }
+
 
     private HBox createDayViewHourRow(int hour, LocalDate date) {
         HBox row = new HBox();
@@ -1482,7 +2527,7 @@ public class CalendarController implements Initializable {
                 if (empty || item == null) {
                     setGraphic(null);
                 } else {
-                    setGraphic(createEnhancedEventCard(item));
+                    setGraphic(createStreamlinedCard(item));
                 }
             }
         });

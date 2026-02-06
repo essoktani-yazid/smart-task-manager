@@ -4,6 +4,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Rectangle?>
+
+<!--
+    ╔══════════════════════════════════════════════════════════════════════════════╗
+    ║                    SMARTTASK CALENDAR - ASANA-INSPIRED DESIGN                 ║
+    ║                    Modern • Professional • Beautiful                          ║
+    ╚══════════════════════════════════════════════════════════════════════════════╝
+-->
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -11,133 +20,275 @@
             styleClass="calendar-root"
             stylesheets="@../css/calendar.css">
 
-    <!-- Define ToggleGroup -->
     <fx:define>
         <ToggleGroup fx:id="viewToggleGroup"/>
     </fx:define>
 
-    <!-- Header -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         HEADER - Clean, minimal top bar inspired by Asana
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════════════════════════
+     OPTION 1: SINGLE LINE COMPACT HEADER
+     Replace your entire <top> section in calendar.fxml with this
+     ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
+
     <top>
-        <VBox styleClass="header-container">
-            <!-- Top toolbar -->
-            <HBox alignment="CENTER_LEFT" spacing="15" styleClass="toolbar">
+        <VBox spacing="0" styleClass="header-wrapper">
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════════════════
+                 ROW 1: Logo | Today + Date | View Toggle
+                 ═══════════════════════════════════════════════════════════════════════════════════════ -->
+            <HBox alignment="CENTER_LEFT" spacing="0" styleClass="main-header-row">
                 <padding>
-                    <Insets topRightBottomLeft="15"/>
+                    <Insets top="10" right="24" bottom="10" left="24"/>
                 </padding>
 
-                <!-- App title -->
-                <Label text="Calendar" styleClass="app-title">
-                    <font>
-                        <Font name="System Bold" size="24"/>
-                    </font>
-                </Label>
-
-                <Region HBox.hgrow="ALWAYS"/>
-
-                <!-- Navigation -->
-                <HBox alignment="CENTER" spacing="10" styleClass="navigation">
-                    <Button fx:id="prevButton" text="‹" onAction="#handlePrevious" styleClass="nav-button"/>
-                    <Button fx:id="todayButton" text="Today" onAction="#handleToday" styleClass="today-button"/>
-                    <Button fx:id="nextButton" text="›" onAction="#handleNext" styleClass="nav-button"/>
+                <!-- LEFT: Brand/Logo -->
+                <HBox alignment="CENTER_LEFT" spacing="8" styleClass="header-brand">
+                    <Label text="📅" style="-fx-font-size: 18;"/>
+                    <Label text="Calendar" styleClass="header-title"/>
                 </HBox>
 
-                <!-- Current date label -->
-                <Label fx:id="currentDateLabel" text="January 2026" styleClass="date-label">
-                    <font>
-                        <Font name="System Bold" size="18"/>
-                    </font>
-                </Label>
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- CENTER: Navigation + Date -->
+                <HBox alignment="CENTER" spacing="12" styleClass="nav-center-group">
+                    <HBox alignment="CENTER" spacing="0" styleClass="nav-container">
+                        <Button fx:id="prevButton" text="‹" onAction="#handlePrevious" styleClass="nav-btn, nav-left"/>
+                        <Button fx:id="todayButton" text="Today" onAction="#handleToday" styleClass="nav-btn, nav-center"/>
+                        <Button fx:id="nextButton" text="›" onAction="#handleNext" styleClass="nav-btn, nav-right"/>
+                    </HBox>
+                    <Label fx:id="currentDateLabel" text="February 2026" styleClass="date-display"/>
+                </HBox>
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <!-- View toggle buttons -->
+                <!-- RIGHT: View Toggle -->
                 <HBox alignment="CENTER" spacing="0" styleClass="view-toggle-group">
-                    <ToggleButton fx:id="dayViewButton" text="Day" toggleGroup="$viewToggleGroup" styleClass="view-toggle, view-toggle-left"/>
-                    <ToggleButton fx:id="weekViewButton" text="Week" toggleGroup="$viewToggleGroup" styleClass="view-toggle, view-toggle-middle"/>
-                    <ToggleButton fx:id="monthViewButton" text="Month" toggleGroup="$viewToggleGroup" styleClass="view-toggle, view-toggle-middle"/>
-                    <ToggleButton fx:id="yearViewButton" text="Year" toggleGroup="$viewToggleGroup" styleClass="view-toggle, view-toggle-right"/>
+                    <ToggleButton fx:id="dayViewButton" text="Day" toggleGroup="$viewToggleGroup" styleClass="view-btn, first"/>
+                    <ToggleButton fx:id="weekViewButton" text="Week" toggleGroup="$viewToggleGroup" styleClass="view-btn"/>
+                    <ToggleButton fx:id="monthViewButton" text="Month" toggleGroup="$viewToggleGroup" styleClass="view-btn"/>
+                    <ToggleButton fx:id="yearViewButton" text="Year" toggleGroup="$viewToggleGroup" styleClass="view-btn, last"/>
                 </HBox>
-
-                <!-- Add event button -->
-                <Button fx:id="addTaskButton" text="📋 Add Task" onAction="#handleAddTask" styleClass="add-task-button"/>
-                <Button fx:id="addEventButton" text="+ Add Event" onAction="#handleAddEvent" styleClass="add-event-button"/>
             </HBox>
 
-            <!-- Separator -->
-            <Separator/>
+            <!-- ═══════════════════════════════════════════════════════════════════════════════════════
+                 SEPARATOR
+                 ═══════════════════════════════════════════════════════════════════════════════════════ -->
+            <Separator styleClass="header-separator"/>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════════════════
+                 ROW 2: Filters | Add Buttons
+                 ═══════════════════════════════════════════════════════════════════════════════════════ -->
+            <HBox alignment="CENTER_LEFT" spacing="0" styleClass="filters-row">
+                <padding>
+                    <Insets top="8" right="24" bottom="8" left="24"/>
+                </padding>
+
+                <!-- LEFT: Filters -->
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="filter-section">
+                    <Label text="Filters:" styleClass="filters-label"/>
+
+                    <!-- Type Filter -->
+                    <MenuButton fx:id="typeFilterBtn" styleClass="filter-menu-btn">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="5">
+                                <Label  styleClass="filter-btn-text"/>
+                                <Label  styleClass="filter-btn-arrow"/>
+                            </HBox>
+                        </graphic>
+                        <items>
+                            <CheckMenuItem fx:id="showTasks" text="📋  Tasks" selected="true"/>
+                            <CheckMenuItem fx:id="showEvents" text="📅  Events" selected="true"/>
+                        </items>
+                    </MenuButton>
+
+                    <!-- Priority Filter -->
+                    <MenuButton fx:id="priorityFilterBtn" styleClass="filter-menu-btn">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="5">
+                                <Label  styleClass="filter-btn-text"/>
+                                <Label  styleClass="filter-btn-arrow"/>
+                            </HBox>
+                        </graphic>
+                        <items>
+                            <CheckMenuItem fx:id="filterUrgent" selected="true">
+                                <graphic>
+                                    <HBox alignment="CENTER_LEFT" spacing="8">
+                                        <Circle radius="5" style="-fx-fill: #ef4444;"/>
+                                        <Label text="Urgent" styleClass="priority-label"/>
+                                    </HBox>
+                                </graphic>
+                            </CheckMenuItem>
+                            <CheckMenuItem fx:id="filterImportant" selected="true">
+                                <graphic>
+                                    <HBox alignment="CENTER_LEFT" spacing="8">
+                                        <Circle radius="5" style="-fx-fill: #f97316;"/>
+                                        <Label text="Important" styleClass="priority-label"/>
+                                    </HBox>
+                                </graphic>
+                            </CheckMenuItem>
+                            <CheckMenuItem fx:id="filterStandard" selected="true">
+                                <graphic>
+                                    <HBox alignment="CENTER_LEFT" spacing="8">
+                                        <Circle radius="5" style="-fx-fill: #3b82f6;"/>
+                                        <Label text="Standard" styleClass="priority-label"/>
+                                    </HBox>
+                                </graphic>
+                            </CheckMenuItem>
+                            <CheckMenuItem fx:id="filterOptional" selected="true">
+                                <graphic>
+                                    <HBox alignment="CENTER_LEFT" spacing="8">
+                                        <Circle radius="5" style="-fx-fill: #9ca3af;"/>
+                                        <Label text="Optional" styleClass="priority-label"/>
+                                    </HBox>
+                                </graphic>
+                            </CheckMenuItem>
+                        </items>
+                    </MenuButton>
+
+                    <!-- Status Filter -->
+                    <MenuButton fx:id="statusFilterBtn" styleClass="filter-menu-btn">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="5">
+                                <Label  styleClass="filter-btn-text"/>
+                                <Label  styleClass="filter-btn-arrow"/>
+                            </HBox>
+                        </graphic>
+                        <items>
+                            <CheckMenuItem fx:id="showCompleted" text=" Show completed" selected="true"/>
+                        </items>
+                    </MenuButton>
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- RIGHT: Add Buttons -->
+                <HBox alignment="CENTER_RIGHT" spacing="8" styleClass="action-buttons">
+                    <Button fx:id="addTaskButton" onAction="#handleAddTask" styleClass="add-btn, add-task">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="4">
+                                <Label text="+" styleClass="add-btn-icon"/>
+                                <Label text="Task" styleClass="add-btn-text"/>
+                            </HBox>
+                        </graphic>
+                    </Button>
+                    <Button fx:id="addEventButton" onAction="#handleAddEvent" styleClass="add-btn, add-event">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="4">
+                                <Label text="+" styleClass="add-btn-icon"/>
+                                <Label text="Event" styleClass="add-btn-text"/>
+                            </HBox>
+                        </graphic>
+                    </Button>
+                </HBox>
+            </HBox>
         </VBox>
     </top>
 
-    <!-- Main content -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         MAIN CONTENT - Split view: Calendar + Sidebar
+         ═══════════════════════════════════════════════════════════════════════════ -->
     <center>
-        <HBox>
-            <!-- Calendar container -->
-            <StackPane fx:id="calendarContainer" HBox.hgrow="ALWAYS" styleClass="calendar-container">
-                <padding>
-                    <Insets topRightBottomLeft="10"/>
-                </padding>
-            </StackPane>
+        <HBox styleClass="main-content">
+            <!-- Calendar Area -->
+            <VBox HBox.hgrow="ALWAYS" styleClass="calendar-area">
+                <StackPane fx:id="calendarContainer" VBox.vgrow="ALWAYS" styleClass="calendar-container">
+                    <padding>
+                        <Insets top="0" right="0" bottom="0" left="0"/>
+                    </padding>
+                </StackPane>
+            </VBox>
         </HBox>
     </center>
 
-    <!-- Right sidebar - Filters and upcoming events -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         RIGHT SIDEBAR - Upcoming items & Details
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+     REDESIGNED RIGHT SIDEBAR - Full Height, Streamlined Design
+     Replace the <right> section in your calendar.fxml with this
+     ═══════════════════════════════════════════════════════════════════════════ -->
     <right>
-        <VBox prefWidth="280" spacing="0" styleClass="sidebar">
-            <padding>
-                <Insets topRightBottomLeft="15"/>
-            </padding>
+        <VBox prefWidth="360" styleClass="sidebar-redesigned" VBox.vgrow="ALWAYS">
 
-            <!-- Filter section -->
-            <VBox spacing="15" styleClass="filter-section">
-                <Label text="Filters" styleClass="section-title">
-                    <font>
-                        <Font name="System Bold" size="16"/>
-                    </font>
-                </Label>
+            <!-- Sidebar Header - Clean & Minimal -->
+            <HBox alignment="CENTER_LEFT" styleClass="sidebar-header-new">
+                <padding>
+                    <Insets top="24" right="24" bottom="20" left="24"/>
+                </padding>
+                <VBox spacing="4">
+                    <Label text="Upcoming" styleClass="sidebar-title-new"/>
+                    <Label text="Next 30 days" styleClass="sidebar-subtitle-new"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+<!--                &lt;!&ndash; Optional: Filter/Sort button &ndash;&gt;-->
+<!--                <Button text="⋮" styleClass="sidebar-menu-btn"/>-->
+            </HBox>
 
-                <!-- Priority filters -->
-                <VBox spacing="8">
-                    <Label text="Priority" styleClass="filter-label"/>
-                    <VBox spacing="5" styleClass="filter-options">
-                        <CheckBox fx:id="filterOptional" text="Optional" selected="true" styleClass="filter-checkbox, priority-optional"/>
-                        <CheckBox fx:id="filterStandard" text="Standard" selected="true" styleClass="filter-checkbox, priority-standard"/>
-                        <CheckBox fx:id="filterImportant" text="Important" selected="true" styleClass="filter-checkbox, priority-important"/>
-                        <CheckBox fx:id="filterUrgent" text="Urgent" selected="true" styleClass="filter-checkbox, priority-urgent"/>
-                    </VBox>
-                </VBox>
-                <!-- Type filters -->
-                <VBox spacing="8">
-                    <Label text="Item Type" styleClass="filter-label"/>
-                    <VBox spacing="5" styleClass="filter-options">
-                        <CheckBox fx:id="showTasks" text="📋 Tasks" selected="true" styleClass="filter-checkbox"/>
-                        <CheckBox fx:id="showEvents" text="📅 Events" selected="true" styleClass="filter-checkbox"/>
-                    </VBox>
-                </VBox>
+            <!-- Quick Stats Bar -->
+            <HBox alignment="CENTER" spacing="0" styleClass="stats-bar-new">
+                <padding>
+                    <Insets top="0" right="24" bottom="0" left="24"/>
+                </padding>
+                <HBox alignment="CENTER" spacing="8" styleClass="stat-chip" HBox.hgrow="ALWAYS">
+                    <Label text="📋" styleClass="stat-icon"/>
+                    <Label fx:id="taskCountLabel" text="3" styleClass="stat-value"/>
+                    <Label text="Tasks" styleClass="stat-text"/>
+                </HBox>
+                <HBox alignment="CENTER" spacing="8" styleClass="stat-chip" HBox.hgrow="ALWAYS">
+                    <Label text="📅" styleClass="stat-icon"/>
+                    <Label fx:id="eventCountLabel" text="2" styleClass="stat-value"/>
+                    <Label text="Events" styleClass="stat-text"/>
+                </HBox>
+            </HBox>
 
-                <!-- Show completed -->
-                <VBox spacing="8">
-                    <Label text="Display" styleClass="filter-label"/>
-                    <CheckBox fx:id="showCompleted" text="Show completed" selected="true" styleClass="filter-checkbox"/>
+            <!-- Divider -->
+            <HBox styleClass="sidebar-divider">
+                <padding>
+                    <Insets top="16" right="24" bottom="8" left="24"/>
+                </padding>
+                <Separator HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <!-- Scrollable Items List - Takes remaining height -->
+            <ScrollPane fitToWidth="true" fitToHeight="true"
+                        hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                        VBox.vgrow="ALWAYS" styleClass="sidebar-scroll-new">
+                <VBox fx:id="upcomingContainer" spacing="12" styleClass="upcoming-container-new">
+                    <padding>
+                        <Insets top="8" right="24" bottom="24" left="24"/>
+                    </padding>
+                    <ListView fx:id="upcomingItemsList" styleClass="upcoming-list-new" VBox.vgrow="ALWAYS"/>
                 </VBox>
+            </ScrollPane>
+
+            <!-- Empty State (shown when no items) - Optional -->
+            <!--
+            <VBox alignment="CENTER" spacing="12" styleClass="empty-state" VBox.vgrow="ALWAYS">
+                <Label text="📭" styleClass="empty-icon"/>
+                <Label text="No upcoming items" styleClass="empty-title"/>
+                <Label text="Tasks and events will appear here" styleClass="empty-subtitle"/>
+            </VBox>
+            -->
+            <!-- Divider before Google Calendar section -->
+            <HBox styleClass="sidebar-divider">
+                <padding>
+                    <Insets top="8" right="24" bottom="8" left="24"/>
+                </padding>
+                <Separator HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <!-- Google Calendar Sync Panel Container -->
+            <VBox fx:id="googleCalendarContainer" spacing="0" styleClass="google-calendar-section">
+                <padding>
+                    <Insets top="8" right="16" bottom="16" left="16"/>
+                </padding>
+                <!-- The GoogleCalendarSettingsPanel will be added here programmatically -->
             </VBox>
 
-            <Separator>
-                <VBox.margin>
-                    <Insets top="20" bottom="20"/>
-                </VBox.margin>
-            </Separator>
-
-            <!-- Upcoming events section -->
-            <VBox spacing="10" VBox.vgrow="ALWAYS">
-                <Label text="Upcoming Events" styleClass="section-title">
-                    <font>
-                        <Font name="System Bold" size="16"/>
-                    </font>
-                </Label>
-
-                <ListView fx:id="upcomingItemsList" VBox.vgrow="ALWAYS" styleClass="upcoming-list"/>
-            </VBox>
         </VBox>
     </right>
+
 
 </BorderPane>

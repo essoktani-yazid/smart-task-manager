@@ -1,0 +1,218 @@
+/* =============================================================================
+   VARIABLES & BASE (Thème Moderne)
+   ============================================================================= */
+* {
+    -primary-color: #3498db;        /* Bleu professionnel */
+    -primary-dark: #2980b9;         /* Bleu plus foncé (hover) */
+    -accent-color: #e67e22;         /* Orange pour les actions importantes */
+    -bg-color: #f4f7f6;             /* Gris très clair (fond global) */
+    -panel-bg: #ffffff;             /* Blanc (cartes/panneaux) */
+    -text-main: #2c3e50;            /* Texte principal (Gris foncé) */
+    -text-muted: #95a5a6;           /* Texte secondaire (Gris clair) */
+    -border-color: #ecf0f1;         /* Bordures subtiles */
+    -selection-bg: #ebf5fb;         /* Fond de sélection (bleu très pâle) */
+
+    -fx-font-family: 'Segoe UI', 'Roboto', sans-serif;
+    -fx-font-size: 13px;
+    -fx-focus-color: transparent;   /* Enlève le halo bleu par défaut */
+    -fx-faint-focus-color: transparent;
+}
+
+.root {
+    -fx-background-color: -bg-color;
+}
+
+/* =============================================================================
+   SIDEBAR : LISTE DES PROJETS (#projectsList)
+   ============================================================================= */
+#projectsList {
+    -fx-background-color: -panel-bg;
+    -fx-background-radius: 0 8 8 0; /* Arrondi à droite */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 0);
+    -fx-padding: 10;
+}
+
+#projectsList .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 12 15 12 15;
+    -fx-text-fill: -text-main;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+/* Hover sur un projet */
+#projectsList .list-cell:filled:hover {
+    -fx-background-color: #f8f9fa;
+    -fx-text-fill: -primary-color;
+}
+
+/* Projet sélectionné */
+#projectsList .list-cell:filled:selected {
+    -fx-background-color: -selection-bg;
+    -fx-text-fill: -primary-color;
+    -fx-border-color: transparent transparent transparent -primary-color;
+    -fx-border-width: 0 0 0 4; /* Barre bleue verticale à gauche */
+}
+
+#projectsList .list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+/* =============================================================================
+   TABLEAUX : TÂCHES & SOUS-TÂCHES
+   ============================================================================= */
+.table-view {
+    -fx-background-color: -panel-bg;
+    -fx-table-cell-border-color: transparent; /* Enlève la grille moche */
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 5, 0, 0, 2);
+    -fx-padding: 5;
+}
+
+/* En-tête (Header) */
+.table-view .column-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -border-color transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: transparent;
+    -fx-size: 45px;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: -text-muted;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-alignment: CENTER-LEFT;
+    -fx-text-transform: uppercase;
+}
+
+/* Lignes (Rows) */
+.table-row-cell {
+    -fx-background-color: -panel-bg;
+    -fx-border-color: transparent transparent -border-color transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 50px;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #fafafa;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: -selection-bg;
+    -fx-background-insets: 0;
+}
+
+.table-row-cell:selected .text {
+    -fx-fill: -text-main; /* Garde le texte noir même sélectionné */
+}
+
+/* =============================================================================
+   SOUS-TÂCHES (#subTasksTable) - Style légèrement différent
+   ============================================================================= */
+#subTasksTable {
+    -fx-background-color: #fafafa; /* Fond un peu plus gris */
+    -fx-border-color: -border-color;
+}
+
+#subTasksTable .column-header .label {
+    -fx-text-fill: -primary-color; /* En-têtes bleus pour différencier */
+}
+
+/* =============================================================================
+   BOUTONS & CHAMPS DE SAISIE
+   ============================================================================= */
+.button {
+    -fx-background-color: -panel-bg;
+    -fx-text-fill: -text-main;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-padding: 8 15;
+    -fx-font-weight: bold;
+}
+
+.button:hover {
+    -fx-background-color: #f1f2f6;
+    -fx-border-color: -text-muted;
+}
+
+/* Boutons d'action (Ajouter) - À appliquer via styleClass="action-btn" */
+.button.action-btn {
+    -fx-background-color: -primary-color;
+    -fx-text-fill: white;
+    -fx-border-color: -primary-color;
+}
+.button.action-btn:hover {
+    -fx-background-color: -primary-dark;
+}
+
+.text-field, .text-area {
+    -fx-background-color: -panel-bg;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-border-color: -primary-color;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.2), 5, 0, 0, 0);
+}
+
+/* =============================================================================
+   DÉTAILS (Tags & Commentaires)
+   ============================================================================= */
+
+/* Tags (#tagsList) - Style "Badge" */
+#tagsList {
+    -fx-background-color: transparent;
+    -fx-orientation: horizontal;
+}
+#tagsList .list-cell {
+    -fx-background-color: #e0f7fa; /* Cyan très clair */
+    -fx-text-fill: #006064;         /* Cyan très foncé */
+    -fx-background-radius: 12;
+    -fx-padding: 3 10 3 10;
+    -fx-margin: 2;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Commentaires (#commentsList) - Style "Chat" */
+#commentsList {
+    -fx-background-color: transparent;
+}
+#commentsList .list-cell {
+    -fx-background-color: white;
+    -fx-border-color: -border-color;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-margin: 5 0 5 0;
+    -fx-padding: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 3, 0, 0, 1);
+}
+
+/* Labels de Titres */
+.label-h1 {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text-main;
+}
+
+/* Scrollbars modernes (Fines) */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.scroll-bar .thumb {
+    -fx-background-color: #dfe6e9;
+    -fx-background-radius: 5em;
+}
+.scroll-bar .thumb:hover {
+    -fx-background-color: #b2bec3;
+}

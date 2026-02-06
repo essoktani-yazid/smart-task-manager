@@ -1,5 +1,6 @@
 package com.smarttask.server.dao;
 
+
 import com.smarttask.model.Priority;
 import com.smarttask.model.Status;
 import com.smarttask.model.Task;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.UUID;
 /**
  * ✅ FULLY FIXED: Data Access Object for the Task entity
  * - Removed all u.password references
@@ -23,34 +24,40 @@ public class TaskDAO {
     /**
      * Saves a new task to the database.
      */
-    public String save(Task task) {
-        String sql = "INSERT INTO tasks (id, title, description, priority, status, due_date, created_at, user_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        String id = java.util.UUID.randomUUID().toString();
+    public void save(Task task) throws SQLException {
+        String sql = "INSERT INTO tasks (id, title, description, priority, status, due_date, user_id, project_id, task_type, parent_task_id, created_at, recurrence_type, recurrence_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        if (task.getId() == null) task.setId(UUID.randomUUID().toString());
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, id);
-            pstmt.setString(2, task.getTitle());
-            pstmt.setString(3, task.getDescription());
-            pstmt.setString(4, task.getPriority().name());
-            pstmt.setString(5, task.getStatus().name());
-            pstmt.setTimestamp(6, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
-            pstmt.setTimestamp(7, task.getCreatedAt() != null ? Timestamp.valueOf(task.getCreatedAt()) : Timestamp.valueOf(LocalDateTime.now()));
-            pstmt.setString(8, task.getUser().getId());
+            stmt.setString(1, task.getId());
+            stmt.setString(2, task.getTitle());
+            stmt.setString(3, task.getDescription());
+            stmt.setString(4, task.getPriority().name());
+            stmt.setString(5, task.getStatus().name());
+            stmt.setTimestamp(6, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
 
-            int affectedRows = pstmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new SQLException("Creating task failed, no rows affected.");
+            // --- ICI : Extraction de l'ID utilisateur ---
+            if (task.getUser() != null) {
+                stmt.setString(7, task.getUser().getId());
+            } else {
+                throw new SQLException("Une tâche doit avoir un utilisateur assigné");
             }
+            // Ajout du project_id
+            stmt.setString(8, task.getProjectId());
+            // --------------------------------------------
 
-            task.setId(id);
-            return id;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error saving task", e);
+            stmt.setString(9, task.getParentTask() != null ? "SUB" : "MAIN");
+            stmt.setString(10, task.getParentTask() != null ? task.getParentTask().getId() : null);
+            stmt.setTimestamp(11, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            
+            // Add recurrence fields
+            stmt.setString(12, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
+            stmt.setInt(13, task.getRecurrenceInterval() != null ? task.getRecurrenceInterval() : 0);
+
+            stmt.executeUpdate();
         }
     }
 
@@ -58,10 +65,7 @@ public class TaskDAO {
      * ✅ FIXED: Finds a task by ID - includes username and email
      */
     public Optional<Task> findById(String id) {
-        String sql = "SELECT t.*, u.id as user_id, u.username, u.email " +
-                "FROM tasks t " +
-                "INNER JOIN users u ON t.user_id = u.id " +
-                "WHERE t.id = ?";
+        String sql = "SELECT t.*, u.username FROM tasks t JOIN users u ON t.user_id = u.id WHERE t.task_type = 'MAIN';";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -139,55 +143,59 @@ public class TaskDAO {
     /**
      * ✅ FIXED: Retrieves all tasks - includes username and email
      */
+    // Méthode de lecture optimisée avec jointure pour avoir le Username
     public List<Task> findAll() {
-        String sql = "SELECT t.*, u.id as user_id, u.username, u.email " +
-                "FROM tasks t " +
-                "INNER JOIN users u ON t.user_id = u.id " +
-                "ORDER BY t.created_at DESC";
-
         List<Task> tasks = new ArrayList<>();
+        // Jointure pour récupérer le nom de l'utilisateur directement
+        String sql = "SELECT t.*, u.username FROM tasks t LEFT JOIN users u ON t.user_id = u.id WHERE t.task_type = 'MAIN'";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                try {
-                    tasks.add(mapResultSetToTask(rs));
-                } catch (Exception e) {
-                    System.err.println("❌ Failed to map task: " + e.getMessage());
-                }
+                tasks.add(mapResultSetToTask(rs));
             }
         } catch (SQLException e) {
-            System.err.println("❌ Error in findAll: " + e.getMessage());
             e.printStackTrace();
         }
-
         return tasks;
     }
 
     /**
      * Updates an existing task.
      */
-    public void update(Task task) {
-        String sql = "UPDATE tasks SET title = ?, description = ?, priority = ?, status = ?, due_date = ? WHERE id = ?";
+    // Méthode UPDATE : Mise à jour d'une tâche
+    public void update(Task task) throws SQLException {
+    String sql = "UPDATE tasks SET title=?, description=?, priority=?, status=?, due_date=?, user_id=?, project_id=?, recurrence_type=?, recurrence_interval=? WHERE id=?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, task.getTitle());
-            pstmt.setString(2, task.getDescription());
-            pstmt.setString(3, task.getPriority().name());
-            pstmt.setString(4, task.getStatus().name());
-            pstmt.setTimestamp(5, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
-            pstmt.setString(6, task.getId());
-
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error updating task", e);
+        stmt.setString(1, task.getTitle());
+        stmt.setString(2, task.getDescription());
+        stmt.setString(3, task.getPriority().name());
+        stmt.setString(4, task.getStatus().name());
+        stmt.setTimestamp(5, task.getDueDate() != null ? Timestamp.valueOf(task.getDueDate()) : null);
+        stmt.setString(6, task.getUser().getId());
+        
+        // --- MODIFICATION ICI ---
+        // On s'assure d'envoyer NULL proprement si l'ID est vide, sinon la String
+        if (task.getProjectId() != null) {
+            stmt.setString(7, task.getProjectId());
+        } else {
+            stmt.setNull(7, java.sql.Types.VARCHAR);
         }
+        // --- Add recurrence fields ---
+        stmt.setString(8, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
+        stmt.setInt(9, task.getRecurrenceInterval() != null ? task.getRecurrenceInterval() : 0);
+        // ------------------------
+
+        stmt.setString(10, task.getId());
+
+        stmt.executeUpdate();
     }
+}
 
     /**
      * Deletes a task from the database.
@@ -215,52 +223,108 @@ public class TaskDAO {
     }
 
     /**
+     * Récupère les tâches liées à un projet spécifique.
+     */
+    public List<Task> findByProjectId(String projectId) {
+        List<Task> tasks = new ArrayList<>();
+        // On sélectionne les tâches qui ont ce project_id
+        String sql = "SELECT t.*, u.username FROM tasks t " +
+                "LEFT JOIN users u ON t.user_id = u.id " +
+                "WHERE t.project_id = ? ORDER BY t.created_at DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, projectId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    tasks.add(mapResultSetToTask(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tasks;
+    }
+
+    /**
      * ✅ FIXED: Maps a ResultSet row to a Task object
      * - No password column needed
      * - Validates priority/status enums with fallback
      */
+    // Helper pour transformer le résultat SQL en Objet Task
     private Task mapResultSetToTask(ResultSet rs) throws SQLException {
-        Task task = new Task();
-        task.setId(rs.getString("id"));
-        task.setTitle(rs.getString("title"));
-        task.setDescription(rs.getString("description"));
+    Task t = new Task();
+    t.setId(rs.getString("id"));
+    t.setTitle(rs.getString("title"));
+    t.setDescription(rs.getString("description"));
+    t.setPriority(Priority.valueOf(rs.getString("priority")));
+    t.setStatus(Status.valueOf(rs.getString("status")));
 
-        // ✅ Handle priority with validation and fallback
-        String priorityStr = rs.getString("priority");
-        try {
-            task.setPriority(Priority.valueOf(priorityStr));
-        } catch (IllegalArgumentException e) {
-            System.err.println("⚠️ Invalid priority value: '" + priorityStr + "', defaulting to MEDIUM");
-            task.setPriority(Priority.MEDIUM);
+    // --- LIGNE MANQUANTE À AJOUTER ICI ---
+    t.setProjectId(rs.getString("project_id")); 
+    // -------------------------------------
+
+    Timestamp ts = rs.getTimestamp("due_date");
+    if (ts != null) t.setDueDate(ts.toLocalDateTime());
+
+    // User
+    String userId = rs.getString("user_id");
+    if (userId != null) {
+        User u = new User();
+        u.setId(userId);
+        try { u.setUsername(rs.getString("username")); } catch (Exception e) {}
+        t.setUser(u);
+    }
+
+    // Parent
+    String parentId = rs.getString("parent_task_id");
+    if (parentId != null) {
+        Task parent = new Task();
+        parent.setId(parentId);
+        t.setParentTask(parent);
+    }
+    
+    // Recurrence
+    try {
+        String recurrenceType = rs.getString("recurrence_type");
+        if (recurrenceType != null) {
+            t.setRecurrenceType(recurrenceType);
         }
+        int recurrenceInterval = rs.getInt("recurrence_interval");
+        t.setRecurrenceInterval(recurrenceInterval);
+    } catch (Exception e) {
+        // Column might not exist in older database versions
+        t.setRecurrenceType("NONE");
+        t.setRecurrenceInterval(0);
+    }
 
-        // ✅ Handle status with validation and fallback
-        String statusStr = rs.getString("status");
-        try {
-            task.setStatus(Status.valueOf(statusStr));
-        } catch (IllegalArgumentException e) {
-            System.err.println("⚠️ Invalid status value: '" + statusStr + "', defaulting to TODO");
-            task.setStatus(Status.TODO);
+    return t;
+}
+
+
+    public List<Task> findSubTasks(String parentId) {
+        List<Task> tasks = new ArrayList<>();
+        // La requête SQL avec jointure pour avoir le nom de l'utilisateur
+        String sql = "SELECT t.*, u.username FROM tasks t " +
+                "LEFT JOIN users u ON t.user_id = u.id " +
+                "WHERE t.parent_task_id = ? ORDER BY t.created_at DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, parentId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    // Utilise ta méthode existante pour convertir le résultat en objet Task
+                    tasks.add(mapResultSetToTask(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-
-        Timestamp dueDate = rs.getTimestamp("due_date");
-        if (dueDate != null) {
-            task.setDueDate(dueDate.toLocalDateTime());
-        }
-
-        Timestamp createdAt = rs.getTimestamp("created_at");
-        if (createdAt != null) {
-            task.setCreatedAt(createdAt.toLocalDateTime());
-        }
-
-        // ✅ Map user WITHOUT password field
-        User user = new User();
-        user.setId(rs.getString("user_id"));
-        user.setUsername(rs.getString("username"));
-        user.setEmail(rs.getString("email"));
-        // No password needed - security best practice
-        task.setUser(user);
-
-        return task;
+        return tasks;
     }
 }

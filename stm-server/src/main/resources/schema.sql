@@ -489,147 +489,147 @@ JOIN tasks t2 ON td.successor_id = t2.id;
 -- ============================================
 -- DONNÉES DE TEST
 -- ============================================
-
--- Insertion d'utilisateurs de test
-INSERT INTO users (id, username, email, password_hash) VALUES
-('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@smarttask.com', '$2a$12$YourHashedPasswordHere'),
-('550e8400-e29b-41d4-a716-446655440001', 'john', 'john@smarttask.com', '$2a$12$YourHashedPasswordHere'),
-('550e8400-e29b-41d4-a716-446655440002', 'jane', 'jane@smarttask.com', '$2a$12$YourHashedPasswordHere'),
-('550e8400-e29b-41d4-a716-446655440003', 'alice', 'alice@smarttask.com', '$2a$12$YourHashedPasswordHere'),
-('550e8400-e29b-41d4-a716-446655440004', 'bob', 'bob@smarttask.com', '$2a$12$YourHashedPasswordHere');
-
--- Insertion de paramètres de productivité
-INSERT INTO user_productivity_settings (id, user_id, daily_goal_tasks, weekly_goal_hours) VALUES
-(UUID(), '550e8400-e29b-41d4-a716-446655440000', 8, 35),
-(UUID(), '550e8400-e29b-41d4-a716-446655440001', 5, 25),
-(UUID(), '550e8400-e29b-41d4-a716-446655440002', 6, 30);
-
--- Insertion de projets
-INSERT INTO projects (id, name, description, user_id, color) VALUES
-('p001', 'Développement Application', 'Projet principal Smart Task Manager', '550e8400-e29b-41d4-a716-446655440000', '#FF6B6B'),
-('p002', 'Documentation', 'Documentation technique et utilisateur', '550e8400-e29b-41d4-a716-446655440000', '#4ECDC4'),
-('p003', 'Tests & QA', 'Tests qualité et validation', '550e8400-e29b-41d4-a716-446655440000', '#45B7D1');
-
--- Insertion de modèles d'IA
-INSERT INTO ai_models (id, model_type, model_name, model_version, accuracy) VALUES
-('ai001', 'CATEGORIZATION', 'TaskCategoryModel', '1.0.0', 0.85),
-('ai002', 'TIME_PREDICTION', 'TimePredictionModel', '1.0.0', 0.78),
-('ai003', 'PRIORITY_PREDICTION', 'PriorityModel', '1.0.0', 0.92);
-
--- Insertion de patterns NLP
-INSERT INTO nlp_patterns (id, pattern_type, pattern_regex, pattern_name, extraction_key) VALUES
-('nlp001', 'DATE', '\\b(tomorrow|today|next week|next month)\\b', 'Relative Date', 'date'),
-('nlp002', 'TIME', '\\b(at\\s+\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\b', 'Time Expression', 'time'),
-('nlp003', 'PRIORITY', '\\b(urgent|high priority|low priority|asap)\\b', 'Priority Keywords', 'priority'),
-('nlp004', 'CATEGORY', '\\b(meeting|call|email|report|shopping|doctor)\\b', 'Category Keywords', 'category');
-
--- Insertion de tâches de test
-INSERT INTO tasks (id, title, description, task_type, priority, status, user_id, due_date, ai_category) VALUES
--- Tâches pour admin
-('t001', 'Réunion équipe développement', 'Discussion architecture backend', 'MAIN', 'HIGH', 'TODO', 
- '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 2 DAY), 'meeting'),
-('t002', 'Implémenter système NLP', 'Parser langage naturel pour tâches', 'MAIN', 'URGENT', 'IN_PROGRESS',
- '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 5 DAY), 'development'),
-('t003', 'Tests unitaires DAO', 'Tests couverture 80% minimum', 'MAIN', 'MEDIUM', 'TODO',
- '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 7 DAY), 'testing'),
-('t004', 'Documentation API', 'Documenter endpoints REST', 'MAIN', 'LOW', 'TODO',
- '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 10 DAY), 'documentation'),
-
--- Tâches pour john
-('t005', 'Acheter fournitures bureau', 'Papier, stylos, café', 'MAIN', 'LOW', 'COMPLETED',
- '550e8400-e29b-41d4-a716-446655440001', DATE_SUB(NOW(), INTERVAL 1 DAY), 'shopping'),
-('t006', 'Préparer rapport mensuel', 'Analyses et statistiques', 'MAIN', 'MEDIUM', 'IN_PROGRESS',
- '550e8400-e29b-41d4-a716-446655440001', NOW(), 'report'),
-
--- Tâches pour jane
-('t007', 'Rendez-vous médecin', 'Contrôle annuel', 'MAIN', 'MEDIUM', 'TODO',
- '550e8400-e29b-41d4-a716-446655440002', DATE_ADD(NOW(), INTERVAL 3 DAY), 'health'),
-('t008', 'Répondre aux emails', 'Priorité clients', 'MAIN', 'HIGH', 'TODO',
- '550e8400-e29b-41d4-a716-446655440002', NOW(), 'communication');
-
--- Sous-tâches
-INSERT INTO tasks (id, title, description, task_type, priority, status, user_id, parent_task_id, due_date) VALUES
-('st001', 'Design architecture NLP', 'Concevoir le modèle de données', 'SUB', 'HIGH', 'TODO',
- '550e8400-e29b-41d4-a716-446655440000', 't002', DATE_ADD(NOW(), INTERVAL 1 DAY)),
-('st002', 'Implémenter parser date', 'Parser expressions temporelles', 'SUB', 'MEDIUM', 'IN_PROGRESS',
- '550e8400-e29b-41d4-a716-446655440000', 't002', DATE_ADD(NOW(), INTERVAL 2 DAY)),
-('st003', 'Tests parser', 'Tests unitaires du parser', 'SUB', 'LOW', 'TODO',
- '550e8400-e29b-41d4-a716-446655440000', 't002', DATE_ADD(NOW(), INTERVAL 3 DAY));
-
--- Dépendances entre tâches
-INSERT INTO task_dependencies (id, predecessor_id, successor_id, dependency_type) VALUES
-('t002_t003', 't002', 't003', 'FINISH_TO_START'),
-('st001_st002', 'st001', 'st002', 'START_TO_START'),
-('st002_st003', 'st002', 'st003', 'FINISH_TO_START');
-
--- Tags pour tâches
-INSERT INTO task_tags (task_id, tag_name) VALUES
-('t001', 'meeting'),
-('t001', 'team'),
-('t002', 'ai'),
-('t002', 'backend'),
-('t002', 'development'),
-('t003', 'testing'),
-('t003', 'quality'),
-('t004', 'documentation'),
-('t005', 'shopping'),
-('t006', 'report'),
-('t007', 'health'),
-('t008', 'email');
-
--- Événements calendrier
-# INSERT INTO calendar_event (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
-# ('e001', 'Réunion équipe', 'Revue hebdomadaire',
-#  DATE_ADD(NOW(), INTERVAL 1 DAY),
-#  DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 DAY), INTERVAL 1 HOUR),
-#  '550e8400-e29b-41d4-a716-446655440000', 't001', '#FF6B6B'),
-#
-# ('e002', 'Développement NLP', 'Session focus',
-#  DATE_ADD(NOW(), INTERVAL 2 DAY),
-#  DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 DAY), INTERVAL 3 HOUR),
-#  '550e8400-e29b-41d4-a716-446655440000', 't002', '#4ECDC4'),
-#
-# ('e003', 'Rendez-vous médical', 'Contrôle annuel',
-#  DATE_ADD(NOW(), INTERVAL 3 DAY),
-#  DATE_ADD(DATE_ADD(NOW(), INTERVAL 3 DAY), INTERVAL 1 HOUR),
-#  '550e8400-e29b-41d4-a716-446655440002', 't007', '#45B7D1');
-
--- Suivi du temps
-INSERT INTO time_tracking (id, task_id, user_id, start_time, end_time, duration_ms, focus_score) VALUES
-('tt001', 't002', '550e8400-e29b-41d4-a716-446655440000', 
- DATE_SUB(NOW(), INTERVAL 3 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR), 3600000, 85),
-('tt002', 't002', '550e8400-e29b-41d4-a716-446655440000',
- DATE_SUB(NOW(), INTERVAL 5 HOUR), DATE_SUB(NOW(), INTERVAL 4 HOUR), 3600000, 90),
-('tt003', 't006', '550e8400-e29b-41d4-a716-446655440001',
- DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 1 HOUR), 3600000, 75);
-
--- Commentaires
-INSERT INTO comments (id, task_id, user_id, content) VALUES
-('c001', 't002', '550e8400-e29b-41d4-a716-446655440000', 'J''ai commencé l''implémentation du parser de dates'),
-('c002', 't002', '550e8400-e29b-41d4-a716-446655440001', 'Bonne idée d''ajouter le support des expressions relatives'),
-('c003', 't006', '550e8400-e29b-41d4-a716-446655440001', 'Le rapport nécessite plus de données statistiques');
-
--- Notifications
-INSERT INTO notifications (id, user_id, type, title, message, related_task_id) VALUES
-('n001', '550e8400-e29b-41d4-a716-446655440000', 'TASK_ASSIGNED', 'Nouvelle tâche assignée', 
- 'La tâche "Implémenter système NLP" vous a été assignée', 't002'),
-('n002', '550e8400-e29b-41d4-a716-446655440000', 'DEADLINE_REMINDER', 'Rappel d''échéance',
- 'La tâche "Réunion équipe développement" est due demain', 't001'),
-('n003', '550e8400-e29b-41d4-a716-446655440002', 'PRODUCTIVITY_TIP', 'Conseil productivité',
- 'Vous avez 2 tâches en attente, planifiez-les cette semaine', NULL);
-
--- Insights de productivité
-INSERT INTO productivity_insights (id, user_id, insight_type, title, description) VALUES
-('i001', '550e8400-e29b-41d4-a716-446655440000', 'WEEKLY_SUMMARY', 'Résumé hebdomadaire',
- 'Vous avez complété 3 tâches sur 8 cette semaine. Productivité en hausse de 15%'),
-('i002', '550e8400-e29b-41d4-a716-446655440000', 'PRODUCTIVITY_TIP', 'Optimisez votre temps',
- 'Vos sessions du matin sont 25% plus productives. Planifiez les tâches difficiles avant midi');
-
--- Modèles de tâches
-INSERT INTO task_templates (id, template_name, title, description, priority, category) VALUES
-('tmp001', 'Réunion standard', 'Préparer réunion', 'Préparation ordre du jour et matériel', 'MEDIUM', 'meeting'),
-('tmp002', 'Rapport mensuel', 'Rapport d''activité', 'Collecte données et rédaction', 'HIGH', 'report'),
-('tmp003', 'Revue code', 'Revue de code', 'Vérification qualité et standards', 'MEDIUM', 'development');
+--
+-- -- Insertion d'utilisateurs de test
+-- INSERT INTO users (id, username, email, password_hash) VALUES
+-- ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@smarttask.com', '$2a$12$YourHashedPasswordHere'),
+-- ('550e8400-e29b-41d4-a716-446655440001', 'john', 'john@smarttask.com', '$2a$12$YourHashedPasswordHere'),
+-- ('550e8400-e29b-41d4-a716-446655440002', 'jane', 'jane@smarttask.com', '$2a$12$YourHashedPasswordHere'),
+-- ('550e8400-e29b-41d4-a716-446655440003', 'alice', 'alice@smarttask.com', '$2a$12$YourHashedPasswordHere'),
+-- ('550e8400-e29b-41d4-a716-446655440004', 'bob', 'bob@smarttask.com', '$2a$12$YourHashedPasswordHere');
+--
+-- -- Insertion de paramètres de productivité
+-- INSERT INTO user_productivity_settings (id, user_id, daily_goal_tasks, weekly_goal_hours) VALUES
+-- (UUID(), '550e8400-e29b-41d4-a716-446655440000', 8, 35),
+-- (UUID(), '550e8400-e29b-41d4-a716-446655440001', 5, 25),
+-- (UUID(), '550e8400-e29b-41d4-a716-446655440002', 6, 30);
+--
+-- -- Insertion de projets
+-- INSERT INTO projects (id, name, description, user_id, color) VALUES
+-- ('p001', 'Développement Application', 'Projet principal Smart Task Manager', '550e8400-e29b-41d4-a716-446655440000', '#FF6B6B'),
+-- ('p002', 'Documentation', 'Documentation technique et utilisateur', '550e8400-e29b-41d4-a716-446655440000', '#4ECDC4'),
+-- ('p003', 'Tests & QA', 'Tests qualité et validation', '550e8400-e29b-41d4-a716-446655440000', '#45B7D1');
+--
+-- -- Insertion de modèles d'IA
+-- INSERT INTO ai_models (id, model_type, model_name, model_version, accuracy) VALUES
+-- ('ai001', 'CATEGORIZATION', 'TaskCategoryModel', '1.0.0', 0.85),
+-- ('ai002', 'TIME_PREDICTION', 'TimePredictionModel', '1.0.0', 0.78),
+-- ('ai003', 'PRIORITY_PREDICTION', 'PriorityModel', '1.0.0', 0.92);
+--
+-- -- Insertion de patterns NLP
+-- INSERT INTO nlp_patterns (id, pattern_type, pattern_regex, pattern_name, extraction_key) VALUES
+-- ('nlp001', 'DATE', '\\b(tomorrow|today|next week|next month)\\b', 'Relative Date', 'date'),
+-- ('nlp002', 'TIME', '\\b(at\\s+\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\b', 'Time Expression', 'time'),
+-- ('nlp003', 'PRIORITY', '\\b(urgent|high priority|low priority|asap)\\b', 'Priority Keywords', 'priority'),
+-- ('nlp004', 'CATEGORY', '\\b(meeting|call|email|report|shopping|doctor)\\b', 'Category Keywords', 'category');
+--
+-- -- Insertion de tâches de test
+-- INSERT INTO tasks (id, title, description, task_type, priority, status, user_id, due_date, ai_category) VALUES
+-- -- Tâches pour admin
+-- ('t001', 'Réunion équipe développement', 'Discussion architecture backend', 'MAIN', 'HIGH', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 2 DAY), 'meeting'),
+-- ('t002', 'Implémenter système NLP', 'Parser langage naturel pour tâches', 'MAIN', 'URGENT', 'IN_PROGRESS',
+--  '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 5 DAY), 'development'),
+-- ('t003', 'Tests unitaires DAO', 'Tests couverture 80% minimum', 'MAIN', 'MEDIUM', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 7 DAY), 'testing'),
+-- ('t004', 'Documentation API', 'Documenter endpoints REST', 'MAIN', 'LOW', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440000', DATE_ADD(NOW(), INTERVAL 10 DAY), 'documentation'),
+--
+-- -- Tâches pour john
+-- ('t005', 'Acheter fournitures bureau', 'Papier, stylos, café', 'MAIN', 'LOW', 'COMPLETED',
+--  '550e8400-e29b-41d4-a716-446655440001', DATE_SUB(NOW(), INTERVAL 1 DAY), 'shopping'),
+-- ('t006', 'Préparer rapport mensuel', 'Analyses et statistiques', 'MAIN', 'MEDIUM', 'IN_PROGRESS',
+--  '550e8400-e29b-41d4-a716-446655440001', NOW(), 'report'),
+--
+-- -- Tâches pour jane
+-- ('t007', 'Rendez-vous médecin', 'Contrôle annuel', 'MAIN', 'MEDIUM', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440002', DATE_ADD(NOW(), INTERVAL 3 DAY), 'health'),
+-- ('t008', 'Répondre aux emails', 'Priorité clients', 'MAIN', 'HIGH', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440002', NOW(), 'communication');
+--
+-- -- Sous-tâches
+-- INSERT INTO tasks (id, title, description, task_type, priority, status, user_id, parent_task_id, due_date) VALUES
+-- ('st001', 'Design architecture NLP', 'Concevoir le modèle de données', 'SUB', 'HIGH', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440000', 't002', DATE_ADD(NOW(), INTERVAL 1 DAY)),
+-- ('st002', 'Implémenter parser date', 'Parser expressions temporelles', 'SUB', 'MEDIUM', 'IN_PROGRESS',
+--  '550e8400-e29b-41d4-a716-446655440000', 't002', DATE_ADD(NOW(), INTERVAL 2 DAY)),
+-- ('st003', 'Tests parser', 'Tests unitaires du parser', 'SUB', 'LOW', 'TODO',
+--  '550e8400-e29b-41d4-a716-446655440000', 't002', DATE_ADD(NOW(), INTERVAL 3 DAY));
+--
+-- -- Dépendances entre tâches
+-- INSERT INTO task_dependencies (id, predecessor_id, successor_id, dependency_type) VALUES
+-- ('t002_t003', 't002', 't003', 'FINISH_TO_START'),
+-- ('st001_st002', 'st001', 'st002', 'START_TO_START'),
+-- ('st002_st003', 'st002', 'st003', 'FINISH_TO_START');
+--
+-- -- Tags pour tâches
+-- INSERT INTO task_tags (task_id, tag_name) VALUES
+-- ('t001', 'meeting'),
+-- ('t001', 'team'),
+-- ('t002', 'ai'),
+-- ('t002', 'backend'),
+-- ('t002', 'development'),
+-- ('t003', 'testing'),
+-- ('t003', 'quality'),
+-- ('t004', 'documentation'),
+-- ('t005', 'shopping'),
+-- ('t006', 'report'),
+-- ('t007', 'health'),
+-- ('t008', 'email');
+--
+-- -- Événements calendrier
+-- # INSERT INTO calendar_event (id, title, description, start_time, end_time, user_id, task_id, color) VALUES
+-- # ('e001', 'Réunion équipe', 'Revue hebdomadaire',
+-- #  DATE_ADD(NOW(), INTERVAL 1 DAY),
+-- #  DATE_ADD(DATE_ADD(NOW(), INTERVAL 1 DAY), INTERVAL 1 HOUR),
+-- #  '550e8400-e29b-41d4-a716-446655440000', 't001', '#FF6B6B'),
+-- #
+-- # ('e002', 'Développement NLP', 'Session focus',
+-- #  DATE_ADD(NOW(), INTERVAL 2 DAY),
+-- #  DATE_ADD(DATE_ADD(NOW(), INTERVAL 2 DAY), INTERVAL 3 HOUR),
+-- #  '550e8400-e29b-41d4-a716-446655440000', 't002', '#4ECDC4'),
+-- #
+-- # ('e003', 'Rendez-vous médical', 'Contrôle annuel',
+-- #  DATE_ADD(NOW(), INTERVAL 3 DAY),
+-- #  DATE_ADD(DATE_ADD(NOW(), INTERVAL 3 DAY), INTERVAL 1 HOUR),
+-- #  '550e8400-e29b-41d4-a716-446655440002', 't007', '#45B7D1');
+--
+-- -- Suivi du temps
+-- INSERT INTO time_tracking (id, task_id, user_id, start_time, end_time, duration_ms, focus_score) VALUES
+-- ('tt001', 't002', '550e8400-e29b-41d4-a716-446655440000',
+--  DATE_SUB(NOW(), INTERVAL 3 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR), 3600000, 85),
+-- ('tt002', 't002', '550e8400-e29b-41d4-a716-446655440000',
+--  DATE_SUB(NOW(), INTERVAL 5 HOUR), DATE_SUB(NOW(), INTERVAL 4 HOUR), 3600000, 90),
+-- ('tt003', 't006', '550e8400-e29b-41d4-a716-446655440001',
+--  DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 1 HOUR), 3600000, 75);
+--
+-- -- Commentaires
+-- INSERT INTO comments (id, task_id, user_id, content) VALUES
+-- ('c001', 't002', '550e8400-e29b-41d4-a716-446655440000', 'J''ai commencé l''implémentation du parser de dates'),
+-- ('c002', 't002', '550e8400-e29b-41d4-a716-446655440001', 'Bonne idée d''ajouter le support des expressions relatives'),
+-- ('c003', 't006', '550e8400-e29b-41d4-a716-446655440001', 'Le rapport nécessite plus de données statistiques');
+--
+-- -- Notifications
+-- INSERT INTO notifications (id, user_id, type, title, message, related_task_id) VALUES
+-- ('n001', '550e8400-e29b-41d4-a716-446655440000', 'TASK_ASSIGNED', 'Nouvelle tâche assignée',
+--  'La tâche "Implémenter système NLP" vous a été assignée', 't002'),
+-- ('n002', '550e8400-e29b-41d4-a716-446655440000', 'DEADLINE_REMINDER', 'Rappel d''échéance',
+--  'La tâche "Réunion équipe développement" est due demain', 't001'),
+-- ('n003', '550e8400-e29b-41d4-a716-446655440002', 'PRODUCTIVITY_TIP', 'Conseil productivité',
+--  'Vous avez 2 tâches en attente, planifiez-les cette semaine', NULL);
+--
+-- -- Insights de productivité
+-- INSERT INTO productivity_insights (id, user_id, insight_type, title, description) VALUES
+-- ('i001', '550e8400-e29b-41d4-a716-446655440000', 'WEEKLY_SUMMARY', 'Résumé hebdomadaire',
+--  'Vous avez complété 3 tâches sur 8 cette semaine. Productivité en hausse de 15%'),
+-- ('i002', '550e8400-e29b-41d4-a716-446655440000', 'PRODUCTIVITY_TIP', 'Optimisez votre temps',
+--  'Vos sessions du matin sont 25% plus productives. Planifiez les tâches difficiles avant midi');
+--
+-- -- Modèles de tâches
+-- INSERT INTO task_templates (id, template_name, title, description, priority, category) VALUES
+-- ('tmp001', 'Réunion standard', 'Préparer réunion', 'Préparation ordre du jour et matériel', 'MEDIUM', 'meeting'),
+-- ('tmp002', 'Rapport mensuel', 'Rapport d''activité', 'Collecte données et rédaction', 'HIGH', 'report'),
+-- ('tmp003', 'Revue code', 'Revue de code', 'Vérification qualité et standards', 'MEDIUM', 'development');
 
 -- ============================================
 -- INDEX SUPPLÉMENTAIRES POUR PERFORMANCE
