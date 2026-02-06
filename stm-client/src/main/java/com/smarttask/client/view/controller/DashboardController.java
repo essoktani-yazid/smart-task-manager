@@ -1,5 +1,6 @@
 package com.smarttask.client.view.controller;
 
+import com.smarttask.client.service.GoogleCalendarService;
 import com.smarttask.client.service.TaskService;
 import com.smarttask.model.Priority;
 import com.smarttask.model.Status;
@@ -43,9 +44,12 @@ public class DashboardController {
     private User currentUser;
     private final TaskService taskService = new TaskService();
     private final ObservableList<Task> tasks = FXCollections.observableArrayList();
+    //private final GoogleCalendarService googleCalendarService ;
 
     // Cache pour la vue Analytics pour éviter de la recharger à chaque fois
     private Parent analyticsView;
+
+
 
     @FXML
     private void initialize() {
@@ -152,6 +156,8 @@ public class DashboardController {
         try {
             Parent loginView = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
             mainBorderPane.getScene().setRoot(loginView);
+            //googleCalendarService.disconnect();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -28,6 +28,10 @@ public class PlannerManager {
     
     private final User currentUser; // Current logged-in user
     private final boolean useDatabaseMode;
+
+    // Google Calendar Service
+    private final GoogleCalendarService googleCalendarService;
+    private boolean googleSyncEnabled = true;
     
     public PlannerManager(User currentUser) {
         this(currentUser, true);
@@ -39,6 +43,7 @@ public class PlannerManager {
         
         this.eventDAO = new CalendarEventDAO();
         this.taskDAO = new TaskDAO();
+        this.googleCalendarService = GoogleCalendarService.getInstance();
         
         this.events = FXCollections.observableArrayList();
         this.tasks = FXCollections.observableArrayList();
@@ -139,8 +144,75 @@ public class PlannerManager {
     public boolean hasItemsOn(LocalDate date) {
         return !getItemsForDate(date).isEmpty();
     }
-    
+    // ════════════════════════════════════════════════════════════════════════════
+    // GOOGLE CALENDAR SYNC SETTINGS
+    // ════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Enable Google Calendar sync
+     * This will authenticate with Google and start syncing
+     */
+    public void enableGoogleSync() {
+        googleCalendarService.authenticate(currentUser)
+                .thenAccept(success -> {
+                    if (success) {
+                        googleSyncEnabled = true;
+                        System.out.println("✅ Google Calendar sync enabled");
+
+                        // Optionally sync all existing items
+                        // syncAllToGoogle();
+                    } else {
+                        googleSyncEnabled = false;
+                        System.err.println("❌ Failed to enable Google Calendar sync");
+                    }
+                });
+    }
+
+    /**
+     * Disable Google Calendar sync
+     */
+    public void disableGoogleSync() {
+        googleSyncEnabled = false;
+        googleCalendarService.disconnect();
+        System.out.println("🔌 Google Calendar sync disabled");
+    }
+
+    /**
+     * Check if Google sync is enabled and authenticated
+     */
+    public boolean isGoogleSyncEnabled() {
+        return googleSyncEnabled && googleCalendarService.isAuthenticated();
+    }
+
+    /**
+     * Sync all tasks and events to Google Calendar
+     */
+    public void syncAllToGoogle() {
+        if (!isGoogleSyncEnabled()) {
+            System.err.println("⚠️ Google sync not enabled");
+            return;
+        }
+
+        List<Task> tasks = getAllTasks();
+        List<CalendarEvent> events = getAllEvents();
+
+        googleCalendarService.syncAll(tasks, events)
+                .thenAccept(count -> {
+                    System.out.println("✅ Synced " + count + " items to Google Calendar");
+                });
+    }
+
+    /**
+     * Add a sync listener
+     */
+    public void addGoogleSyncListener(GoogleCalendarService.GoogleCalendarSyncListener listener) {
+        googleCalendarService.addSyncListener(listener);
+    }
+
+
+
     // ============= EVENT OPERATIONS =============
+
     
     /**
      * Add a new event (public)
@@ -158,6 +230,15 @@ public class PlannerManager {
                 System.err.println("❌ Failed to add event to database");
                 events.remove(event);
             }
+        }
+        // Sync to Google Calendar
+        if (isGoogleSyncEnabled()) {
+            googleCalendarService.syncEvent(event)
+                    .thenAccept(googleId -> {
+                        if (googleId != null) {
+                            System.out.println("   📤 Synced to Google Calendar");
+                        }
+                    });
         }
     }
     
@@ -181,6 +262,15 @@ public class PlannerManager {
                 System.out.println("✅ Event updated: " + event.getTitle());
             }
         }
+        // Sync to Google Calendar
+        if (isGoogleSyncEnabled()) {
+            googleCalendarService.syncEvent(event)
+                    .thenAccept(googleId -> {
+                        if (googleId != null) {
+                            System.out.println("   📤 Synced update to Google Calendar");
+                        }
+                    });
+        }
     }
     
     /**
@@ -194,6 +284,19 @@ public class PlannerManager {
         if (useDatabaseMode) {
             eventDAO.deleteEvent(event.getId());
         }
+        // Delete from Google first
+        if (isGoogleSyncEnabled()) {
+            googleCalendarService.deleteEvent(event)
+                    .thenAccept(success -> {
+                        if (success) {
+                            System.out.println("   🗑️ Deleted from Google Calendar");
+                        }
+                    });
+        }
+    }
+
+    public GoogleCalendarService getGoogleCalendarService() {
+        return googleCalendarService;
     }
     
     /**
@@ -228,6 +331,15 @@ public class PlannerManager {
                 e.printStackTrace();
             }
         }
+        // Sync to Google Calendar
+        if (isGoogleSyncEnabled()) {
+            googleCalendarService.syncTask(task)
+                    .thenAccept(googleId -> {
+                        if (googleId != null) {
+                            System.out.println("   📤 Synced to Google Calendar");
+                        }
+                    });
+        }
     }
     
     /**
@@ -253,6 +365,15 @@ public class PlannerManager {
                 e.printStackTrace();
             }
         }
+        // Sync to Google Calendar
+        if (isGoogleSyncEnabled()) {
+            googleCalendarService.syncTask(task)
+                    .thenAccept(googleId -> {
+                        if (googleId != null) {
+                            System.out.println("   📤 Synced update to Google Calendar");
+                        }
+                    });
+        }
     }
     
     /**
@@ -265,6 +386,14 @@ public class PlannerManager {
         
         if (useDatabaseMode) {
             taskDAO.deleteById(task.getId());
+        }
+        if (isGoogleSyncEnabled()) {
+            googleCalendarService.deleteTask(task)
+                    .thenAccept(success -> {
+                        if (success) {
+                            System.out.println("   🗑️ Deleted from Google Calendar");
+                        }
+                    });
         }
     }
     

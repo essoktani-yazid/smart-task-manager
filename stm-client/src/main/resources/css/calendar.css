@@ -2769,3 +2769,82 @@
         -fx-font-size: 12;
         -fx-font-weight: 600;
     }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   GOOGLE CALENDAR SECTION STYLES
+   Add these to your calendar.css
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+    /* Google Calendar Section Container */
+    .google-calendar-section {
+        -fx-background-color: transparent;
+    }
+
+    /* The panel itself is styled in GoogleCalendarSettingsPanel.java,
+       but you can override here if needed */
+
+    .google-calendar-section .google-panel {
+        -fx-background-color: white;
+        -fx-background-radius: 12;
+        -fx-border-color: #e5e7eb;
+        -fx-border-radius: 12;
+        -fx-border-width: 1;
+    }
+
+    /* Connected state indicator */
+    .sync-status-connected {
+        -fx-background-color: #f0fdf4;
+        -fx-border-color: #bbf7d0;
+    }
+
+    .sync-status-error {
+        -fx-background-color: #fef2f2;
+        -fx-border-color: #fecaca;
+    }
+
+    /* Google brand button styling */
+    .google-connect-btn {
+        -fx-background-color: #4285f4;
+        -fx-text-fill: white;
+        -fx-font-size: 12;
+        -fx-font-weight: 600;
+        -fx-padding: 8 16;
+        -fx-background-radius: 6;
+        -fx-cursor: hand;
+    }
+
+    .google-connect-btn:hover {
+        -fx-background-color: #3367d6;
+    }
+
+    .google-disconnect-btn {
+        -fx-background-color: white;
+        -fx-text-fill: #dc2626;
+        -fx-font-size: 12;
+        -fx-font-weight: 600;
+        -fx-padding: 8 16;
+        -fx-background-radius: 6;
+        -fx-border-color: #fecaca;
+        -fx-border-radius: 6;
+        -fx-cursor: hand;
+    }
+
+    .google-disconnect-btn:hover {
+        -fx-background-color: #fef2f2;
+    }
+
+    .google-sync-btn {
+        -fx-background-color: white;
+        -fx-text-fill: #059669;
+        -fx-font-size: 12;
+        -fx-font-weight: 600;
+        -fx-padding: 8 16;
+        -fx-background-radius: 6;
+        -fx-border-color: #a7f3d0;
+        -fx-border-radius: 6;
+        -fx-cursor: hand;
+    }
+
+    .google-sync-btn:hover {
+        -fx-background-color: #f0fdf4;
+    }

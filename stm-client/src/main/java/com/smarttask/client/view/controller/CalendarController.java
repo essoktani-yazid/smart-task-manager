@@ -78,6 +78,8 @@ public class CalendarController implements Initializable {
 
     private static final int HOUR_HEIGHT = 60;
 
+    private GoogleCalendarSettingsPanel googleCalendarPanel;
+
     // FXML Components
     @FXML private Label currentDateLabel;
     @FXML private Button prevButton;
@@ -113,6 +115,7 @@ public class CalendarController implements Initializable {
     @FXML private Label taskCountLabel;
     @FXML private Label eventCountLabel;
     @FXML private Label completedCountLabel;
+    @FXML private VBox googleCalendarContainer;
 
     // State
     private LocalDate currentDate = LocalDate.now();
@@ -142,6 +145,7 @@ public class CalendarController implements Initializable {
         setupUpcomingItemsList();
         updateFilterButtonLabels();
         setupPersistentFilterDropdowns();
+        setupGoogleCalendarPanel();
         updateView();
     }
 
@@ -186,6 +190,100 @@ public class CalendarController implements Initializable {
         SessionManager.getInstance().setCurrentUser(user);
         this.plannerManager = new PlannerManager(user);
         updateView();
+    }
+
+    /**
+     * Setup Google Calendar integration panel
+     */
+    private void setupGoogleCalendarPanel() {
+        if (googleCalendarContainer != null && plannerManager != null) {
+
+            // Create the settings panel
+            googleCalendarPanel = new GoogleCalendarSettingsPanel(
+                    plannerManager.getGoogleCalendarService()
+            );
+
+            // Set up action callbacks
+            googleCalendarPanel.setOnConnectAction(() -> {
+                // Enable Google sync through PlannerManager
+                plannerManager.enableGoogleSync();
+            });
+
+            googleCalendarPanel.setOnDisconnectAction(() -> {
+                // Disable Google sync
+                plannerManager.disableGoogleSync();
+            });
+
+            googleCalendarPanel.setOnSyncAction(() -> {
+                // Sync all items
+                plannerManager.syncAllToGoogle();
+            });
+
+            // Add to container
+            googleCalendarContainer.getChildren().add(googleCalendarPanel);
+
+            System.out.println("✅ Google Calendar panel initialized");
+        }
+    }
+
+
+//    **
+//            * Create a small sync status indicator for the header
+// */
+    private HBox createSyncStatusIndicator() {
+        HBox indicator = new HBox(6);
+        indicator.setAlignment(Pos.CENTER_LEFT);
+        indicator.setPadding(new Insets(4, 10, 4, 10));
+        indicator.setStyle(
+                "-fx-background-color: #f0fdf4; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-border-color: #bbf7d0; " +
+                        "-fx-border-radius: 12;"
+        );
+
+        // Animated dot
+        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
+        dot.setFill(javafx.scene.paint.Color.web("#22c55e"));
+
+        Label text = new Label("Synced");
+        text.setStyle("-fx-font-size: 10; -fx-font-weight: 600; -fx-text-fill: #16a34a;");
+
+        indicator.getChildren().addAll(dot, text);
+        indicator.setVisible(false); // Hidden by default
+
+        // Listen for sync status changes
+        plannerManager.addGoogleSyncListener((status, message) -> {
+            Platform.runLater(() -> {
+                switch (status) {
+                    case CONNECTED, SYNCED:
+                        indicator.setVisible(true);
+                        text.setText("Synced");
+                        dot.setFill(javafx.scene.paint.Color.web("#22c55e"));
+                        break;
+                    case SYNCING:
+                        indicator.setVisible(true);
+                        text.setText("Syncing...");
+                        dot.setFill(javafx.scene.paint.Color.web("#3b82f6"));
+                        break;
+                    case DISCONNECTED:
+                        indicator.setVisible(false);
+                        break;
+                    case ERROR:
+                        indicator.setVisible(true);
+                        text.setText("Sync Error");
+                        dot.setFill(javafx.scene.paint.Color.web("#ef4444"));
+                        indicator.setStyle(
+                                "-fx-background-color: #fef2f2; " +
+                                        "-fx-background-radius: 12; " +
+                                        "-fx-border-color: #fecaca; " +
+                                        "-fx-border-radius: 12;"
+                        );
+                        break;
+                }
+            });
+        });
+
+        return indicator;
     }
 
     /**

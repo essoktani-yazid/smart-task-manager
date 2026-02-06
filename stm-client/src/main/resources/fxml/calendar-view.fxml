@@ -222,8 +222,8 @@
                     <Label text="Next 30 days" styleClass="sidebar-subtitle-new"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
-                <!-- Optional: Filter/Sort button -->
-                <Button text="⋮" styleClass="sidebar-menu-btn"/>
+<!--                &lt;!&ndash; Optional: Filter/Sort button &ndash;&gt;-->
+<!--                <Button text="⋮" styleClass="sidebar-menu-btn"/>-->
             </HBox>
 
             <!-- Quick Stats Bar -->
@@ -271,6 +271,21 @@
                 <Label text="Tasks and events will appear here" styleClass="empty-subtitle"/>
             </VBox>
             -->
+            <!-- Divider before Google Calendar section -->
+            <HBox styleClass="sidebar-divider">
+                <padding>
+                    <Insets top="8" right="24" bottom="8" left="24"/>
+                </padding>
+                <Separator HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <!-- Google Calendar Sync Panel Container -->
+            <VBox fx:id="googleCalendarContainer" spacing="0" styleClass="google-calendar-section">
+                <padding>
+                    <Insets top="8" right="16" bottom="16" left="16"/>
+                </padding>
+                <!-- The GoogleCalendarSettingsPanel will be added here programmatically -->
+            </VBox>
 
         </VBox>
     </right>
