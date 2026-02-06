@@ -72,6 +72,9 @@ public class AIController {
     private String pendingSqlQuery = null;
     private Rectangle cursorNode; // Le curseur clignotant
 
+    // Nouveau drapeau pour gérer l'UX de confirmation
+    private boolean waitingForConfirmationResult = false; 
+
     @FXML
     public void initialize() {
         // 1. Initialisation de l'interface : Cacher les éléments non nécessaires
@@ -129,6 +132,7 @@ public class AIController {
         userInput.clear();
         userInput.setPrefHeight(40);
         pendingSqlQuery = null;
+        waitingForConfirmationResult = false; // Reset du state
         
         if (confirmationBox != null) {
             confirmationBox.setVisible(false);
@@ -180,7 +184,6 @@ public class AIController {
             }
 
             // CAS 2 : Réponse finale
-            // Extraction sécurisée pour éviter UnsupportedOperationException sur JsonNull
             String displayMessage = "";
             if (response.has("display_message") && !response.get("display_message").isJsonNull()) {
                 displayMessage = response.get("display_message").getAsString();
@@ -211,6 +214,14 @@ public class AIController {
                 
                 setGeneratingState(false);
 
+                // --- MODIFICATION ICI : NETTOYAGE SI RETOUR DE CONFIRMATION ---
+                if (waitingForConfirmationResult) {
+                    // On efface tout le texte précédent (question + demande confirmation + message "Executing")
+                    // pour afficher proprement le résultat final (Succès/Echec)
+                    aiResponseFlow.getChildren().clear();
+                    waitingForConfirmationResult = false; 
+                }
+
                 // Animation Rich Text (Machine à écrire + Code highlighting)
                 animateText(finalDisplayMessage, () -> {
                     if (finalRequiresConfirmation) {
@@ -230,7 +241,7 @@ public class AIController {
         }
     }
 
-    // --- ACTIONS DE CONFIRMATION (AVEC FEEDBACK CAPSULES) ---
+    // --- ACTIONS DE CONFIRMATION (AVEC NOUVEAU FLUX) ---
 
     @FXML
     private void handleConfirm() {
@@ -241,8 +252,16 @@ public class AIController {
             
             if (webSocket != null) webSocket.sendText(gson.toJson(payload), true);
 
-            // Feedback Visuel (Capsule Verte)
-            addFeedbackMessage("Action confirmed successfully.", true);
+            // --- MODIFICATION ICI : FEEDBACK D'ATTENTE ---
+            
+            // 1. Ajouter le message "Executing..." au bas du texte actuel
+            Text executingText = new Text("\n\n⚙️ Executing operation...");
+            executingText.setStyle("-fx-fill: #aaaaaa; -fx-font-style: italic;"); // Style gris italique
+            aiResponseFlow.getChildren().add(executingText);
+            scrollToBottom();
+
+            // 2. Activer le mode "attente de résultat" pour déclencher le clear() au retour
+            waitingForConfirmationResult = true;
         }
         hideConfirmation();
     }
@@ -254,7 +273,6 @@ public class AIController {
         
         if (webSocket != null) webSocket.sendText(gson.toJson(payload), true);
 
-        // Feedback Visuel (Capsule Rouge)
         addFeedbackMessage("Action cancelled by user.", false);
         hideConfirmation();
     }
@@ -271,24 +289,19 @@ public class AIController {
      * Ajoute un message stylisé (Capsule/Badge) dans le flux de réponse.
      */
     private void addFeedbackMessage(String message, boolean isSuccess) {
-        // Création de l'icône SVG
         SVGPath icon = new SVGPath();
         if (isSuccess) {
-            // Check mark
             icon.setContent("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z");
             icon.getStyleClass().add("icon-success");
         } else {
-            // X mark (ou Warning)
             icon.setContent("M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z");
             icon.getStyleClass().add("icon-error");
         }
 
-        // Création du Label (Capsule)
         Label feedbackLabel = new Label(message);
         feedbackLabel.setGraphic(icon); 
         feedbackLabel.getStyleClass().add(isSuccess ? "msg-success" : "msg-error");
         
-        // Ajout d'un saut de ligne avant
         aiResponseFlow.getChildren().add(new Text("\n\n"));
         aiResponseFlow.getChildren().add(feedbackLabel);
         
@@ -306,7 +319,6 @@ public class AIController {
 
     private void animateText(String fullText, Runnable onFinished) {
         initCursor();
-        // Reset du curseur
         aiResponseFlow.getChildren().remove(cursorNode);
         aiResponseFlow.getChildren().add(cursorNode);
         if (!cursorNode.getStyleClass().contains("cursor-blink")) {
@@ -314,7 +326,6 @@ public class AIController {
         }
 
         Timeline timeline = new Timeline();
-        // Regex complexe pour garder les espaces et sauts de ligne lors du split
         String[] words = fullText.split("(?=[\\s\\n])|(?<=[\\s\\n])"); 
         
         Duration delay = Duration.ZERO;
@@ -325,7 +336,7 @@ public class AIController {
                 aiResponseFlow.getChildren().add(cursorNode);
             });
             timeline.getKeyFrames().add(kf);
-            delay = delay.add(Duration.millis(15)); // Vitesse de frappe
+            delay = delay.add(Duration.millis(15));
         }
         
         timeline.setOnFinished(e -> {
@@ -336,16 +347,13 @@ public class AIController {
     }
 
     private void appendRichText(String chunk) {
-        // 1. Retour ligne
         if (chunk.equals("\n")) {
             aiResponseFlow.getChildren().add(new Text("\n"));
             return;
         }
 
-        // 2. Nettoyage Markdown basique
         String text = chunk.replace("- ", "• ").replace("* ", "• ");
         
-        // 3. Détection CODE PILL (`table`)
         if (text.contains("`")) {
             String cleanCode = text.replace("`", "").trim();
             if (!cleanCode.isEmpty()) {
@@ -357,7 +365,6 @@ public class AIController {
             return;
         }
 
-        // 4. Coloration Syntaxique SQL (Safe vs Danger)
         String upper = text.toUpperCase().trim();
         Text textNode = new Text(text);
         
@@ -371,7 +378,6 @@ public class AIController {
             textNode.getStyleClass().add("sql-keyword-logic");
         }
         else {
-            // 5. Styles Markdown standards (Gras et Titres)
             if (text.contains("**")) {
                 textNode.setText(text.replace("**", ""));
                 isBoldMode = !isBoldMode; 

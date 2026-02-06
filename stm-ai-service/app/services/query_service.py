@@ -199,3 +199,56 @@ async def handle_user_request(websocket, user_id, user_message):
             })
     
     log.info("--- Fin du traitement ---")
+
+
+async def execute_and_summarize(websocket, sql_query):
+    """
+    Exécute le SQL confirmé, vérifie le résultat, et utilise l'IA pour la réponse finale.
+    """
+    log.info(f"--- Exécution confirmée : {sql_query} ---")
+    
+    # 1. Feedback visuel : Exécution en cours
+    if not await send_status(websocket, "Executing operation..."): return
+
+    execution_result = ""
+    is_success = True
+
+    # 2. Exécution réelle en base de données
+    try:
+        # On utilise db.execute qui retourne un curseur (via SQLAlchemy ou connecteur brut)
+        cursor = db.execute(sql_query)
+        # On tente de récupérer le nombre de lignes affectées (rowcount)
+        row_count = cursor.rowcount if hasattr(cursor, 'rowcount') else "unknown"
+        
+        execution_result = f"Success. Rows affected: {row_count}"
+        log.db(f"Exécution OK. Rows: {row_count}")
+        
+    except Exception as e:
+        is_success = False
+        execution_result = f"Error: {str(e)}"
+        log.error(f"Erreur SQL execution: {e}")
+
+    # 3. Feedback visuel : Analyse du résultat
+    if not await send_status(websocket, "Analyzing result..."): return
+
+    # 4. Appel au LLM pour générer la réponse post-action
+    # On crée un prompt 'ad-hoc' ou on l'ajoute dans prompts.py
+    summary_prompt = (
+        f"The user ordered an operation. Here is the SQL executed: \"{sql_query}\".\n"
+        f"Here is the database execution result: \"{execution_result}\".\n"
+        "Generate a short, natural language response confirming the action to the user."
+        "If it failed, apologize and explain why."
+    )
+
+    final_message = await call_llm(
+        summary_prompt, 
+        "You are a helpful task manager assistant.", 
+        is_json=False
+    )
+
+    # 5. Envoi de la réponse finale au client
+    # Le client affichera le message et arrêtera le spinner
+    await safe_send(websocket, {
+        "display_message": final_message,
+        "requires_confirmation": False
+    })

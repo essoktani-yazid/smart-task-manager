@@ -99,3 +99,5 @@ def get_impact_warning_prompt(user_message, count, examples_str):
         4. End with a direct question asking for confirmation (e.g., "Do you want to proceed?").
         5. NO meta-text (do not say "Here is the warning"). Output ONLY the message.
     """
+
+    

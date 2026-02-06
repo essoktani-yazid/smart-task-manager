@@ -2,7 +2,7 @@ import json
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from app.database import db
-from app.services.query_service import handle_user_request
+from app.services.query_service import handle_user_request, execute_and_summarize
 from app.utils.logger import log
 
 app = FastAPI()
@@ -40,17 +40,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     log.incoming(f"Action reçue : {action}")
                     
                     if action == "CONFIRM":
-                        sql = data.get("sql")
-                        if sql:
-                            log.db(f"Exécution SQL confirmée : {sql}")
-                            db.execute(sql)
-                            await websocket.send_json({
-                                "display_message": "✅ Action effectuée avec succès !",
-                                "requires_confirmation": False
-                            })
+                        sql_to_run = data.get("sql")
+                        if sql_to_run:
+                            # APPEL DE LA NOUVELLE FONCTION INTELLIGENTE
+                            await execute_and_summarize(websocket, sql_to_run)
+                            
                     elif action == "CANCEL":
                         await websocket.send_json({
-                            "display_message": "❌ Action annulée.",
+                            "display_message": "Action cancelled. Nothing was changed.",
                             "requires_confirmation": False
                         })
                 
