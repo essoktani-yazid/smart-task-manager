@@ -102,30 +102,22 @@ public class DatabaseConnection {
     private static DatabaseConnection instance;
 
     static {
-        // --- CONFIGURATION RAILWAY ---
-        // On récupère les composants séparés pour construire une URL JDBC propre
+        // --- CONFIGURATION ---
         String host = System.getenv("MYSQLHOST");
         String port = System.getenv("MYSQLPORT");
         String dbName = System.getenv("MYSQLDATABASE");
-        
         String envUser = System.getenv("MYSQLUSER");
         String envPass = System.getenv("MYSQLPASSWORD");
 
         if (host != null && !host.isEmpty()) {
             System.out.println(">>> Mode Railway détecté.");
-            
-            // Construction manuelle de l'URL pour éviter les erreurs de parsing et ajouter les options SSL
-            // allowPublicKeyRetrieval=true est OBLIGATOIRE sur Railway avec le nouveau driver
-            url = String.format("jdbc:mysql://%s:%s/%s?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8", 
+            // Construction URL avec options anti-crash (Timeouts + AutoReconnect)
+            url = String.format("jdbc:mysql://%s:%s/%s?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&connectTimeout=20000", 
                                 host, port, dbName);
-            
             username = envUser;
             password = envPass;
-            
-            System.out.println(">>> URL JDBC générée : " + url); // Log pour débugger (sans le mot de passe)
         } else {
-            // --- CONFIGURATION LOCALE ---
-            System.out.println(">>> Mode Local détecté. Chargement de database.properties...");
+            System.out.println(">>> Mode Local détecté.");
             loadDatabaseProperties();
         }
 
@@ -139,27 +131,51 @@ public class DatabaseConnection {
     private static void loadDatabaseProperties() {
         try (InputStream input = DatabaseConnection.class.getClassLoader()
                 .getResourceAsStream("database.properties")) {
-            
             if (input == null) throw new RuntimeException("database.properties introuvable !");
-
             Properties prop = new Properties();
             prop.load(input);
-
             url = prop.getProperty("db.url");
             username = prop.getProperty("db.username");
             password = prop.getProperty("db.password");
-            
         } catch (Exception e) {
             throw new RuntimeException("Erreur chargement properties", e);
         }
     }
 
+    /**
+     * Tente d'obtenir une connexion avec 5 essais (Retry Logic)
+     * Pour gérer le "Cold Start" de Railway
+     */
     public static Connection getConnection() throws SQLException {
         if (url == null) throw new SQLException("URL Base de données non configurée");
-        return DriverManager.getConnection(url, username, password);
+
+        int maxRetries = 5;
+        int attempt = 0;
+
+        while (attempt < maxRetries) {
+            try {
+                return DriverManager.getConnection(url, username, password);
+            } catch (SQLException e) {
+                attempt++;
+                System.err.println("⚠️ Échec connexion DB (Tentative " + attempt + "/" + maxRetries + ")");
+                
+                // Si c'est la dernière tentative, on abandonne et on lance l'erreur
+                if (attempt == maxRetries) {
+                    throw e;
+                }
+
+                // Sinon, on attend 3 secondes avant de réessayer
+                try {
+                    System.out.println("⏳ La base de données dort peut-être... Attente de 3s...");
+                    Thread.sleep(3000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        return null;
     }
-    
-    // ... (Gardez les méthodes getInstance et closeConnection comme avant) ...
+
     public static DatabaseConnection getInstance() {
         if (instance == null) {
             synchronized (DatabaseConnection.class) {
@@ -171,9 +187,7 @@ public class DatabaseConnection {
 
     public static void closeConnection(Connection connection) {
         if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) { /* Ignorer */ }
+            try { connection.close(); } catch (SQLException e) { /* Ignore */ }
         }
     }
 }
