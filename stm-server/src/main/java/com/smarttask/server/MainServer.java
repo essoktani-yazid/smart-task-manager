@@ -16,7 +16,8 @@ import java.sql.SQLException;
  * Launches the server on port 8080 and configures routes.
  */
 public class MainServer {
-    private static final int PORT = 8090;
+    // private static final int PORT = 8090;
+    private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
     public static void main(String[] args) {
         try {
@@ -31,7 +32,8 @@ public class MainServer {
             }
 
             // Create HTTP server
-            HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+            // HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+            HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", PORT), 0);
 
             // Configure routes
             server.createContext("/api/auth", new AuthHandler());

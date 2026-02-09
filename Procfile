@@ -1,0 +1,1 @@
+web: java -jar stm-server/target/stm-server-1.0.0.jar
