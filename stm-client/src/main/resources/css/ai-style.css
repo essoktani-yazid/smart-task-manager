@@ -122,7 +122,7 @@
 .btn-action-small { -fx-background-color: rgba(243, 244, 246, 0.8); -fx-text-fill: #6b7280; -fx-font-size: 11px; -fx-background-radius: 8; -fx-cursor: hand; }
 .btn-action-small:hover { -fx-background-color: #e5e7eb; }
 
-/* --- NOUVEAUX BOUTONS DE CONFIRMATION --- */
+/* --- BOUTONS DE CONFIRMATION --- */
 .btn-confirm {
     -fx-background-color: linear-gradient(to right, #10b981, #059669);
     -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold;
@@ -132,13 +132,34 @@
 .btn-confirm:hover { -fx-scale-x: 1.05; -fx-scale-y: 1.05; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.6), 15, 0, 0, 4); }
 .btn-confirm:pressed { -fx-scale-x: 0.98; -fx-scale-y: 0.98; }
 
+/* BOUTON CANCEL - STYLE NEUTRE & ÉLÉGANT */
 .btn-cancel {
-    -fx-background-color: rgba(254, 226, 226, 0.5); -fx-background-radius: 20;
-    -fx-border-color: rgba(239, 68, 68, 0.3); -fx-border-radius: 20;
-    -fx-text-fill: #ef4444; -fx-font-weight: bold; -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 13px; -fx-padding: 7 20 7 20; -fx-cursor: hand;
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-color: #E5E7EB; /* Gris très clair */
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-text-fill: #6B7280; /* Gris texte moyen */
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-padding: 7 20 7 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);
 }
-.btn-cancel:hover { -fx-background-color: rgba(254, 226, 226, 0.8); -fx-border-color: #ef4444; }
+
+.btn-cancel:hover {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+    -fx-text-fill: #374151;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 8, 0, 0, 2);
+}
+
+.btn-cancel:pressed {
+    -fx-background-color: #F3F4F6;
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
 
 /* =========================================
    5. TEXTE MARKDOWN & FEEDBACK CAPSULES
@@ -153,7 +174,7 @@
 .ai-text-success { -fx-fill: #059669; -fx-font-weight: bold; -fx-font-size: 14px; }
 .ai-text-italic { -fx-fill: #9ca3af; -fx-font-style: italic; -fx-font-size: 13px; }
 
-/* --- CAPSULES DE FEEDBACK --- */
+/* --- CAPSULES DE FEEDBACK (MESSAGES) --- */
 .msg-success {
     -fx-background-color: rgba(209, 250, 229, 0.8); -fx-border-color: #10b981;
     -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 8 12 8 12;
@@ -166,11 +187,9 @@
     -fx-text-fill: #991b1b; -fx-font-weight: bold; -fx-font-size: 13px;
     -fx-font-family: "Segoe UI", sans-serif; -fx-graphic-text-gap: 8;
 }
-.icon-success { -fx-fill: #059669; -fx-scale-x: 0.9; -fx-scale-y: 0.9; }
-.icon-error { -fx-fill: #dc2626; -fx-scale-x: 0.9; -fx-scale-y: 0.9; }
 
 /* =========================================
-   6. ZONE DE RÉPONSE & SCROLL (SCROLLBAR INVISIBLE)
+   6. ZONE DE RÉPONSE & SCROLL
    ========================================= */
 .response-card {
   -fx-background-color: rgba(255, 255, 255, 0.85);
@@ -191,7 +210,7 @@
 .response-text-flow { -fx-background-color: transparent; -fx-padding: 5 10 5 5; }
 
 /* =========================================
-   7. CARTES (HOME)
+   7. CARTES D'ACCUEIL (HOME)
    ========================================= */
 .card-glass {
   -fx-background-color: rgba(255, 255, 255, 0.5);
@@ -203,6 +222,8 @@
   -fx-background-color: white; -fx-translate-y: -5; -fx-border-color: white;
   -fx-effect: dropshadow(gaussian, rgba(139, 92, 246, 0.15), 25, 0, 0, 10);
 }
+
+/* SVG utilisés dans les cartes HOME (Gros format) */
 .card-svg-path { -fx-scale-x: 1.4; -fx-scale-y: 1.4; -fx-stroke-width: 0; }
 .card-icon-container { -fx-padding: 5 0 10 5; -fx-alignment: CENTER_LEFT; }
 
@@ -218,3 +239,34 @@
   -fx-border-color: white; -fx-font-weight: bold; -fx-padding: 15 20; -fx-text-fill: #1f2937;
   -fx-font-size: 16px; -fx-font-family: "Segoe UI", sans-serif; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.03), 10, 0, 0, 2);
 }
+
+/* =========================================
+   8. ICÔNES D'ACTION (CHAT STREAM)
+   (Nouveaux styles spécifiques pour éviter les conflits avec le HOME)
+   ========================================= */
+
+/* Le conteneur rond (Bulle) */
+.chat-icon-container {
+    -fx-background-radius: 50%;
+    -fx-min-width: 40px; -fx-min-height: 40px;
+    -fx-max-width: 40px; -fx-max-height: 40px;
+    -fx-alignment: CENTER;
+    -fx-margin: 0 10 0 0;
+}
+
+/* Les SVG à l'intérieur des actions */
+.chat-icon-svg {
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+    -fx-stroke-width: 0;
+}
+
+/* Couleurs de fond (Bulles) */
+.container-danger { -fx-background-color: rgba(239, 68, 68, 0.1); }
+.container-warning { -fx-background-color: rgba(245, 158, 11, 0.1); }
+.container-success { -fx-background-color: rgba(16, 185, 129, 0.1); }
+
+/* Couleurs des icônes (Remplissage) */
+.icon-danger { -fx-fill: #EF4444; }
+.icon-warning { -fx-fill: #F59E0B; }
+.icon-success { -fx-fill: #10B981; }

@@ -22,6 +22,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
+import com.smarttask.client.config.AppConfig;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -58,9 +59,14 @@ public class AIController {
 
     // --- CONSTANTES ---
     private final String TITLE_TEXT = "How can I supercharge your productivity?";
-    private static final String AI_SERVICE_URL = "ws://localhost:8000/ai/stream";
     private final String ICON_SEND = "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z";
     private final String ICON_STOP = "M6 6h12v12H6z";
+
+    // --- CONSTANTES SVG (MATERIAL DESIGN) ---
+    private static final String SVG_DELETE = "M6 19c0 1.1.9 2 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"; // Poubelle
+    private static final String SVG_WARNING = "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"; // Triangle Attention
+    private static final String SVG_CREATE = "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"; // Plus
+    private static final String SVG_SUCCESS = "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"; // Check
 
     // --- OBJETS UTILITAIRES ---
     private WebSocket webSocket;
@@ -71,8 +77,8 @@ public class AIController {
     private boolean isBoldMode = false;
     private String pendingSqlQuery = null;
     private Rectangle cursorNode; // Le curseur clignotant
-
-    // Nouveau drapeau pour gérer l'UX de confirmation
+    
+    // Drapeau pour gérer le flux de confirmation (Nettoyage écran)
     private boolean waitingForConfirmationResult = false; 
 
     @FXML
@@ -103,7 +109,7 @@ public class AIController {
     private void connectToAiService() {
         HttpClient client = HttpClient.newHttpClient();
         client.newWebSocketBuilder()
-                .buildAsync(URI.create(AI_SERVICE_URL), new WebSocketListener())
+                .buildAsync(URI.create(AppConfig.AI_WS_URL), new WebSocketListener())
                 .thenAccept(ws -> {
                     this.webSocket = ws;
                     System.out.println("✅ Connecté au service IA");
@@ -199,10 +205,17 @@ public class AIController {
                 sqlQuery = response.get("sql_to_execute").getAsString();
             }
 
+            // [NOUVEAU] Récupération du type d'opération pour l'icône
+            String opType = "";
+            if (response.has("operation_type") && !response.get("operation_type").isJsonNull()) {
+                opType = response.get("operation_type").getAsString();
+            }
+
             // Variables finales pour le thread UI
             String finalDisplayMessage = displayMessage;
             boolean finalRequiresConfirmation = requiresConfirmation;
             String finalSqlQuery = sqlQuery;
+            String finalOpType = opType;
 
             Platform.runLater(() -> {
                 // Arrêt du spinner
@@ -214,12 +227,25 @@ public class AIController {
                 
                 setGeneratingState(false);
 
-                // --- MODIFICATION ICI : NETTOYAGE SI RETOUR DE CONFIRMATION ---
+                // --- GESTION DU NETTOYAGE APRES CONFIRMATION ---
                 if (waitingForConfirmationResult) {
-                    // On efface tout le texte précédent (question + demande confirmation + message "Executing")
-                    // pour afficher proprement le résultat final (Succès/Echec)
+                    // On efface tout le texte précédent pour afficher le résultat propre
                     aiResponseFlow.getChildren().clear();
                     waitingForConfirmationResult = false; 
+                    
+                    // Si on revient d'une confirmation sans type précis, on affiche SUCCESS par défaut
+                    if (finalOpType.isEmpty()) {
+                         aiResponseFlow.getChildren().add(createStyledIcon("SUCCESS"));
+                    }
+                }
+
+                // --- INJECTION DE L'ICÔNE SVG ---
+                if (!finalOpType.isEmpty()) {
+                    Node iconNode = createStyledIcon(finalOpType);
+                    if (iconNode != null) {
+                        aiResponseFlow.getChildren().add(iconNode);
+                        aiResponseFlow.getChildren().add(new Text("\n")); // Petit saut de ligne
+                    }
                 }
 
                 // Animation Rich Text (Machine à écrire + Code highlighting)
@@ -241,7 +267,7 @@ public class AIController {
         }
     }
 
-    // --- ACTIONS DE CONFIRMATION (AVEC NOUVEAU FLUX) ---
+    // --- ACTIONS DE CONFIRMATION ---
 
     @FXML
     private void handleConfirm() {
@@ -252,15 +278,14 @@ public class AIController {
             
             if (webSocket != null) webSocket.sendText(gson.toJson(payload), true);
 
-            // --- MODIFICATION ICI : FEEDBACK D'ATTENTE ---
-            
+            // --- FEEDBACK D'ATTENTE ---
             // 1. Ajouter le message "Executing..." au bas du texte actuel
             Text executingText = new Text("\n\n⚙️ Executing operation...");
-            executingText.setStyle("-fx-fill: #aaaaaa; -fx-font-style: italic;"); // Style gris italique
+            executingText.setStyle("-fx-fill: #aaaaaa; -fx-font-style: italic;");
             aiResponseFlow.getChildren().add(executingText);
             scrollToBottom();
 
-            // 2. Activer le mode "attente de résultat" pour déclencher le clear() au retour
+            // 2. Activer le mode "attente" pour déclencher le clear() au prochain message
             waitingForConfirmationResult = true;
         }
         hideConfirmation();
@@ -273,6 +298,7 @@ public class AIController {
         
         if (webSocket != null) webSocket.sendText(gson.toJson(payload), true);
 
+        // Feedback simple pour l'annulation
         addFeedbackMessage("Action cancelled by user.", false);
         hideConfirmation();
     }
@@ -286,25 +312,62 @@ public class AIController {
     }
 
     /**
-     * Ajoute un message stylisé (Capsule/Badge) dans le flux de réponse.
+     * Crée une icône SVG stylisée selon le type d'opération.
      */
-    private void addFeedbackMessage(String message, boolean isSuccess) {
-        SVGPath icon = new SVGPath();
-        if (isSuccess) {
-            icon.setContent("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z");
-            icon.getStyleClass().add("icon-success");
-        } else {
-            icon.setContent("M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z");
-            icon.getStyleClass().add("icon-error");
-        }
+    private Node createStyledIcon(String type) {
+        StackPane container = new StackPane();
+        // CHANGEMENT ICI : "chat-icon-container" au lieu de "card-icon-container"
+        container.getStyleClass().add("chat-icon-container");
 
-        Label feedbackLabel = new Label(message);
-        feedbackLabel.setGraphic(icon); 
+        SVGPath svg = new SVGPath();
+        // CHANGEMENT ICI : "chat-icon-svg" au lieu de "card-svg-path"
+        svg.getStyleClass().add("chat-icon-svg"); 
+
+        switch (type.toUpperCase()) {
+            case "DELETE":
+            case "REMOVE":
+                svg.setContent(SVG_DELETE);
+                svg.getStyleClass().add("icon-danger");
+                container.getStyleClass().add("container-danger");
+                break;
+            case "UPDATE":
+            case "WARNING":
+                svg.setContent(SVG_WARNING);
+                svg.getStyleClass().add("icon-warning");
+                container.getStyleClass().add("container-warning");
+                break;
+            case "CREATE":
+                svg.setContent(SVG_CREATE);
+                svg.getStyleClass().add("icon-success");
+                container.getStyleClass().add("container-success");
+                break;
+            case "SUCCESS":
+                svg.setContent(SVG_SUCCESS);
+                svg.getStyleClass().add("icon-success");
+                container.getStyleClass().add("container-success");
+                break;
+            default:
+                return null;
+        }
+        
+        container.getChildren().add(svg);
+        HBox wrapper = new HBox(container);
+        wrapper.setStyle("-fx-alignment: CENTER_LEFT; -fx-padding: 0 0 10 0;");
+        return wrapper;
+    }
+
+    private void addFeedbackMessage(String message, boolean isSuccess) {
+        // Fallback pour les messages simples (ex: Cancel)
+        Node icon = createStyledIcon(isSuccess ? "SUCCESS" : "DELETE"); // On réutilise la logique
+        
+        Label feedbackLabel = new Label(" " + message);
         feedbackLabel.getStyleClass().add(isSuccess ? "msg-success" : "msg-error");
         
+        HBox container = new HBox(feedbackLabel);
+        container.setStyle("-fx-alignment: CENTER_LEFT; -fx-padding: 5px 0 0 0;");
+
         aiResponseFlow.getChildren().add(new Text("\n\n"));
-        aiResponseFlow.getChildren().add(feedbackLabel);
-        
+        aiResponseFlow.getChildren().add(container);
         scrollToBottom();
     }
 
@@ -354,6 +417,7 @@ public class AIController {
 
         String text = chunk.replace("- ", "• ").replace("* ", "• ");
         
+        // Détection Code Pill
         if (text.contains("`")) {
             String cleanCode = text.replace("`", "").trim();
             if (!cleanCode.isEmpty()) {
@@ -365,6 +429,7 @@ public class AIController {
             return;
         }
 
+        // Coloration Syntaxique SQL
         String upper = text.toUpperCase().trim();
         Text textNode = new Text(text);
         
@@ -376,6 +441,9 @@ public class AIController {
         }
         else if (upper.matches("WHERE|FROM|AND|OR|JOIN|LIMIT|ORDER|BY|SET|VALUES")) {
             textNode.getStyleClass().add("sql-keyword-logic");
+        }
+        else if (upper.matches("WARNING|ATTENTION")) {
+             textNode.getStyleClass().add("sql-keyword-logic"); // Jaune/Orange
         }
         else {
             if (text.contains("**")) {

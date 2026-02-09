@@ -169,7 +169,7 @@ async def handle_user_request(websocket, user_id, user_message):
                 try:
                     # On essaie d'appeler l'IA
                     warning_msg = await call_llm(
-                        prompts.get_impact_warning_prompt(user_message, count, examples_str),
+                        prompts.get_impact_warning_prompt(user_message, count, examples_str, op), # On passe 'op'
                         "Security Assistant",
                         is_json=False
                     )
@@ -252,3 +252,35 @@ async def execute_and_summarize(websocket, sql_query):
         "display_message": final_message,
         "requires_confirmation": False
     })
+
+async def generate_dashboard_insights(websocket, user_stats):
+    """
+    Génère l'analyse pour le Dashboard (Smart Header).
+    """
+    try:
+        # 1. Préparer le prompt
+        stats_str = json.dumps(user_stats)
+        prompt_text = prompts.get_dashboard_insight_prompt(stats_str)
+        
+        log.ai(f"Envoi du prompt au LLM...")
+        
+        # 2. Appel au LLM (CORRECTION ICI : Utilisation des noms de paramètres de ai_service.py)
+        content = await call_llm(
+            prompt=prompt_text,                 # 'user_message' devient 'prompt'
+            system_content="Productivity Coach", # 'system_role' devient 'system_content'
+            is_json=True
+        )
+        
+        # 3. Envoi au client Java
+        await websocket.send_text(content)
+        
+    except Exception as e:
+        log.error(f"Erreur lors de la génération d'insights : {e}")
+        error_json = {
+            "mood": "🤕",
+            "title": "Erreur Service",
+            "message": f"Erreur interne : {str(e)}",
+            "theme_color": "#9CA3AF",
+            "action_label": None
+        }
+        await websocket.send_json(error_json)

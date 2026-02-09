@@ -1,0 +1,111 @@
+/* --- DASHBOARD CONTAINER --- */
+.dashboard-scroll {
+    -fx-background-color: transparent;
+    -fx-fit-to-width: true;
+}
+.dashboard-scroll .viewport {
+    -fx-background-color: transparent;
+}
+.dashboard-container {
+    -fx-background-color: linear-gradient(to bottom right, #fdfbfb 0%, #ebedee 100%);
+}
+
+/* --- SMART HEADER (AI INSIGHT) --- */
+.smart-header-card {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5);
+    -fx-border-color: rgba(99, 102, 241, 0.2); /* Bordure Indigo légère */
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+}
+
+.mood-indicator-container {
+    -fx-background-color: rgba(99, 102, 241, 0.1);
+    -fx-background-radius: 50%;
+    -fx-min-width: 70px; -fx-min-height: 70px;
+    -fx-alignment: CENTER;
+}
+
+.insight-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4F46E5; /* Indigo */
+}
+
+.insight-message {
+    -fx-font-size: 14px;
+    -fx-text-fill: #4B5563; /* Gris */
+}
+
+.btn-smart-action {
+    -fx-background-color: #4F46E5;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+.btn-smart-action:hover {
+    -fx-background-color: #4338CA;
+}
+
+/* --- METRIC CARDS --- */
+.metric-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 2);
+    -fx-min-height: 140px;
+}
+
+.metric-label {
+    -fx-text-fill: #6B7280;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.metric-value {
+    -fx-text-fill: #111827;
+    -fx-font-weight: 900;
+    -fx-font-size: 28px;
+}
+
+.metric-trend {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.trend-up { -fx-text-fill: #10B981; } /* Vert */
+.trend-down { -fx-text-fill: #EF4444; } /* Rouge */
+.trend-neutral { -fx-text-fill: #6B7280; } /* Gris */
+
+/* Icons backgrounds */
+.icon-container {
+    -fx-background-radius: 10;
+    -fx-min-width: 32px; -fx-min-height: 32px;
+    -fx-alignment: CENTER;
+}
+.icon-purple { -fx-background-color: rgba(139, 92, 246, 0.1); }
+.icon-blue   { -fx-background-color: rgba(59, 130, 246, 0.1); }
+.icon-green  { -fx-background-color: rgba(16, 185, 129, 0.1); }
+
+.metric-icon {
+    -fx-scale-x: 1.2; -fx-scale-y: 1.2;
+}
+.icon-purple .metric-icon { -fx-fill: #8B5CF6; }
+.icon-blue .metric-icon   { -fx-fill: #3B82F6; }
+.icon-green .metric-icon  { -fx-fill: #10B981; }
+
+/* --- CHART CARDS --- */
+.chart-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 2);
+}
+.chart-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+    -fx-padding: 0 0 10 0;
+}

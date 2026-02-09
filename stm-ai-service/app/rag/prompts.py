@@ -77,27 +77,50 @@ def get_no_results_prompt(user_message, sql_query):
         4. Suggest they check the spelling or criteria if relevant.
     """
 
-def get_impact_warning_prompt(user_message, count, examples_str):
+def get_impact_warning_prompt(user_message, count, examples_str, operation_type="UPDATE"):
+    
     return f"""
-        Act as the SmartTask AI Security Guard.
+        You are the SmartTask Security Guardian.
         
         CONTEXT:
-        The user asked: "{user_message}"
-        This implies a destructive action (UPDATE or DELETE).
+        The user sent: "{user_message}"
+        Operation Type: {operation_type} (Potential destructive action).
         
-        DATA:
-        - Total items affected: {count}
-        - Examples of affected items: {examples_str}
+        IMPACT DATA:
+        - Count: {count} items
+        - Samples: {examples_str}
         
-        YOUR TASK:
-        Generate a clear, professional warning message.
+        YOUR MISSION:
+        Generate a concise, professional warning message.
         
-        GUIDELINES:
-        1. Start with a warning emoji (⚠️) and clearly state how many tasks will be changed/removed.
-        2. List the examples provided using Markdown bullets.
-        3. If the count is high, emphasize caution.
-        4. End with a direct question asking for confirmation (e.g., "Do you want to proceed?").
-        5. NO meta-text (do not say "Here is the warning"). Output ONLY the message.
+        CRITICAL GUIDELINES:
+        1. **Title**: Start with a strong title like "WARNING" or "CONFIRM DELETION" (No emojis).
+        2. **Clarity**: State clearly that **{count} items** will be affected. Use bold for the number.
+        3. **Evidence**: List the 'Samples' provided as bullet points.
+        4. **Confirmation**: End with a single, clear yes/no question (e.g., "Confirm deletion?", "Voulez-vous continuer ?").
+        5. **Language**: Match the user's language (French/English).
+        6. **No Fluff**: Output ONLY the message.
     """
 
-    
+def get_dashboard_insight_prompt(stats_json):
+    # Notez les doubles accolades {{ }} autour du JSON de sortie !
+    return f"""
+        ROLE: You are a motivational Productivity Coach for a Task Manager app.
+        INPUT DATA: {stats_json}
+        
+        TASK: Generate a dashboard briefing based on the stats.
+        
+        OUTPUT FORMAT (Strict JSON, NO Markdown):
+        {{
+            "mood": "Emoji (e.g. 🚀, 🔥, 🧘, ⚠️)",
+            "title": "Short Title (max 4 words)",
+            "message": "Direct observation or advice (max 20 words).",
+            "theme_color": "Hex color (e.g. #EF4444 for alert, #10B981 for success, #8B5CF6 for neutral)",
+            "action_label": "Button label if action needed (e.g. 'Fix Overdue'), else null"
+        }}
+        
+        LOGIC:
+        - High 'overdue' -> Panic mode (Red/Orange).
+        - High 'tasks_done' -> Celebration (Green/Gold).
+        - High 'hours_worked' -> Burnout warning.
+    """

@@ -10,14 +10,14 @@ import java.net.http.HttpResponse;
 import java.net.URI;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class TimeTrackingService {
     private final String baseUrl;
     private final HttpClient client;
 
-    // Constructeur par défaut
     public TimeTrackingService() {
-        this("http://localhost:8090/api/timetracking");
+        this("http://127.0.0.1:8090/api/timetracking");
     }
 
     public TimeTrackingService(String baseUrl) {
@@ -25,20 +25,46 @@ public class TimeTrackingService {
         this.client = HttpClient.newHttpClient();
     }
 
-    public List<TimeTracking> getTimeLogs(String taskId) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/timetracking/task/" + taskId))
-                .GET()
-                .build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) throw new IOException("Error fetching time logs: " + response.body());
-        return Arrays.asList(GsonUtils.getGson().fromJson(response.body(), TimeTracking[].class));
+    public List<TimeTracking> getTimeLogsByUser(String userId) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/" + userId + "/user")) 
+                    .GET()
+                    .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                return Arrays.asList(GsonUtils.getGson().fromJson(response.body(), TimeTracking[].class));
+            } else {
+                System.err.println("Erreur getTimeLogsByUser: " + response.statusCode());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
+    }
+
+    public List<TimeTracking> getTimeLogs(String taskId) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/task/" + taskId))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                return Arrays.asList(GsonUtils.getGson().fromJson(response.body(), TimeTracking[].class));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Collections.emptyList();
     }
 
     public TimeTracking startTracking(TimeTracking log) throws IOException, InterruptedException {
         String json = GsonUtils.getGson().toJson(log);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/timetracking"))
+                .uri(URI.create(baseUrl))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -50,7 +76,7 @@ public class TimeTrackingService {
     public TimeTracking updateTracking(TimeTracking log) throws IOException, InterruptedException {
         String json = GsonUtils.getGson().toJson(log);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/timetracking/" + log.getId()))
+                .uri(URI.create(baseUrl + "/" + log.getId()))
                 .header("Content-Type", "application/json")
                 .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
