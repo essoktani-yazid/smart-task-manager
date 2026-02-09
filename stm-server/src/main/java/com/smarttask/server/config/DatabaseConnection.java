@@ -94,115 +94,86 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-/**
- * Utility class for managing JDBC database connections.
- * Compatible with Railway (Environment Variables) and Local (database.properties).
- */
 public class DatabaseConnection {
     private static String url;
     private static String username;
     private static String password;
-    private static String driver = "com.mysql.cj.jdbc.Driver"; // Driver par défaut
+    private static String driver = "com.mysql.cj.jdbc.Driver"; 
     private static DatabaseConnection instance;
 
     static {
-        // Étape 1 : On tente de charger la configuration depuis Railway (Variables d'environnement)
-        String envUrl = System.getenv("DATABASE_URL");
+        // --- CONFIGURATION RAILWAY ---
+        // On récupère les composants séparés pour construire une URL JDBC propre
+        String host = System.getenv("MYSQLHOST");
+        String port = System.getenv("MYSQLPORT");
+        String dbName = System.getenv("MYSQLDATABASE");
+        
         String envUser = System.getenv("MYSQLUSER");
         String envPass = System.getenv("MYSQLPASSWORD");
 
-        if (envUrl != null && !envUrl.isEmpty()) {
-            System.out.println(">>> Configuration Railway détectée. Utilisation des variables d'environnement.");
+        if (host != null && !host.isEmpty()) {
+            System.out.println(">>> Mode Railway détecté.");
             
-            // Correction automatique de l'URL pour JDBC si nécessaire
-            if (envUrl.startsWith("mysql://")) {
-                url = envUrl.replace("mysql://", "jdbc:mysql://");
-            } else {
-                url = envUrl;
-            }
+            // Construction manuelle de l'URL pour éviter les erreurs de parsing et ajouter les options SSL
+            // allowPublicKeyRetrieval=true est OBLIGATOIRE sur Railway avec le nouveau driver
+            url = String.format("jdbc:mysql://%s:%s/%s?allowPublicKeyRetrieval=true&useSSL=false&characterEncoding=UTF-8", 
+                                host, port, dbName);
             
             username = envUser;
             password = envPass;
+            
+            System.out.println(">>> URL JDBC générée : " + url); // Log pour débugger (sans le mot de passe)
         } else {
-            // Étape 2 : Si pas de variables, on charge le fichier local (database.properties)
-            System.out.println(">>> Aucune variable Railway trouvée. Chargement du fichier database.properties...");
+            // --- CONFIGURATION LOCALE ---
+            System.out.println(">>> Mode Local détecté. Chargement de database.properties...");
             loadDatabaseProperties();
         }
 
-        // Étape 3 : Chargement du Driver
         try {
             Class.forName(driver);
         } catch (ClassNotFoundException e) {
-            // Fallback pour compatibilité
-            try {
-                Class.forName("com.mysql.jdbc.Driver");
-            } catch (ClassNotFoundException ex) {
-                throw new RuntimeException("MySQL JDBC Driver not found", ex);
-            }
+            throw new RuntimeException("MySQL JDBC Driver not found", e);
         }
     }
 
-    /**
-     * Loads database configuration from database.properties file (Local only).
-     */
     private static void loadDatabaseProperties() {
         try (InputStream input = DatabaseConnection.class.getClassLoader()
                 .getResourceAsStream("database.properties")) {
             
-            if (input == null) {
-                // Si on est ici, c'est qu'on a ni variable d'environnement, ni fichier.
-                throw new RuntimeException("CRITIQUE : Impossible de trouver database.properties et aucune variable ENV détectée !");
-            }
+            if (input == null) throw new RuntimeException("database.properties introuvable !");
 
-            Properties properties = new Properties();
-            properties.load(input);
+            Properties prop = new Properties();
+            prop.load(input);
 
-            url = properties.getProperty("db.url");
-            username = properties.getProperty("db.username");
-            password = properties.getProperty("db.password");
-            
-            // On charge le driver depuis le fichier s'il est spécifié, sinon on garde celui par défaut
-            String propDriver = properties.getProperty("db.driver");
-            if (propDriver != null && !propDriver.isEmpty()) {
-                driver = propDriver;
-            }
+            url = prop.getProperty("db.url");
+            username = prop.getProperty("db.username");
+            password = prop.getProperty("db.password");
             
         } catch (Exception e) {
-            throw new RuntimeException("Error loading database properties", e);
+            throw new RuntimeException("Erreur chargement properties", e);
         }
     }
 
-    /**
-     * Gets a new database connection.
-     */
     public static Connection getConnection() throws SQLException {
-        if (url == null) {
-            throw new SQLException("Database URL is null. Configuration failed.");
-        }
+        if (url == null) throw new SQLException("URL Base de données non configurée");
         return DriverManager.getConnection(url, username, password);
     }
-
+    
+    // ... (Gardez les méthodes getInstance et closeConnection comme avant) ...
     public static DatabaseConnection getInstance() {
         if (instance == null) {
             synchronized (DatabaseConnection.class) {
-                if (instance == null) {
-                    instance = new DatabaseConnection();
-                }
+                if (instance == null) instance = new DatabaseConnection();
             }
         }
         return instance;
     }
 
-    /**
-     * Closes a database connection.
-     */
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {
                 connection.close();
-            } catch (SQLException e) {
-                System.err.println("Error closing connection: " + e.getMessage());
-            }
+            } catch (SQLException e) { /* Ignorer */ }
         }
     }
 }
