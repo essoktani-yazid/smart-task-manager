@@ -18,8 +18,18 @@ public class Task {
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
     private User user;
+    private String projectId;
     private Task parentTask;
     private List<Task> subTasks = new ArrayList<>();
+    
+    // Recurrence properties
+    private String recurrenceType = "NONE"; // DAILY, WEEKLY, MONTHLY, YEARLY, NONE
+    private Integer recurrenceInterval = 0;
+    private LocalDateTime recurrenceEndDate;
+    
+    // Dependency properties
+    private String dependentTaskId; // ID of the task this depends on (predecessor)
+    private Task dependentTask; // The actual task object this depends on
 
     // Constructeurs
     public Task() {
@@ -99,6 +109,14 @@ public class Task {
         this.user = user;
     }
 
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
     public Task getParentTask() {
         return parentTask;
     }
@@ -113,6 +131,46 @@ public class Task {
 
     public void setSubTasks(List<Task> subTasks) {
         this.subTasks = subTasks;
+    }
+
+    public String getRecurrenceType() {
+        return recurrenceType;
+    }
+
+    public void setRecurrenceType(String recurrenceType) {
+        this.recurrenceType = recurrenceType;
+    }
+
+    public Integer getRecurrenceInterval() {
+        return recurrenceInterval;
+    }
+
+    public void setRecurrenceInterval(Integer recurrenceInterval) {
+        this.recurrenceInterval = recurrenceInterval;
+    }
+
+    public LocalDateTime getRecurrenceEndDate() {
+        return recurrenceEndDate;
+    }
+
+    public void setRecurrenceEndDate(LocalDateTime recurrenceEndDate) {
+        this.recurrenceEndDate = recurrenceEndDate;
+    }
+
+    public String getDependentTaskId() {
+        return dependentTaskId;
+    }
+
+    public void setDependentTaskId(String dependentTaskId) {
+        this.dependentTaskId = dependentTaskId;
+    }
+
+    public Task getDependentTask() {
+        return dependentTask;
+    }
+
+    public void setDependentTask(Task dependentTask) {
+        this.dependentTask = dependentTask;
     }
 
     @Override

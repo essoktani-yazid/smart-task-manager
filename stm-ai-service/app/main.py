@@ -2,7 +2,7 @@ import json
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from app.database import db
-from app.services.query_service import handle_user_request
+from app.services.query_service import handle_user_request, execute_and_summarize, generate_dashboard_insights
 from app.utils.logger import log
 
 app = FastAPI()
@@ -17,61 +17,49 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     log.success("Client WebSocket connecté")
     
+    # ID utilisateur simulé (à remplacer par le token réel plus tard)
     user_id = "eb3a2803-29b1-4fa1-9b57-7f6b68ced78b"
 
     try:
         while True:
             try:
-                # 1. Attente du message
                 data_str = await websocket.receive_text()
                 
-                # 2. Gestion du signal STOP brut
                 if data_str == "__STOP__":
-                    log.incoming("Signal STOP reçu. Annulation du traitement en cours.")
+                    log.incoming("Signal STOP reçu.")
                     continue
 
-                # 3. Parsing du message JSON
                 data = json.loads(data_str)
 
-                # 4. Routing
                 if "action" in data:
-                    # --- GESTION DES CONFIRMATIONS (Boutons UI) ---
                     action = data["action"]
                     log.incoming(f"Action reçue : {action}")
                     
                     if action == "CONFIRM":
-                        sql = data.get("sql")
-                        if sql:
-                            log.db(f"Exécution SQL confirmée : {sql}")
-                            db.execute(sql)
-                            await websocket.send_json({
-                                "display_message": "✅ Action effectuée avec succès !",
-                                "requires_confirmation": False
-                            })
-                    elif action == "CANCEL":
-                        await websocket.send_json({
-                            "display_message": "❌ Action annulée.",
-                            "requires_confirmation": False
-                        })
-                
+                        sql_to_run = data.get("sql")
+                        if sql_to_run:
+                            await execute_and_summarize(websocket, sql_to_run)
+                    
+                    elif action == "ANALYZE_DASHBOARD":
+                        user_stats = data.get("stats", {})
+                        await generate_dashboard_insights(websocket, user_stats)
+                        
                 else:
-                    # --- FLUX NORMAL (Question utilisateur) ---
                     prompt = data.get("prompt")
                     if prompt:
                         log.incoming(f"Prompt : '{prompt}'")
                         await handle_user_request(websocket, user_id, prompt)
 
             except json.JSONDecodeError:
-                log.error("Message reçu non-JSON")
+                log.error("Message non-JSON reçu")
             except WebSocketDisconnect:
-                log.warning("Client déconnecté (boucle)")
                 break
             except Exception as e:
-                log.error(f"Erreur inattendue : {e}")
+                log.error(f"Erreur : {e}")
                 break
 
     except WebSocketDisconnect:
-        log.warning("Client déconnecté proprement")
+        log.warning("Client déconnecté")
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

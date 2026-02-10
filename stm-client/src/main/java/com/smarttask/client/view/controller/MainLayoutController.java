@@ -2,6 +2,7 @@ package com.smarttask.client.view.controller;
 
 import com.smarttask.client.view.controller.teams.TeamsController;
 import com.smarttask.model.User;
+import com.smarttask.client.view.controller.projects.ProjectsViewController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -67,8 +68,8 @@ public class MainLayoutController {
         if(loadView("/fxml/teams/root-view.fxml")) setActiveButton(teamsButton);
     }
 
-	@FXML private void showProjects() {
-        if(loadView("/fxml/projects/root-view.fxml")) setActiveButton(projectsButton);
+    @FXML private void showProjects() {
+        if(loadView("/fxml/projects/projects-view.fxml")) setActiveButton(projectsButton);
     }
 
     @FXML private void showAnalytics() {
@@ -113,6 +114,8 @@ public class MainLayoutController {
                 ((ProfileController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof TeamsController && currentUser != null) {
                 ((TeamsController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof ProjectsViewController && currentUser != null) {
+                ((ProjectsViewController) controller).setCurrentUser(currentUser);
             }
 
             contentPane.getChildren().clear();

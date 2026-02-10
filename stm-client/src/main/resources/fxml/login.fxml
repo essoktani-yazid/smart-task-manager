@@ -48,12 +48,12 @@
                
                <VBox spacing="8">
                   <Label text="Nom d'utilisateur" styleClass="field-label"/>
-                  <TextField fx:id="loginUsernameField" promptText="Nom d'utilisateur" styleClass="form-field"/>
+                  <TextField fx:id="loginUsernameField" promptText="Nom d'utilisateur" styleClass="form-field" text="yazides"/>
                </VBox>
                
                <VBox spacing="8">
                   <Label text="Mot de passe" styleClass="field-label"/>
-                  <PasswordField fx:id="loginPasswordField" promptText="••••••••" styleClass="form-field"/>
+                  <PasswordField fx:id="loginPasswordField" promptText="••••••••" styleClass="form-field" text="123456"/>
                </VBox>
                
                <Label fx:id="loginErrorLabel" styleClass="error-label" visible="false" wrapText="true"/>
