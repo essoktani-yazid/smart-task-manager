@@ -2,7 +2,7 @@ package com.smarttask.client.service;
 
 import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.User;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -20,7 +20,7 @@ import java.util.List;
 public class UserService {
 
     // Assurez-vous que le port correspond à votre stm-server (8080 ou autre)
-    private static final String BASE_URL = "http://localhost:8090/api/users";
+    private static final String BASE_URL = AppConfig.API_URL + "/users";
 
     private final HttpClient client;
 

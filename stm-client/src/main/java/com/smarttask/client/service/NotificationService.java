@@ -10,14 +10,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
+import com.smarttask.client.config.AppConfig;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 public class NotificationService {
-    private static final String BASE_URL = "http://localhost:8090/api/notifications";
+    private static final String BASE_URL = AppConfig.API_URL + "/notifications";
     private final Gson gson = GsonUtils.getGson();
 
     public List<Notification> getUserNotifications(String userId) {

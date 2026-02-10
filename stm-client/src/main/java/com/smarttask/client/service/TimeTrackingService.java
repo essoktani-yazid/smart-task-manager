@@ -2,7 +2,7 @@ package com.smarttask.client.service;
 
 import com.smarttask.model.TimeTracking;
 import com.smarttask.client.util.GsonUtils;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -17,7 +17,7 @@ public class TimeTrackingService {
     private final HttpClient client;
 
     public TimeTrackingService() {
-        this("http://127.0.0.1:8090/api/timetracking");
+        this(AppConfig.API_URL + "/timetracking");
     }
 
     public TimeTrackingService(String baseUrl) {

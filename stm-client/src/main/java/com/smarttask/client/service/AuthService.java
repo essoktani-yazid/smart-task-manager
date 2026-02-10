@@ -10,6 +10,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import com.smarttask.client.config.AppConfig;
 
 import java.nio.charset.StandardCharsets;
 
@@ -18,7 +19,7 @@ import java.nio.charset.StandardCharsets;
  * Communique avec le serveur pour les opérations de login et register.
  */
 public class AuthService {
-    private static final String BASE_URL = "http://localhost:8090/api/auth";
+    private static final String BASE_URL = AppConfig.API_URL + "/auth";
     private final Gson gson = GsonUtils.getGson();
 
     /**
@@ -62,9 +63,10 @@ public class AuthService {
      * @param username Le nom d'utilisateur
      * @param password Le mot de passe
      * @param email L'email
-     * @return L'utilisateur créé ou null en cas d'erreur
+     * @return L'utilisateur créé en cas de succès
+     * @throws Exception avec le message d'erreur si l'inscription échoue
      */
-    public User register(String username, String password, String email) {
+    public User register(String username, String password, String email) throws Exception {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost request = new HttpPost(BASE_URL + "/register");
             request.setHeader("Content-Type", "application/json");
@@ -85,14 +87,24 @@ public class AuthService {
                 if (statusCode == 201) {
                     return gson.fromJson(responseBody, User.class);
                 } else {
-                    System.err.println("Erreur d'inscription: " + responseBody);
-                    return null;
+                    // Tenter de parser le message d'erreur JSON
+                    try {
+                        ErrorResponse errorResponse = gson.fromJson(responseBody, ErrorResponse.class);
+                        if (errorResponse != null && errorResponse.error != null) {
+                            throw new Exception(errorResponse.error);
+                        }
+                    } catch (Exception e) {
+                        // Si le parsing échoue, on ignore et on continue
+                    }
+                    // Fallback sur le corps complet ou un message par défaut
+                    throw new Exception("Erreur d'inscription: " + responseBody);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
         }
+    }
+    
+    private static class ErrorResponse {
+        String error;
     }
 
     /**

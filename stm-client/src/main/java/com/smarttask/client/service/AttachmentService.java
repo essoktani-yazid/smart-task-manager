@@ -22,7 +22,7 @@ public class AttachmentService {
 
     public List<Attachment> getAttachments(String taskId) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/attachments/task/" + taskId))
+                .uri(URI.create(baseUrl + "/attachments/task/" + taskId))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -33,7 +33,7 @@ public class AttachmentService {
     public Attachment addAttachment(Attachment attachment) throws IOException, InterruptedException {
         String json = GsonUtils.getGson().toJson(attachment);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/attachments"))
+                .uri(URI.create(baseUrl + "/attachments"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -44,7 +44,7 @@ public class AttachmentService {
 
     public void deleteAttachment(String id) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/attachments/" + id))
+                .uri(URI.create(baseUrl + "/attachments/" + id))
                 .DELETE()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

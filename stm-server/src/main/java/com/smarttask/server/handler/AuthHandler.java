@@ -39,26 +39,35 @@ public class AuthHandler implements HttpHandler {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            sendResponse(exchange, 500, "{\"error\":\"" + e.getMessage() + "\"}");
+            String errorMessage = e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Internal server error";
+            sendResponse(exchange, 500, "{\"error\":\"" + errorMessage + "\"}");
         }
     }
 
     private void handleRegister(HttpExchange exchange) throws IOException {
-        String requestBody = readRequestBody(exchange);
-        User user = gson.fromJson(requestBody, User.class);
+        try {
+            String requestBody = readRequestBody(exchange);
+            User user = gson.fromJson(requestBody, User.class);
 
-        // Vérifier si l'utilisateur existe déjà
-        if (userDAO.existsByUsername(user.getUsername())) {
-            sendResponse(exchange, 400, "{\"error\":\"Username already exists\"}");
-            return;
+            // Vérifier si l'utilisateur existe déjà
+            if (userDAO.existsByUsername(user.getUsername())) {
+                sendResponse(exchange, 400, "{\"error\":\"Username already exists\"}");
+                return;
+            }
+
+            // Créer le nouvel utilisateur
+            String userId = userDAO.save(user);
+            user.setId(userId);
+            user.setPassword(null); // Ne pas renvoyer le mot de passe
+
+            sendResponse(exchange, 201, gson.toJson(user));
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            sendResponse(exchange, 500, "{\"error\":\"Error saving user\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendResponse(exchange, 500, "{\"error\":\"Error saving user\"}");
         }
-
-        // Créer le nouvel utilisateur
-        String userId = userDAO.save(user);
-        user.setId(userId);
-        user.setPassword(null); // Ne pas renvoyer le mot de passe
-
-        sendResponse(exchange, 201, gson.toJson(user));
     }
 
     private void handleLogin(HttpExchange exchange) throws IOException {
@@ -69,7 +78,7 @@ public class AuthHandler implements HttpHandler {
         User user = userDAO.findByUsername(loginRequest.username)
                 .orElse(null);
 
-        if (user == null || !user.getPassword().equals(loginRequest.password)) {
+        if (user == null || user.getPassword() == null || !user.getPassword().equals(loginRequest.password)) {
             sendResponse(exchange, 401, "{\"error\":\"Invalid credentials\"}");
             return;
         }

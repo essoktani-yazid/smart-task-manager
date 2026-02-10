@@ -103,9 +103,14 @@ public class LoginController {
             return;
         }
 
-        User user = authService.register(username, password, email);
-        if (user != null) navigateToDashboard(user);
-        else showError(registerErrorLabel, "Nom d'utilisateur déjà pris");
+        try {
+            User user = authService.register(username, password, email);
+            if (user != null) {
+                navigateToDashboard(user);
+            }
+        } catch (Exception e) {
+            showError(registerErrorLabel, e.getMessage());
+        }
     }
 
     private void navigateToDashboard(User user) {

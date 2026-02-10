@@ -26,7 +26,7 @@ public class UserDAO {
 
             pstmt.setString(1, id);
             pstmt.setString(2, user.getUsername());
-            pstmt.setString(3, user.getPassword()); // on stocke le hash ici
+            pstmt.setString(3, user.getPassword()); 
             pstmt.setString(4, user.getEmail());
             pstmt.setString(5, user.getFirstName());
             pstmt.setString(6, user.getLastName());

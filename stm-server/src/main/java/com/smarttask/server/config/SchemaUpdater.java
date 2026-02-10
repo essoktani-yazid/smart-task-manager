@@ -48,14 +48,14 @@ public class SchemaUpdater {
         } else {
             System.out.println("Creating users table...");
             try (Statement stmt = conn.createStatement()) {
-                String sql = "CREATE TABLE users (" +
-                        "id VARCHAR(36) PRIMARY KEY," +
-                        "username VARCHAR(255) NOT NULL UNIQUE," +
-                        "password VARCHAR(255) NOT NULL," +
-                        "email VARCHAR(255)," +
-                        "first_name VARCHAR(255)," +
-                        "last_name VARCHAR(255)" +
-                        ")";
+            String sql = "CREATE TABLE users (" +
+                    "id VARCHAR(36) PRIMARY KEY," +
+                    "username VARCHAR(255) NOT NULL UNIQUE," +
+                    "password_hash VARCHAR(255) NOT NULL," +
+                    "email VARCHAR(255)," +
+                    "first_name VARCHAR(255)," +
+                    "last_name VARCHAR(255)" +
+                    ")";
                 stmt.executeUpdate(sql);
                 System.out.println("Table users created.");
             }

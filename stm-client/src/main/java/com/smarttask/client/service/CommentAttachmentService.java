@@ -2,7 +2,7 @@ package com.smarttask.client.service;
 
 import com.smarttask.model.CommentAttachment;
 import com.smarttask.client.util.GsonUtils;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Arrays;
 
 public class CommentAttachmentService {
-    private String baseUrl = "http://localhost:8090/api/comment-attachments";
+    private String baseUrl = AppConfig.API_URL + "/comment-attachments";
     private final HttpClient client;
 
     public CommentAttachmentService() {
@@ -21,7 +21,7 @@ public class CommentAttachmentService {
 
     public CommentAttachmentService(String baseUrl) {
         this.client = HttpClient.newHttpClient();
-        this.baseUrl = baseUrl.endsWith("/api/comment-attachments") ? baseUrl : baseUrl + "/api/comment-attachments";
+        this.baseUrl = baseUrl.endsWith("/comment-attachments") ? baseUrl : baseUrl + "/comment-attachments";
     }
 
     /**

@@ -6,7 +6,7 @@ import com.smarttask.model.Priority;
 import com.smarttask.model.Status;
 import com.smarttask.model.Task;
 import com.smarttask.model.User;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,7 +25,7 @@ import java.util.List;
 public class TaskService {
 
     // URL par défaut
-    private String baseUrl = "http://localhost:8090/api/tasks";
+    private String baseUrl = AppConfig.API_URL + "/tasks";
 
     private final HttpClient client;
     private final Gson gson;

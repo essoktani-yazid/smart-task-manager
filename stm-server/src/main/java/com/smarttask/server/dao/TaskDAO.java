@@ -23,7 +23,7 @@ public class TaskDAO {
      */
     public void save(Task task) throws SQLException {
         // Assurez-vous que la colonne task_type existe dans votre BDD, sinon retirez-la de la requête
-        String sql = "INSERT INTO tasks (id, title, description, priority, status, due_date, user_id, project_id, task_type, parent_task_id, created_at, recurrence_type, recurrence_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO tasks (id, title, description, priority, status, due_date, user_id, project_id, parent_task_id, created_at, recurrence_type, recurrence_interval) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         if (task.getId() == null) task.setId(UUID.randomUUID().toString());
 
@@ -46,13 +46,12 @@ public class TaskDAO {
             stmt.setString(8, task.getProjectId());
             
             // task_type : MAIN ou SUB selon s'il y a un parent
-            stmt.setString(9, task.getParentTask() != null ? "SUB" : "MAIN");
-            stmt.setString(10, task.getParentTask() != null ? task.getParentTask().getId() : null);
-            stmt.setTimestamp(11, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setString(9, task.getParentTask() != null ? task.getParentTask().getId() : null);
+            stmt.setTimestamp(10, Timestamp.valueOf(LocalDateTime.now()));
             
             // Recurrence fields
-            stmt.setString(12, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
-            stmt.setInt(13, task.getRecurrenceInterval()); // int primitif, pas besoin de null check
+            stmt.setString(11, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
+            stmt.setInt(12, task.getRecurrenceInterval());
 
             stmt.executeUpdate();
         }
@@ -132,8 +131,6 @@ public class TaskDAO {
     public List<Task> findAll() {
         List<Task> tasks = new ArrayList<>();
         String sql = "SELECT t.*, u.username FROM tasks t LEFT JOIN users u ON t.user_id = u.id"; 
-        // Note: J'ai retiré "WHERE t.task_type = 'MAIN'" pour éviter l'erreur "Unknown column" si elle n'existe pas.
-        // Si elle existe, remettez la clause WHERE.
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);

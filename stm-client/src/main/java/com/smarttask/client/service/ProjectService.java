@@ -10,13 +10,13 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
+import com.smarttask.client.config.AppConfig;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ProjectService {
-    private String baseUrl = "http://127.0.0.1:8090/api/projects";
+    private String baseUrl = AppConfig.API_URL + "/projects";
     private final Gson gson = GsonUtils.getGson();
 
     // Constructeur 1 : Sans arguments (pour la compatibilité)
@@ -26,8 +26,8 @@ public class ProjectService {
     // Constructeur 2 : Avec l'URL (pour la flexibilité dans ProjectsViewController)
     public ProjectService(String url) {
         // Si l'URL reçue est juste l'hôte (ex: http://127.0.0.1:8090), on ajoute le chemin
-        if (url != null && !url.contains("/api/projects")) {
-            this.baseUrl = url + "/api/projects";
+        if (url != null && !url.contains("/projects")) {
+            this.baseUrl = url + "/projects";
         } else {
             this.baseUrl = url;
         }
