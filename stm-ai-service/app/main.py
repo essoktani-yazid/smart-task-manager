@@ -16,9 +16,6 @@ async def startup():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     log.success("Client WebSocket connecté")
-    
-    # ID utilisateur simulé (à remplacer par le token réel plus tard)
-    user_id = "eb3a2803-29b1-4fa1-9b57-7f6b68ced78b"
 
     try:
         while True:
@@ -46,6 +43,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         
                 else:
                     prompt = data.get("prompt")
+                    user_id = data.get("userId")
                     if prompt:
                         log.incoming(f"Prompt : '{prompt}'")
                         await handle_user_request(websocket, user_id, prompt)

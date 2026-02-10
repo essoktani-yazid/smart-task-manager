@@ -2,6 +2,8 @@ package com.smarttask.client.view.controller;
 
 import com.google.gson.Gson;
 import com.smarttask.client.util.GsonUtils;
+import com.smarttask.client.util.SessionManager;
+import com.smarttask.model.User;
 import com.google.gson.JsonObject;
 import javafx.animation.*;
 import javafx.application.Platform;
@@ -81,8 +83,11 @@ public class AIController {
     // Drapeau pour gérer le flux de confirmation (Nettoyage écran)
     private boolean waitingForConfirmationResult = false; 
 
+    private User currentUser;
+
     @FXML
     public void initialize() {
+        this.currentUser = SessionManager.getInstance().getCurrentUser();
         // 1. Initialisation de l'interface : Cacher les éléments non nécessaires
         homeContainer.setVisible(true);
         resultContainer.setVisible(false);
@@ -164,6 +169,7 @@ public class AIController {
         if (webSocket != null) {
             JsonObject payload = new JsonObject();
             payload.addProperty("prompt", message);
+            payload.addProperty("userId", currentUser.getId());
             webSocket.sendText(gson.toJson(payload), true);
         } else {
             handleFinalResponse("⚠️ Service disconnected. Reconnecting...", true);
