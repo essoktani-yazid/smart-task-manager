@@ -30,15 +30,21 @@ public class TaskService {
     private final HttpClient client;
     private final Gson gson;
 
-    // Constructeur par défaut
+    // ⚡ OPTIMISÉ: Constructeur avec HTTP/2 et keep-alive
     public TaskService() {
-        this.client = HttpClient.newHttpClient();
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)  // ⚡ HTTP/2 pour multiplexage
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
         this.gson = GsonUtils.getGson();
     }
 
     // Constructeur avec URL personnalisée (si besoin)
     public TaskService(String url) {
-        this.client = HttpClient.newHttpClient();
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)  // ⚡ HTTP/2 pour multiplexage
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
         this.gson = GsonUtils.getGson();
         // Logique pour s'assurer que l'URL est correcte
         this.baseUrl = url.contains("/api/tasks") ? url : url + "/api/tasks";

@@ -144,6 +144,10 @@ public class MainLayoutController {
                 ((DashboardController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof ProjectsViewController && currentUser != null) {
                 ((ProjectsViewController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof ProfileController && currentUser != null) {
+                ((ProfileController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof CalendarController && currentUser != null) {
+                ((CalendarController) controller).setCurrentUser(currentUser);
             }
             // Ajoutez d'autres contrôleurs ici si nécessaire (ProfileController, etc.)
 

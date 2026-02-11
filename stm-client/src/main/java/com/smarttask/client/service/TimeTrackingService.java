@@ -22,7 +22,11 @@ public class TimeTrackingService {
 
     public TimeTrackingService(String baseUrl) {
         this.baseUrl = baseUrl;
-        this.client = HttpClient.newHttpClient();
+        // ⚡ OPTIMISÉ: HTTP/2 pour multiplexage
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
     }
 
     public List<TimeTracking> getTimeLogsByUser(String userId) {

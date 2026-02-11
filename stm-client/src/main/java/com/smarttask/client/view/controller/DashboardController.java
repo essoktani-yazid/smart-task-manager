@@ -105,19 +105,47 @@ public class DashboardController {
     }
 
     private void refreshDashboardData() {
-        new Thread(() -> {
+        // ⚡ OPTIMISÉ: Utilisation d'ExecutorService au lieu de new Thread()
+        java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
             try {
                 if (currentUser == null) return;
 
-                List<Task> allTasks = taskService.getTasksByUser(currentUser.getId());
-                List<TimeTracking> timeLogs = timeTrackingService.getTimeLogsByUser(currentUser.getId());
-                List<Project> projects = projectService.getProjectsByUser(currentUser.getId());
+                long startTime = System.currentTimeMillis();
+                
+                // ⚡ Chargement parallèle des données
+                java.util.concurrent.CompletableFuture<List<Task>> tasksFuture = 
+                    java.util.concurrent.CompletableFuture.supplyAsync(
+                        () -> taskService.getTasksByUser(currentUser.getId())
+                    );
+                
+                java.util.concurrent.CompletableFuture<List<TimeTracking>> timeLogsFuture = 
+                    java.util.concurrent.CompletableFuture.supplyAsync(
+                        () -> timeTrackingService.getTimeLogsByUser(currentUser.getId())
+                    );
+                
+                java.util.concurrent.CompletableFuture<List<Project>> projectsFuture = 
+                    java.util.concurrent.CompletableFuture.supplyAsync(
+                        () -> projectService.getProjectsByUser(currentUser.getId())
+                    );
+                
+                // Attendre tous les résultats en parallèle
+                List<Task> allTasks = tasksFuture.join();
+                List<TimeTracking> timeLogs = timeLogsFuture.join();
+                List<Project> projects = projectsFuture.join();
+                
+                long loadTime = System.currentTimeMillis() - startTime;
+                System.out.println("⚡ Data loaded in " + loadTime + "ms (parallel)");
 
+                // ⚡ Mise à jour UI en un seul batch
                 Platform.runLater(() -> {
+                    long uiStartTime = System.currentTimeMillis();
                     calculateAndDisplayMetrics(allTasks);
                     updatePerformanceChart(allTasks);
                     updateDistributionChart(allTasks, projects);
                     loadUpcomingTasks(allTasks);
+                    long uiTime = System.currentTimeMillis() - uiStartTime;
+                    System.out.println("⚡ UI updated in " + uiTime + "ms");
                 });
 
                 prepareAIStats(allTasks, timeLogs);
@@ -126,8 +154,10 @@ public class DashboardController {
             } catch (Exception e) {
                 e.printStackTrace();
                 Platform.runLater(() -> insightTitleLabel.setText("Error loading data"));
+            } finally {
+                executor.shutdown();
             }
-        }).start();
+        });
     }
 
     // --- METRICS ---
@@ -399,9 +429,10 @@ public class DashboardController {
     }
 
     private void animateCardEntrance() {
-        FadeTransition ft = new FadeTransition(Duration.millis(600), smartHeaderCard);
+        // ⚡ OPTIMISÉ: Animation plus rapide (600ms -> 300ms)
+        FadeTransition ft = new FadeTransition(Duration.millis(300), smartHeaderCard);
         ft.setFromValue(0.0); ft.setToValue(1.0);
-        TranslateTransition tt = new TranslateTransition(Duration.millis(600), smartHeaderCard);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(300), smartHeaderCard);
         tt.setFromY(20); tt.setToY(0);
         ft.play(); tt.play();
     }

@@ -15,6 +15,12 @@ class Logger:
     @staticmethod
     def success(msg):
         print(f"{Logger.GREEN}✅ SUCCESS | {msg}{Logger.ENDC}")
+    
+    # --- AJOUTEZ CETTE MÉTHODE ---
+    @staticmethod
+    def warning(msg):
+        print(f"{Logger.WARNING}⚠️ WARNING | {msg}{Logger.ENDC}")
+    # -----------------------------
 
     @staticmethod
     def incoming(msg):

@@ -40,6 +40,8 @@ public class AIController implements AIResponseListener {
     @FXML private Label vocalStatusLabel;
     @FXML private Circle vocalPulseCircle;
 
+    private boolean isVocalMode = false;
+
     // --- SERVICES & LOGIC ---
     private AIService aiService;
     private AudioService audioService;
@@ -54,6 +56,8 @@ public class AIController implements AIResponseListener {
     public void initialize() {
         this.aiService = new AIService(this);
         this.audioService = new AudioService();
+        this.audioService.setAIService(this.aiService);
+        this.audioService.setVocalStatusLabel(vocalStatusLabel); // Injection pour feedback visuel
         this.renderer = new UIRenderer(aiResponseFlow, responseScroll);
         this.currentUser = SessionManager.getInstance().getCurrentUser();
 
@@ -65,6 +69,8 @@ public class AIController implements AIResponseListener {
         resultContainer.setManaged(false);
         setupAutoGrowingTextArea();
         typeTitleAnimation();
+        
+        System.out.println("✅ AI Controller initialisé - Mode vocal prêt");
     }
 
     @Override
@@ -109,10 +115,24 @@ public class AIController implements AIResponseListener {
     public void onAudioChunkReceived(byte[] audioData) {
         // Appelé depuis le Thread WebSocket, OK car AudioService gère sa file d'attente
         audioService.playChunk(audioData);
+        
+        // Feedback visuel: AI est en train de parler
+        if (isVocalMode) {
+            audioService.updateVocalStatus(vocalStatusLabel, "SPEAKING");
+        }
     }
 
     @Override
-    public void onAudioEnd() { }
+    public void onAudioEnd() {
+        System.out.println("🔊 Audio playback terminé");
+        if (isVocalMode) {
+            Platform.runLater(() -> {
+                // Retour au mode écoute
+                audioService.updateVocalStatus(vocalStatusLabel, "LISTENING");
+                audioService.resumeCapture();
+            });
+        }
+    }
 
     @Override
     public void onError(String message) {
@@ -154,14 +174,20 @@ public class AIController implements AIResponseListener {
 
     @FXML
     private void handleMicToggle() {
+        isVocalMode = !isVocalMode;
         boolean active = audioService.toggleVocalMode();
+        
         if (active) {
+            System.out.println("🎤 Mode vocal ACTIVÉ");
             micButton.getStyleClass().add("btn-mic-active");
             micIcon.setFill(Color.web("#ef4444"));
+            audioService.updateVocalStatus(vocalStatusLabel, "LISTENING");
         } else {
+            System.out.println("🎤 Mode vocal DÉSACTIVÉ");
             micButton.getStyleClass().remove("btn-mic-active");
             micIcon.setFill(Color.web("#6b7280"));
         }
+        
         audioService.updateOverlay(active, vocalOverlay, vocalStatusLabel, vocalPulseCircle);
     }
 
@@ -195,8 +221,8 @@ public class AIController implements AIResponseListener {
         moveSearchUp.setInterpolator(Interpolator.EASE_BOTH);
         moveSearchUp.play();
 
-        // Reset Conteneurs
-        FadeTransition fadeOutResult = new FadeTransition(Duration.millis(300), resultContainer);
+        // ⚡ OPTIMISÉ: Animations plus rapides (300ms -> 150ms)
+        FadeTransition fadeOutResult = new FadeTransition(Duration.millis(150), resultContainer);
         fadeOutResult.setFromValue(1.0);
         fadeOutResult.setToValue(0.0);
         fadeOutResult.setOnFinished(e -> {
@@ -205,7 +231,7 @@ public class AIController implements AIResponseListener {
             homeContainer.setVisible(true);
             homeContainer.setManaged(true);
             homeContainer.setOpacity(0);
-            FadeTransition fadeInHome = new FadeTransition(Duration.millis(400), homeContainer);
+            FadeTransition fadeInHome = new FadeTransition(Duration.millis(200), homeContainer);
             fadeInHome.setToValue(1);
             fadeInHome.play();
             typeTitleAnimation();
@@ -264,7 +290,8 @@ public class AIController implements AIResponseListener {
     private void performSearchTransition() {
         if (!homeContainer.isVisible() && resultContainer.isVisible()) return;
 
-        FadeTransition fadeOutHome = new FadeTransition(Duration.millis(300), homeContainer);
+        // ⚡ OPTIMISÉ: Animations plus rapides (300ms -> 150ms, 500ms -> 300ms)
+        FadeTransition fadeOutHome = new FadeTransition(Duration.millis(150), homeContainer);
         fadeOutHome.setToValue(0);
         fadeOutHome.setOnFinished(e -> {
             homeContainer.setVisible(false);
@@ -272,7 +299,7 @@ public class AIController implements AIResponseListener {
             resultContainer.setVisible(true);
             resultContainer.setManaged(true);
             resultContainer.setOpacity(0);
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), resultContainer);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(150), resultContainer);
             fadeIn.setFromValue(0);
             fadeIn.setToValue(1.0);
             fadeIn.play();
@@ -283,7 +310,7 @@ public class AIController implements AIResponseListener {
         if (parentHeight == 0) parentHeight = 600;
         double targetY = (parentHeight / 2) - 80;
 
-        TranslateTransition moveSearchDown = new TranslateTransition(Duration.millis(500), searchContainer);
+        TranslateTransition moveSearchDown = new TranslateTransition(Duration.millis(300), searchContainer);
         moveSearchDown.setToY(targetY);
         moveSearchDown.setInterpolator(Interpolator.EASE_BOTH);
         moveSearchDown.play();

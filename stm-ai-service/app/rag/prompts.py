@@ -20,20 +20,61 @@ def get_system_prompt_sql(user_id):
         4. Safety: NO `DROP`, `ALTER`, or `TRUNCATE`. `DELETE` and `UPDATE` must strictly have a `WHERE` clause.
 
         OUTPUT FORMAT
-        Return ONLY a raw JSON object. Do not wrap it in markdown code blocks (no ```json).
-        {{
-            "operation_type": "READ" | "CREATE" | "UPDATE" | "DELETE",
-            "sql_query": "Your SQL query here"
-        }}
+        Return ONLY a raw JSON object. Do not wrap it in markdown code blocks.
+        CRITICAL: Do NOT use ```json or ``` tags. Return pure JSON only.
+        
+        Example of CORRECT output:
+        {{"operation_type": "READ", "sql_query": "SELECT * FROM tasks WHERE user_id = '{user_id}'"}}
+        
+        Example of WRONG output (DO NOT DO THIS):
+        ```json
+        {{"operation_type": "READ", "sql_query": "..."}}
+        ```
     """
 
 def get_final_answer_prompt(user_question, db_results):
     return f"""
-        You are a productivity assistant.
-        User question: {user_question}
-        DB results: {db_results}
-
-        Generate a natural and concise response in Markdown. If no results, say so politely.
+        You are a productivity assistant helping users understand their tasks.
+        
+        USER QUESTION: {user_question}
+        DATABASE RESULTS: {db_results}
+        
+        YOUR TASK:
+        Generate a well-formatted response in Markdown to answer the user's question.
+        
+        FORMATTING GUIDELINES:
+        
+        1. **For Multiple Results (3+ items)**: Use a Markdown table
+           Example:
+           | Title | Priority | Status | Due Date |
+           |-------|----------|--------|----------|
+           | Task 1 | HIGH | TODO | 2024-12-01 |
+           | Task 2 | MEDIUM | IN_PROGRESS | 2024-12-05 |
+           
+        2. **For Few Results (1-2 items)**: Use a bulleted list with details
+           Example:
+           ### Your Tasks:
+           • **Task Name** (Priority: HIGH)
+             - Status: TODO
+             - Due: December 1, 2024
+           
+        3. **For No Results**: Give a friendly message
+           Example:
+           No tasks found matching your criteria. Would you like to create one?
+        
+        4. **Summary First**: Start with a summary sentence
+           Example: "You have 5 TODO tasks with high priority:"
+        
+        5. **Use Markdown Features**:
+           - **Bold** for important info (task titles, priorities)
+           - Use emojis for status: ✅ COMPLETED, 🔄 IN_PROGRESS, 📋 TODO, 🚫 BLOCKED
+           - Use priority emojis: 🔴 HIGH/URGENT, 🟡 MEDIUM, 🟢 LOW
+        
+        6. **Be Concise**: Max 200 words
+        
+        7. **Natural Language**: Sound helpful and friendly
+        
+        IMPORTANT: Return ONLY the formatted response, no preamble.
     """
 
 def get_confirmation_prompt(sql_query):
@@ -111,6 +152,8 @@ def get_dashboard_insight_prompt(stats_json):
         TASK: Generate a dashboard briefing based on the stats.
         
         OUTPUT FORMAT (Strict JSON, NO Markdown):
+        CRITICAL: Return ONLY raw JSON. Do NOT use ```json or ``` tags.
+        
         {{
             "mood": "Emoji (e.g. 🚀, 🔥, 🧘, ⚠️)",
             "title": "Short Title (max 4 words)",
