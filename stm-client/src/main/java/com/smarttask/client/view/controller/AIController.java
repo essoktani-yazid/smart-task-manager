@@ -124,13 +124,22 @@ public class AIController implements AIResponseListener {
 
     @Override
     public void onAudioEnd() {
-        System.out.println("🔊 Audio playback terminé");
+        // Log détaillé dans AIService (compteur chunks)
         if (isVocalMode) {
-            Platform.runLater(() -> {
-                // Retour au mode écoute
-                audioService.updateVocalStatus(vocalStatusLabel, "LISTENING");
-                audioService.resumeCapture();
-            });
+            // Petit délai pour laisser le temps aux derniers chunks audio d'arriver
+            // (évite de repasser en mode écoute avant que l'audio soit bien en file)
+            new Thread(() -> {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                javafx.application.Platform.runLater(() -> {
+                    if (isVocalMode) {
+                        audioService.notifyServerAudioEnd();
+                    }
+                });
+            }, "AudioEnd-Delay").start();
         }
     }
 

@@ -7,11 +7,12 @@ import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.User;
 import javafx.application.Platform;
 
+import java.nio.ByteBuffer;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
-import java.util.Base64;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AIService {
 
@@ -19,6 +20,7 @@ public class AIService {
     private final Gson gson = GsonUtils.getGson();
     private final AIResponseListener listener;
     private boolean isGenerating = false;
+    private final AtomicInteger binaryChunkCount = new AtomicInteger(0);  // [FLOW] Compteur chunks reçus
 
     public AIService(AIResponseListener listener) {
         this.listener = listener;
@@ -52,10 +54,31 @@ public class AIService {
         
         try {
             // sendBinary est la méthode native de Java 11 HttpClient pour les octets
+            System.out.println("🌐 [AIService] Envoi WebSocket Binary: " + audioData.length + " bytes");
             webSocket.sendBinary(java.nio.ByteBuffer.wrap(audioData), true);
         } catch (Exception e) {
             System.err.println("❌ Erreur envoi audio chunk: " + e.getMessage());
+            e.printStackTrace();
             listener.onError("Audio transmission error");
+        }
+    }
+
+    public void sendAudioEnd() {
+        if (webSocket == null) {
+            System.err.println("⚠️ Impossible d'envoyer signal fin audio: WebSocket non connecté");
+            return;
+        }
+        
+        try {
+            JsonObject payload = new JsonObject();
+            payload.addProperty("action", "AUDIO_END");
+            
+            String jsonMessage = gson.toJson(payload);
+            System.out.println("🔚 [AIService] Envoi signal fin audio");
+            webSocket.sendText(jsonMessage, true);
+        } catch (Exception e) {
+            System.err.println("❌ Erreur envoi signal fin audio: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -118,36 +141,24 @@ public class AIService {
                 if (json.has("type")) {
                     String type = json.get("type").getAsString();
                     
-                    // --- AUDIO (Zéro contact avec l'UI nécessaire) ---
-                    if ("AUDIO_CHUNK".equals(type)) {
-                        try {
-                            String base64Data = json.get("data").getAsString();
-                            // Décodage Base64 hors du thread UI
-                            byte[] pcmData = Base64.getDecoder().decode(base64Data);
-                            
-                            if (pcmData.length == 0) {
-                                System.err.println("⚠️ Chunk PCM vide après décodage");
-                                return null;
-                            }
-                            
-                            // On envoie direct au service audio (Thread-Safe)
-                            // PAS DE Platform.runLater ICI ! C'est ce qui causait le lag.
-                            listener.onAudioChunkReceived(pcmData);
-                        } catch (IllegalArgumentException e) {
-                            System.err.println("❌ Erreur décodage Base64: " + e.getMessage());
-                        } catch (Exception e) {
-                            System.err.println("❌ Erreur traitement audio chunk: " + e.getMessage());
-                        }
-                        return null; 
-                    }
-                    
+                    // --- AUDIO_END (audio TTS terminé côté serveur) ---
                     if ("AUDIO_END".equals(type)) {
+                        int total = binaryChunkCount.get();
+                        System.out.println("⬇️ [FLOW] AUDIO_END reçu | Chunks binaires reçus avant: " + total);
+                        if (total == 0) {
+                            System.err.println("⚠️ [FLOW] AUCUN chunk audio reçu avant AUDIO_END - mic va se réactiver sans lecture");
+                        }
+                        binaryChunkCount.set(0);  // Reset pour prochaine réponse
                         listener.onAudioEnd();
+                        webSocket.request(1); // ⚡ CRITICAL: demander le prochain message
                         return null;
                     }
                 }
 
                 // --- UI UPDATES (Seulement ici on appelle JavaFX) ---
+                if (json.has("display_message")) {
+                    System.out.println("⬇️ [FLOW] Message texte reçu (display_message)");
+                }
                 Platform.runLater(() -> {
                     listener.onMessageReceived(json);
                 });
@@ -157,6 +168,29 @@ public class AIService {
             }
             
             return WebSocket.Listener.super.onText(webSocket, data, last);
+        }
+
+        @Override
+        public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
+            // Audio TTS reçu du serveur (format binaire PCM)
+            try {
+                int size = data.remaining();
+                if (size <= 0) {
+                    System.err.println("⚠️ [FLOW] onBinary: chunk vide ignoré");
+                    return WebSocket.Listener.super.onBinary(webSocket, data, last);
+                }
+                byte[] pcmData = new byte[size];
+                data.get(pcmData);
+                binaryChunkCount.incrementAndGet();
+                if (binaryChunkCount.get() <= 3 || binaryChunkCount.get() % 20 == 0) {
+                    System.out.println("⬇️ [FLOW] BINARY reçu #" + binaryChunkCount.get() + " (" + size + " bytes)");
+                }
+                listener.onAudioChunkReceived(pcmData);
+            } catch (Exception e) {
+                System.err.println("❌ [FLOW] Erreur onBinary: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return WebSocket.Listener.super.onBinary(webSocket, data, last);
         }
 
         @Override

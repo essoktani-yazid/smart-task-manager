@@ -10,8 +10,9 @@ public class AudioStreamPlayer {
     private final BlockingQueue<byte[]> audioQueue = new LinkedBlockingQueue<>();
     private volatile boolean isPlaying = false;
     private SourceDataLine line;
+    private Runnable onPlaybackFinished; // Callback pour signaler la fin physique du son
 
-    // Configuration EXACTE correspondant au Python
+    // Configuration EXACTE correspondant au Python (Edge TTS -> Pydub -> PCM)
     private final AudioFormat format = new AudioFormat(
             24000,  // Sample Rate
             16,     // Sample Size (bits)
@@ -20,14 +21,19 @@ public class AudioStreamPlayer {
             false   // Big Endian (False = Little Endian, standard PC)
     );
 
+    /**
+     * Définit l'action à exécuter quand tout l'audio a fini de jouer.
+     */
+    public void setOnPlaybackFinished(Runnable callback) {
+        this.onPlaybackFinished = callback;
+    }
+
     public void start() {
         if (isPlaying) {
-            System.out.println("⚠️ Audio player déjà actif");
             return;
         }
         isPlaying = true;
         
-        // On lance le lecteur dans un thread séparé pour ne pas bloquer l'UI
         Thread playerThread = new Thread(this::playbackLoop, "Audio-Player-Thread");
         playerThread.setDaemon(true);
         playerThread.setUncaughtExceptionHandler((thread, throwable) -> {
@@ -41,14 +47,32 @@ public class AudioStreamPlayer {
 
     // Méthode appelée par le WebSocket quand un chunk arrive
     public void enqueueAudio(byte[] audioData) {
-        audioQueue.offer(audioData);
+        if (audioData != null && audioData.length > 0) {
+            audioQueue.offer(audioData);
+            int size = audioQueue.size();
+            if (size <= 5 || size % 20 == 0) {
+                System.out.println("📥 [FLOW] Chunk en file (queue=" + size + ", +" + audioData.length + " bytes)");
+            }
+        }
+    }
+
+    /**
+     * Appelé quand le serveur a fini d'envoyer les données.
+     * Insère un marqueur de fin dans la file.
+     */
+    public void finish() {
+        int queueSize = audioQueue.size();
+        System.out.println("🏁 [FLOW] finish() -> poison pill (queue=" + queueSize + ")");
+        if (queueSize == 0) {
+            System.err.println("⚠️ [FLOW] Queue vide: micro va se réactiver sans avoir joué d'audio");
+        }
+        audioQueue.offer(new byte[0]);
     }
 
     private void playbackLoop() {
         try {
             DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
             
-            // Vérifier que le système audio est disponible
             if (!AudioSystem.isLineSupported(info)) {
                 System.err.println("❌ Format audio non supporté par le système");
                 isPlaying = false;
@@ -60,33 +84,35 @@ public class AudioStreamPlayer {
             line.start();
             System.out.println("🔊 Ligne audio ouverte - Prêt à jouer");
 
-            int chunkCount = 0;
             while (isPlaying) {
                 try {
-                    // Prend le prochain morceau (attend s'il n'y en a pas)
+                    // Prend le prochain morceau (bloquant si vide)
                     byte[] chunk = audioQueue.take();
                     
-                    // Signal d'arrêt (chunk vide optionnel)
+                    // DÉTECTION DU MARQUEUR DE FIN
                     if (chunk.length == 0) {
-                        System.out.println("⚠️ Chunk vide reçu, ignoré");
+                        System.out.println("🏁 [FLOW] Poison pill -> drainage -> onPlaybackFinished");
+                        
+                        // Signaler au service qu'on peut rouvrir le micro
+                        if (onPlaybackFinished != null) {
+                            onPlaybackFinished.run();
+                        }
                         continue;
                     }
 
-                    // Écriture directe sur la carte son
-                    line.write(chunk, 0, chunk.length);
-                    chunkCount++;
-                    
-                    if (chunkCount % 10 == 0) {
-                        System.out.println("🔊 " + chunkCount + " chunks audio joués");
+                    // Aligner au frame size (2 bytes pour 16-bit mono)
+                    // Sinon IllegalArgumentException: "non-integral number of frames"
+                    int frameSize = 2; // 16-bit mono = 2 bytes par frame
+                    int alignedLength = (chunk.length / frameSize) * frameSize;
+                    if (alignedLength > 0) {
+                        line.write(chunk, 0, alignedLength);
                     }
+                    
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    System.out.println("⚠️ Playback interrompu");
                     break;
                 }
             }
-            
-            System.out.println("✅ Playback terminé - Total chunks: " + chunkCount);
             
         } catch (LineUnavailableException e) {
             System.err.println("❌ Impossible d'ouvrir la ligne audio: " + e.getMessage());
@@ -97,11 +123,10 @@ public class AudioStreamPlayer {
         } finally {
             if (line != null) {
                 try {
-                    line.drain(); // Attendre que tout soit joué
+                    line.drain();
                     line.close();
-                    System.out.println("🔇 Ligne audio fermée");
                 } catch (Exception e) {
-                    System.err.println("⚠️ Erreur lors de la fermeture: " + e.getMessage());
+                    // Ignore
                 }
             }
         }
@@ -110,5 +135,7 @@ public class AudioStreamPlayer {
     public void stop() {
         isPlaying = false;
         audioQueue.clear();
+        // Pour débloquer le thread s'il attend sur take()
+        audioQueue.offer(new byte[0]); 
     }
 }

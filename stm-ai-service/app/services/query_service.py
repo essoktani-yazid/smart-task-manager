@@ -1,4 +1,5 @@
 import json
+import re
 from fastapi import WebSocketDisconnect
 from app.database import db
 from app.services.ai_service import stream_llm_response
@@ -6,10 +7,23 @@ from app.rag import prompts
 from app.utils.logger import log
 
 # --- UTILITAIRES ---
+def _fix_control_chars_in_strings(s: str) -> str:
+    """Échappe les caractères de contrôle (ex: retours à la ligne) dans les valeurs des chaînes JSON."""
+    def replacer(match):
+        content = match.group(1)
+        content = content.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t")
+        for i in range(32):
+            if i not in (9, 10, 13):
+                content = content.replace(chr(i), " ")
+        return '"' + content + '"'
+    return re.sub(r'"((?:[^"\\]|\\.)*)"', replacer, s)
+
+
 def clean_llm_json(response: str) -> str:
     """
     Nettoie la réponse LLM pour extraction JSON.
     Retire les balises markdown ```json et ``` si présentes.
+    Corrige les caractères de contrôle invalides (retours à la ligne bruts dans les chaînes).
     
     Args:
         response: La réponse brute du LLM
@@ -31,6 +45,35 @@ def clean_llm_json(response: str) -> str:
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]  # Enlever ```
         cleaned = cleaned.strip()
+    
+    # Corriger les caractères de contrôle invalides dans les chaînes JSON
+    cleaned = _fix_control_chars_in_strings(cleaned)
+    
+    # Extraire uniquement l'objet JSON (ignorer texte avant/après)
+    # Le LLM ajoute parfois des notes après le JSON: *(Note: ...)*
+    start = cleaned.find('{')
+    if start != -1:
+        depth = 0
+        in_string = False
+        escape = False
+        for i, ch in enumerate(cleaned[start:], start):
+            if escape:
+                escape = False
+                continue
+            if ch == '\\' and in_string:
+                escape = True
+                continue
+            if ch == '"' and not escape:
+                in_string = not in_string
+                continue
+            if not in_string:
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+                    if depth == 0:
+                        cleaned = cleaned[start:i+1]
+                        break
     
     return cleaned
 
@@ -69,9 +112,12 @@ async def handle_user_request(websocket, user_id, user_message):
         cleaned_res = clean_llm_json(ai_res)
         data = json.loads(cleaned_res)
         op = data["operation_type"]
-        query = data["sql_query"]
+        # Normaliser INFO → INFORMATION
+        if op == "INFO":
+            op = "INFORMATION"
+        query = data.get("sql_query", None)  # Peut être absent pour INFORMATION
         log.ai(f"Opération : {op} | SQL : {query}")
-    except Exception as e:
+    except (KeyError, json.JSONDecodeError) as e:
         log.error(f"Erreur parsing JSON IA : {e}")
         log.error(f"Réponse reçue : {ai_res}")
         await safe_send(websocket, {"display_message": "❌ Error analyzing request. Please try again.", "requires_confirmation": False})
@@ -230,6 +276,17 @@ async def handle_user_request(websocket, user_id, user_message):
                 "display_message": f"❌ An internal error occurred.\nDetails: {str(critical_error)}",
                 "requires_confirmation": False
             })
+    # =========================================================================
+    # CAS 4 : INFORMATION (Requête conversationnelle, pas de SQL)
+    # =========================================================================
+    elif op == "INFORMATION":
+        # La réponse conversationnelle est déjà dans le JSON du LLM
+        response_text = data.get("response", "I'm here to help you manage your tasks! Try asking me something like 'show my tasks'.")
+        
+        await safe_send(websocket, {
+            "display_message": response_text,
+            "requires_confirmation": False
+        })
     
     log.info("--- Fin du traitement ---")
 
