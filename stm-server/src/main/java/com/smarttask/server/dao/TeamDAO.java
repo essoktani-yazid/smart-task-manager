@@ -23,20 +23,12 @@ public class TeamDAO {
         String teamId = UUID.randomUUID().toString();
 
         String teamSql = """
-            INSERT INTO teams (id, name, description, color, owner_id, is_active)
-            VALUES (?, ?, ?, ?, ?, TRUE)
-        """;
-
-        String ownerSql = """
-            INSERT INTO team_members (team_id, user_id, role)
-            VALUES (?, ?, 'OWNER')
-        """;
+                    INSERT INTO teams (id, name, description, color, owner_id, is_active)
+                    VALUES (?, ?, ?, ?, ?, TRUE)
+                """;
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement teamStmt = conn.prepareStatement(teamSql);
-                 PreparedStatement ownerStmt = conn.prepareStatement(ownerSql)) {
+            try (PreparedStatement teamStmt = conn.prepareStatement(teamSql)) {
 
                 teamStmt.setString(1, teamId);
                 teamStmt.setString(2, team.getName());
@@ -45,16 +37,8 @@ public class TeamDAO {
                 teamStmt.setString(5, team.getOwnerId());
                 teamStmt.executeUpdate();
 
-                ownerStmt.setString(1, teamId);
-                ownerStmt.setString(2, team.getOwnerId());
-                ownerStmt.executeUpdate();
-
-                conn.commit();
                 team.setId(teamId);
                 return teamId;
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -69,7 +53,7 @@ public class TeamDAO {
         String sql = "SELECT * FROM teams WHERE id = ? AND is_active = TRUE";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, teamId);
 
@@ -89,18 +73,19 @@ public class TeamDAO {
      */
     public List<Team> findByUser(String userId) {
         String sql = """
-            SELECT DISTINCT t.*
-            FROM teams t
-            JOIN team_members tm ON t.id = tm.team_id
-            WHERE tm.user_id = ? AND t.is_active = TRUE
-        """;
+                    SELECT DISTINCT t.*
+                    FROM teams t
+                    LEFT JOIN team_members tm ON t.id = tm.team_id
+                    WHERE (tm.user_id = ? OR t.owner_id = ?) AND t.is_active = TRUE
+                """;
 
         List<Team> teams = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId);
+            stmt.setString(2, userId);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -118,13 +103,13 @@ public class TeamDAO {
      */
     public void update(Team team) {
         String sql = """
-            UPDATE teams
-            SET name = ?, description = ?, color = ?, is_active = ?
-            WHERE id = ?
-        """;
+                    UPDATE teams
+                    SET name = ?, description = ?, color = ?, is_active = ?
+                    WHERE id = ?
+                """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, team.getName());
             stmt.setString(2, team.getDescription());
@@ -146,7 +131,7 @@ public class TeamDAO {
         String sql = "UPDATE teams SET is_active = FALSE WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, teamId);
             stmt.executeUpdate();
@@ -157,12 +142,12 @@ public class TeamDAO {
 
     public void addMember(String teamId, String userId, String role) {
         String sql = """
-            INSERT INTO team_members (team_id, user_id, role)
-            VALUES (?, ?, ?)
-        """;
+                    INSERT INTO team_members (team_id, user_id, role)
+                    VALUES (?, ?, ?)
+                """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, teamId);
             stmt.setString(2, userId);
@@ -179,7 +164,7 @@ public class TeamDAO {
         String sql = "DELETE FROM team_members WHERE team_id = ? AND user_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, teamId);
             stmt.setString(2, userId);
@@ -191,13 +176,13 @@ public class TeamDAO {
 
     public void updateMemberRole(String teamId, String userId, String role) {
         String sql = """
-            UPDATE team_members
-            SET role = ?
-            WHERE team_id = ? AND user_id = ?
-        """;
+                    UPDATE team_members
+                    SET role = ?
+                    WHERE team_id = ? AND user_id = ?
+                """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, role);
             stmt.setString(2, teamId);
@@ -213,7 +198,7 @@ public class TeamDAO {
         List<TeamMember> members = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, teamId);
 
@@ -249,4 +234,3 @@ public class TeamDAO {
         return member;
     }
 }
-

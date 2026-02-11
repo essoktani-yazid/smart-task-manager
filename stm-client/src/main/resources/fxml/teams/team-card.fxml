@@ -1,29 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
 
-<HBox xmlns="http://javafx.com/javafx"
+<VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      spacing="16"
-      alignment="CENTER_LEFT"
-      styleClass="team-card">
+      fx:controller="com.smarttask.client.view.controller.teams.TeamCardController"
+      styleClass="team-card"
+      spacing="15">
 
-    <!-- Icon -->
-    <StackPane fx:id="colorBadge"
-               styleClass="team-badge">
-        <Label text="👥" styleClass="team-icon"/>
-    </StackPane>
+    <HBox spacing="16" alignment="CENTER_LEFT">
+        <!-- Icon -->
+        <StackPane fx:id="colorBadge"
+                   styleClass="team-badge">
+            <Label text="👥" styleClass="team-icon"/>
+        </StackPane>
 
-    <!-- Info -->
-    <VBox spacing="4">
-        <Label fx:id="teamName"
-               text="Nom de l'équipe"
-               styleClass="team-name"/>
-        <Label fx:id="teamDescription"
-               text="Description de l'équipe"
-               styleClass="team-desc"/>
-    </VBox>
+        <!-- Info -->
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label fx:id="teamName"
+                   text="Nom de l'équipe"
+                   styleClass="team-name"/>
+            <Label fx:id="teamDescription"
+                   text="Description de l'équipe"
+                   styleClass="team-desc"
+                   maxHeight="40"/>
+        </VBox>
+    </HBox>
 
-</HBox>
+    <!-- Meta Info -->
+    <HBox alignment="CENTER_LEFT" styleClass="meta-container">
+        <StackPane styleClass="member-chip">
+            <Label fx:id="memberCountLabel" text="0 members" styleClass="member-count-label"/>
+        </StackPane>
+        <Region HBox.hgrow="ALWAYS"/>
+        <!-- Optional: Hover indicator or button could go here -->
+    </HBox>
 
+</VBox>
