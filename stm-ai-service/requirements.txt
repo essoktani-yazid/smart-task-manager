@@ -4,3 +4,5 @@ websockets
 python-dotenv
 mysql-connector-python
 httpx
+edge-tts
+pydub

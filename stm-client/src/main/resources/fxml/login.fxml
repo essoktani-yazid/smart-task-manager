@@ -36,7 +36,7 @@
                     onAction="#switchToRegister" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
          </HBox>
          
-         <StackPane VBox.vgrow="ALWAYS">
+         <StackPane fx:id="formContainer" VBox.vgrow="ALWAYS">
             
             <VBox fx:id="loginForm" spacing="20" styleClass="auth-form">
                <VBox spacing="5">
@@ -48,12 +48,12 @@
                
                <VBox spacing="8">
                   <Label text="Nom d'utilisateur" styleClass="field-label"/>
-                  <TextField fx:id="loginUsernameField" promptText="Nom d'utilisateur" styleClass="form-field" text="yazides"/>
+                  <TextField fx:id="loginUsernameField" promptText="Nom d'utilisateur" styleClass="form-field" text="yazid"/>
                </VBox>
                
                <VBox spacing="8">
                   <Label text="Mot de passe" styleClass="field-label"/>
-                  <PasswordField fx:id="loginPasswordField" promptText="••••••••" styleClass="form-field" text="123456"/>
+                  <PasswordField fx:id="loginPasswordField" promptText="••••••••" styleClass="form-field" text="yazid"/>
                </VBox>
                
                <Label fx:id="loginErrorLabel" styleClass="error-label" visible="false" wrapText="true"/>
@@ -88,6 +88,8 @@
                <Button fx:id="registerButton" text="S'inscrire" styleClass="primary-btn" 
                        onAction="#handleRegister" maxWidth="Infinity"/>
             </VBox>
+            
+            <ProgressIndicator fx:id="loadingSpinner" maxWidth="50" maxHeight="50" visible="false"/>
             
          </StackPane>
       </VBox>

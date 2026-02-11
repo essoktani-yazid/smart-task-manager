@@ -22,7 +22,6 @@
 
         <VBox fx:id="homeContainer" alignment="CENTER" spacing="40" VBox.vgrow="ALWAYS">
             <Label fx:id="typingTitle" styleClass="creative-title" text="" />
-
             <Region prefHeight="80" />
             
             <HBox fx:id="cardsContainer" alignment="CENTER" spacing="20" maxWidth="850">
@@ -115,23 +114,41 @@
             <Button text="← New Search" onAction="#resetView" styleClass="btn-back"/>
             <Region prefHeight="80" />
         </VBox>
-
     </VBox>
 
     <HBox fx:id="searchContainer" alignment="CENTER_LEFT" maxWidth="750" minHeight="60" maxHeight="60" styleClass="search-pill-glass" pickOnBounds="false">
         <padding><Insets bottom="5" left="18" right="10" top="5"/></padding>
+        
         <Button styleClass="btn-icon-glass">
             <graphic><SVGPath content="M12 5V19M5 12H19" stroke="#6b7280" strokeWidth="2" fill="transparent" scaleX="1.2" scaleY="1.2"/></graphic>
         </Button>
+        
         <TextArea fx:id="userInput" promptText="Ask anything..." HBox.hgrow="ALWAYS" wrapText="true" styleClass="search-area"/>
+        
         <HBox alignment="CENTER" spacing="10">
-            <Button styleClass="btn-icon-glass">
-                <graphic><SVGPath content="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2" stroke="#6b7280" strokeWidth="2" fill="transparent"/></graphic>
+            <Button fx:id="micButton" styleClass="btn-mic-glass" onAction="#handleMicToggle">
+                <graphic>
+                    <SVGPath fx:id="micIcon" content="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 2.34 9 5v6c0 1.66 1.34 3 3 3z M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" 
+                             fill="#6b7280" scaleX="0.9" scaleY="0.9"/>
+                </graphic>
             </Button>
+
             <Button fx:id="sendButton" styleClass="btn-send-gradient" onAction="#handleSendMessage">
                 <graphic><SVGPath content="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="white" scaleX="0.9" scaleY="0.9" translateX="-1"/></graphic>
             </Button>
         </HBox>
     </HBox>
+
+    <VBox fx:id="vocalOverlay" visible="false" managed="false" alignment="CENTER" spacing="30" styleClass="vocal-overlay">
+        <Label text="I'm listening..." styleClass="vocal-status-text" fx:id="vocalStatusLabel"/>
+        
+        <StackPane>
+            <Circle fx:id="vocalPulseCircle" radius="60" styleClass="vocal-pulse-circle"/>
+            <SVGPath content="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 2.34 9 5v6c0 1.66 1.34 3 3 3z M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" 
+                     fill="white" scaleX="2.5" scaleY="2.5"/>
+        </StackPane>
+
+        <Button text="Stop Listening" onAction="#handleMicToggle" styleClass="btn-vocal-stop"/>
+    </VBox>
 
 </StackPane>
