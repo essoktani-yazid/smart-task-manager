@@ -1,6 +1,6 @@
 -- 1. Créer la base de données
 DROP DATABASE IF EXISTS smarttask_db;
-CREATE DATABASE IF NOT EXISTS smarttask_db 
+CREATE DATABASE IF NOT EXISTS smarttask_db ;
 
 USE smarttask_db;
 

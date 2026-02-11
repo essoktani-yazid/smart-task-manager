@@ -2,8 +2,10 @@ package com.smarttask.client.view.controller;
 
 import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
+import com.smarttask.client.view.controller.kanban.*;
 
 import com.smarttask.client.service.PlannerManager;
+import com.smarttask.server.dao.ProjectDAO;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -37,7 +39,7 @@ import java.util.*;
 public class CalendarController implements Initializable {
 
     public enum ViewType {
-        DAY, WEEK, MONTH, YEAR
+        DAY, WEEK, MONTH, YEAR , KANBAN
     }
     // Primary Colors
     private static final String M3_PRIMARY = "#4f46e5";
@@ -117,6 +119,9 @@ public class CalendarController implements Initializable {
     @FXML private Label completedCountLabel;
     @FXML private VBox googleCalendarContainer;
 
+    @FXML private ToggleButton kanbanViewButton;  // Add this line
+
+
     // State
     private LocalDate currentDate = LocalDate.now();
     private ViewType currentView = ViewType.MONTH;
@@ -131,6 +136,8 @@ public class CalendarController implements Initializable {
     private final DateTimeFormatter monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy");
     private final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy");
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+    private KanbanBoard kanbanBoard;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -227,7 +234,7 @@ public class CalendarController implements Initializable {
     }
 
 
-//    **
+    //    **
 //            * Create a small sync status indicator for the header
 // */
     private HBox createSyncStatusIndicator() {
@@ -307,18 +314,19 @@ public class CalendarController implements Initializable {
                 else if (newVal == weekViewButton) currentView = ViewType.WEEK;
                 else if (newVal == monthViewButton) currentView = ViewType.MONTH;
                 else if (newVal == yearViewButton) currentView = ViewType.YEAR;
+                else if (newVal == kanbanViewButton) currentView = ViewType.KANBAN;
                 updateView();
+
+
             });
 
-//            if (monthViewButton != null) {
-//                monthViewButton.setSelected(true);
-//            }
 
             // In setupViewToggle():
-                if (weekViewButton != null) {
-                    weekViewButton.setSelected(true);  // Changed from monthViewButton
-                }
+            if (weekViewButton != null) {
+                weekViewButton.setSelected(true);  // Changed from monthViewButton
+            }
         }
+        initializeKanbanBoard();
     }
 
     private void setupPersistentFilterDropdowns() {
@@ -326,6 +334,29 @@ public class CalendarController implements Initializable {
         setupPersistentMenuButton(typeFilterBtn);
         setupPersistentMenuButton(priorityFilterBtn);
         setupPersistentMenuButton(statusFilterBtn);
+    }
+
+    private void initializeKanbanBoard() {
+        kanbanBoard = new KanbanBoard();
+        kanbanBoard.setCurrentUser(currentUser);
+
+        // Set callbacks
+        kanbanBoard.setOnTaskUpdated(task -> {
+            // Save to database when task is moved
+            plannerManager.updateTask(task);
+            System.out.println("✅ Task status updated via Kanban: " + task.getTitle() + " → " + task.getStatus());
+        });
+
+        kanbanBoard.setOnTaskClicked(task -> {
+            // Open edit dialog
+            showTaskDialog(new TaskPlannerAdapter(task));
+        });
+
+        kanbanBoard.setOnTaskDeleted(task -> {
+            // Delete from database
+            plannerManager.removeTask(task);
+            System.out.println("🗑️ Task deleted via Kanban: " + task.getTitle());
+        });
     }
 
     /**
@@ -942,7 +973,7 @@ public class CalendarController implements Initializable {
         btn.setStyle(
                 "-fx-background-color: transparent; " +
                         "-fx-text-fill: #94a3b8; " +
-                        "-fx-font-size: 12; " +
+                        "-fx-font-size: 14; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 4 8; " +
                         "-fx-background-radius: 6; " +
@@ -952,7 +983,7 @@ public class CalendarController implements Initializable {
         btn.setOnMouseEntered(e -> btn.setStyle(
                 "-fx-background-color: #f1f5f9; " +
                         "-fx-text-fill: #475569; " +
-                        "-fx-font-size: 12; " +
+                        "-fx-font-size: 14; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 4 8; " +
                         "-fx-background-radius: 6; " +
@@ -962,7 +993,7 @@ public class CalendarController implements Initializable {
         btn.setOnMouseExited(e -> btn.setStyle(
                 "-fx-background-color: transparent; " +
                         "-fx-text-fill: #94a3b8; " +
-                        "-fx-font-size: 12; " +
+                        "-fx-font-size: 14; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 4 8; " +
                         "-fx-background-radius: 6; " +
@@ -1098,119 +1129,135 @@ public class CalendarController implements Initializable {
         return button;
     }
 
-    /**
-     * ✨ MODERN STYLED: Enhanced settings menu with beautiful design
-     */
     private void showEnhancedItemMenu(Node owner, PlannerItem item) {
         ContextMenu menu = new ContextMenu();
 
-        // ============= MODERN MENU STYLING =============
+        // Modern menu styling
         menu.setStyle(
                 "-fx-background-color: white; " +
                         "-fx-background-radius: 12; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 8); " +
-                        "-fx-padding: 6; " +
-                        "-fx-border-color: rgba(0,0,0,0.08); " +
+                        "-fx-border-radius: 12; " +
+                        "-fx-border-color: #e2e8f0; " +
                         "-fx-border-width: 1; " +
-                        "-fx-border-radius: 12;"
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 8); " +
+                        "-fx-padding: 6;"
         );
 
         boolean isCompleted = checkItemCompletion(item);
 
-        // ============= EDIT MENU ITEM (Blue like your screenshot) =============
-        CustomMenuItem editItem = createModernMenuItem(
-                "✏️",
-                "Edit                  ",
-                "#3b82f6",
-                () -> {
-                    if (item.getItemType() == PlannerItemType.TASK) {
-                        showTaskDialog((TaskPlannerAdapter) item);
-                    } else {
-                        showEventDialog((EventPlannerAdapter) item);
-                    }
-                    menu.hide();
-                }
-        );
+        // ════════════════════════════════════════════════════════════════════════════
+        // EDIT - Standard MenuItem (CSS handles hover)
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem editItem = new MenuItem("Edit");
+        editItem.setStyle("-fx-padding: 10 16;");
+        editItem.setOnAction(e -> {
+            if (item.getItemType() == PlannerItemType.TASK) {
+                showTaskDialog((TaskPlannerAdapter) item);
+            } else {
+                showEventDialog((EventPlannerAdapter) item);
+            }
+        });
 
-        // ============= MARK COMPLETE MENU ITEM =============
-        CustomMenuItem toggleCompleteItem = createModernMenuItem(
-                isCompleted ? "↩️" : "✓",
-                isCompleted ? "Mark as Incomplete" : "Mark as Complete",
-                isCompleted ? "#f59e0b" : "#10b981",
-                () -> {
+        // ════════════════════════════════════════════════════════════════════════════
+        // MARK AS COMPLETE / INCOMPLETE
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem toggleCompleteItem = new MenuItem(
+                isCompleted ? "Mark as Incomplete" : "Mark as Complete"
+        );
+        toggleCompleteItem.setStyle("-fx-padding: 10 16;");
+        toggleCompleteItem.setOnAction(e -> {
+            if (item.getItemType() == PlannerItemType.TASK) {
+                TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
+                Task task = adapter.getTask();
+                task.setStatus(task.getStatus() == Status.COMPLETED ? Status.TODO : Status.COMPLETED);
+                plannerManager.updateTask(task);
+            } else {
+                EventPlannerAdapter adapter = (EventPlannerAdapter) item;
+                CalendarEvent event = adapter.getEvent();
+                event.toggleCompleted();
+                plannerManager.updateEvent(event);
+            }
+            updateView();
+        });
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // LOCATE IN CALENDAR
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem locateItem = new MenuItem("Locate in Calendar");
+        locateItem.setStyle("-fx-padding: 10 16;");
+        locateItem.setOnAction(e -> {
+            currentDate = item.getDate();
+            currentView = ViewType.DAY;
+            dayViewButton.setSelected(true);
+            updateView();
+        });
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // SEPARATOR
+        // ════════════════════════════════════════════════════════════════════════════
+        SeparatorMenuItem separator = new SeparatorMenuItem();
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // DELETE - Red text via inline style
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem deleteItem = new MenuItem("🗑  Delete");
+        deleteItem.setStyle("-fx-padding: 10 16; -fx-text-fill: #ef4444;");
+        deleteItem.setOnAction(e -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Delete " + (item.getItemType() == PlannerItemType.TASK ? "Task" : "Event"));
+            alert.setHeaderText("Delete \"" + item.getTitle() + "\"?");
+            alert.setContentText("This action cannot be undone.");
+
+            // Style the dialog
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.setStyle("-fx-background-color: white;");
+
+            Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+            Button cancelButton = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
+
+            if (okButton != null) {
+                okButton.setText("Delete");
+                okButton.setStyle(
+                        "-fx-background-color: #ef4444; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-padding: 8 20; " +
+                                "-fx-font-weight: 600; " +
+                                "-fx-cursor: hand;"
+                );
+            }
+
+            if (cancelButton != null) {
+                cancelButton.setStyle(
+                        "-fx-background-color: white; " +
+                                "-fx-text-fill: #374151; " +
+                                "-fx-border-color: #d1d5db; " +
+                                "-fx-border-radius: 8; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-padding: 8 20; " +
+                                "-fx-font-weight: 600; " +
+                                "-fx-cursor: hand;"
+                );
+            }
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
                     if (item.getItemType() == PlannerItemType.TASK) {
-                        TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
-                        Task task = adapter.getTask();
-                        task.setStatus(task.getStatus() == Status.COMPLETED ? Status.TODO : Status.COMPLETED);
-                        plannerManager.updateTask(task);
+                        plannerManager.removeTask(((TaskPlannerAdapter) item).getTask());
                     } else {
-                        EventPlannerAdapter adapter = (EventPlannerAdapter) item;
-                        CalendarEvent event = adapter.getEvent();
-                        event.toggleCompleted();
-                        plannerManager.updateEvent(event);
+                        plannerManager.removeEvent(((EventPlannerAdapter) item).getEvent());
                     }
                     updateView();
-                    menu.hide();
                 }
-        );
+            });
+        });
 
-        // ============= LOCATE MENU ITEM =============
-        CustomMenuItem locateItem = createModernMenuItem(
-                "📍",
-                "Locate in Calendar",
-                "#8b5cf6",
-                () -> {
-                    currentDate = item.getDate();
-                    currentView = ViewType.DAY;
-                    dayViewButton.setSelected(true);
-                    updateView();
-                    menu.hide();
-                }
-        );
-
-        // ============= DELETE MENU ITEM =============
-        CustomMenuItem deleteItem = createModernMenuItem(
-                "🗑️",
-                "Delete                 ",
-                "#ef4444",
-                () -> {
-                    menu.hide();
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("Delete " + (item.getItemType() == PlannerItemType.TASK ? "Task" : "Event"));
-                    alert.setHeaderText("Delete \"" + item.getTitle() + "\"?");
-                    alert.setContentText("This action cannot be undone.");
-
-                    alert.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.OK) {
-                            if (item.getItemType() == PlannerItemType.TASK) {
-                                plannerManager.removeTask(((TaskPlannerAdapter) item).getTask());
-                            } else {
-                                plannerManager.removeEvent(((EventPlannerAdapter) item).getEvent());
-                            }
-                            updateView();
-                        }
-                    });
-                }
-        );
-
-        // ============= ADD SEPARATORS =============
-        SeparatorMenuItem separator1 = new SeparatorMenuItem();
-        SeparatorMenuItem separator2 = new SeparatorMenuItem();
-
-        // Add all items
-        menu.getItems().addAll(
-                editItem,
-                toggleCompleteItem,
-                separator1,
-                locateItem,
-                separator2,
-                deleteItem
-        );
+        // Add all items to menu
+        menu.getItems().addAll(editItem, toggleCompleteItem, locateItem, separator, deleteItem);
 
         // Show menu
-        menu.show(owner, javafx.geometry.Side.BOTTOM, 0, 8);
+        menu.show(owner, javafx.geometry.Side.BOTTOM, 0, 5);
     }
-
     /**
      * ✨ NEW: Create modern menu item with icon, text, and hover effect
      */
@@ -1389,12 +1436,47 @@ public class CalendarController implements Initializable {
             case WEEK -> renderWeekView();
             case MONTH -> renderMonthView();
             case YEAR -> renderYearView();
+            case KANBAN -> renderKanbanView();
         }
 
         updateDateLabel();
         updateUpcomingItems();
-
         updateSidebarStats();
+    }
+
+    private void renderKanbanView() {
+        System.out.println("🎯 renderKanbanView() STARTED");
+
+        if (kanbanBoard == null) {
+            System.err.println("⚠️ kanbanBoard is NULL, initializing...");
+            initializeKanbanBoard();
+        }
+
+        System.out.println("✅ KanbanBoard initialized: " + kanbanBoard);
+
+        // Load all tasks for current user
+        List<Task> allTasks = plannerManager.getAllTasks();
+        System.out.println("📋 Loaded " + allTasks.size() + " tasks");
+
+        // Apply filters if needed
+        List<Task> filteredTasks = allTasks.stream()
+                .filter(task -> {
+                    // Show completed filter
+                    if (!isShowCompleted() && task.getStatus() == Status.COMPLETED) {
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        System.out.println("🔍 After filtering: " + filteredTasks.size() + " tasks");
+
+        kanbanBoard.loadTasks(filteredTasks);
+
+        // Display in container
+        System.out.println("🖼️ Setting Kanban board in container...");
+        calendarContainer.getChildren().setAll(kanbanBoard);
+        System.out.println("✅ renderKanbanView() COMPLETED");
     }
 
     private void updateDateLabel() {
@@ -1410,6 +1492,7 @@ public class CalendarController implements Initializable {
             }
             case MONTH -> currentDateLabel.setText(currentDate.format(monthYearFormatter));
             case YEAR -> currentDateLabel.setText(String.valueOf(currentDate.getYear()));
+            case KANBAN -> currentDateLabel.setText("📋 Kanban Board");
         }
     }
 
@@ -2538,12 +2621,7 @@ public class CalendarController implements Initializable {
         dialog.showAndWait();
     }
 
-    /**
-     * ✨ FIXED: Task dialog with WORKING save button
-     */
-    /**
-     * ✨ MODERN: Task dialog with beautiful styling
-     */
+
     private void showTaskDialog(TaskPlannerAdapter existingAdapter) {
         Dialog<Task> dialog = new Dialog<>();
 
@@ -2621,6 +2699,122 @@ public class CalendarController implements Initializable {
         );
 
         descSection.getChildren().addAll(descLabel, descField);
+
+// ============= PROJECT SELECTION SECTION =============
+        VBox projectSection = new VBox(8);
+        Label projectLabel = new Label("Project");
+        projectLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        ComboBox<Project> projectCombo = new ComboBox<>();
+        projectCombo.setPrefHeight(40);
+        projectCombo.setMaxWidth(Double.MAX_VALUE);
+        projectCombo.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 0 12;"
+        );
+        projectCombo.setPromptText("Select a project (optional)");
+
+// ✨ ADD STRING CONVERTER - This is crucial!
+        projectCombo.setConverter(new StringConverter<Project>() {
+            @Override
+            public String toString(Project project) {
+                if (project == null) {
+                    return "";
+                }
+                return project.getName() != null ? project.getName() : "No Project";
+            }
+
+            @Override
+            public Project fromString(String string) {
+                return null; // Not needed for display
+            }
+        });
+
+// Load projects from database
+        ProjectDAO projectDAO = new ProjectDAO();
+        List<Project> userProjects = projectDAO.getProjectsByUserId(currentUser.getId());
+
+// Add "No Project" option
+        Project noProject = new Project();
+        noProject.setId(null);
+        noProject.setName("No Project");
+        noProject.setColor(null);
+
+        projectCombo.getItems().add(noProject);
+        projectCombo.getItems().addAll(userProjects);
+
+// Set default selection
+        projectCombo.setValue(noProject);
+
+// Custom cell factory for dropdown list
+        projectCombo.setCellFactory(listView -> new ListCell<Project>() {
+            @Override
+            protected void updateItem(Project project, boolean empty) {
+                super.updateItem(project, empty);
+                if (empty || project == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    HBox container = new HBox(10);
+                    container.setAlignment(Pos.CENTER_LEFT);
+
+                    // Color indicator
+                    if (project.getColor() != null && !project.getColor().isEmpty()) {
+                        Region colorDot = new Region();
+                        colorDot.setMinSize(10, 10);
+                        colorDot.setMaxSize(10, 10);
+                        colorDot.setStyle("-fx-background-color: " + project.getColor() + "; -fx-background-radius: 5;");
+                        container.getChildren().add(colorDot);
+                    }
+
+                    String displayName = project.getName() != null ? project.getName() : "No Project";
+                    Label nameLabel = new Label(displayName);
+                    nameLabel.setStyle("-fx-font-size: 13;");
+                    container.getChildren().add(nameLabel);
+
+                    setGraphic(container);
+                }
+            }
+        });
+
+// Button cell for selected value display
+        projectCombo.setButtonCell(new ListCell<Project>() {
+            @Override
+            protected void updateItem(Project project, boolean empty) {
+                super.updateItem(project, empty);
+                if (empty || project == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    HBox container = new HBox(8);
+                    container.setAlignment(Pos.CENTER_LEFT);
+                    container.setPadding(new Insets(0, 0, 0, 0));
+
+                    // Color dot
+                    if (project.getColor() != null && !project.getColor().isEmpty()) {
+                        Region colorDot = new Region();
+                        colorDot.setMinSize(8, 8);
+                        colorDot.setMaxSize(8, 8);
+                        colorDot.setStyle("-fx-background-color: " + project.getColor() + "; -fx-background-radius: 4;");
+                        container.getChildren().add(colorDot);
+                    }
+
+                    // Project name
+                    String displayName = project.getName() != null ? project.getName() : "No Project";
+                    Label nameLabel = new Label(displayName);
+                    nameLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #374151;");
+                    container.getChildren().add(nameLabel);
+
+                    setGraphic(container);
+                    setText(null); // ← CRITICAL: Set text to null when using graphic
+                }
+            }
+        });
+
+        projectSection.getChildren().addAll(projectLabel, projectCombo);
 
         // Date & Time section
         HBox dateTimeBox = new HBox(12);
@@ -2813,6 +3007,12 @@ public class CalendarController implements Initializable {
             minuteSpinner.getValueFactory().setValue(existingAdapter.getStartTime().getMinute());
             statusCombo.setValue(task.getStatus());
 
+            // Set selected project
+            if (task.getProjectId() != null && !task.getProjectId().isEmpty()) {
+                projectCombo.getItems().stream()
+                        .filter(p -> p.getId() != null && p.getId().equals(task.getProjectId()))
+                        .findFirst()
+                        .ifPresent(projectCombo::setValue);}
             // Select priority button
             com.smarttask.model.Priority taskPriority = task.getPriority();
             for (int i = 0; i < priorityValues.length; i++) {
@@ -2830,6 +3030,7 @@ public class CalendarController implements Initializable {
         mainContent.getChildren().addAll(
                 titleSection,
                 descSection,
+                projectSection,
                 dateTimeBox,
                 prioritySection,
                 statusSection,
@@ -2927,6 +3128,14 @@ public class CalendarController implements Initializable {
                 LocalTime time = LocalTime.of(hourSpinner.getValue(), minuteSpinner.getValue());
                 task.setDueDate(date.atTime(time));
 
+                // ✨ SET PROJECT ID
+                Project selectedProject = projectCombo.getValue();
+                if (selectedProject != null && selectedProject.getId() != null) {
+                    task.setProjectId(selectedProject.getId());
+                } else {
+                    task.setProjectId(null);
+                }
+
                 if (existingAdapter == null) {
                     task.setUser(currentUser);
                 }
@@ -2945,18 +3154,8 @@ public class CalendarController implements Initializable {
             updateView();
         });
     }
-    /**
-     * ✨ FIXED: Event dialog with WORKING save button
-     */
 
-    /**
-     * ✨ MODERN: Event dialog with beautiful styling (matching task dialog)
-     */
-
-    /**
-     * ✨ FIXED: Event dialog with scrollable content - buttons always visible
-     */
-    private void showEventDialog(EventPlannerAdapter existingAdapter) {
+    public void showEventDialog(EventPlannerAdapter existingAdapter) {
         CalendarEvent existingEvent = existingAdapter != null ? existingAdapter.getEvent() : null;
 
         Dialog<CalendarEvent> dialog = new Dialog<>();
@@ -3628,6 +3827,7 @@ public class CalendarController implements Initializable {
             case WEEK -> weekViewButton.setSelected(true);
             case MONTH -> monthViewButton.setSelected(true);
             case YEAR -> yearViewButton.setSelected(true);
+            case KANBAN -> kanbanViewButton.setSelected(true);
         }
     }
 

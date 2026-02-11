@@ -530,6 +530,7 @@
 
     .task-card:hover {
         -fx-background-color: #f0fff4;
+
     }
 
     /* Event Cards - Left border style */
@@ -861,6 +862,7 @@
     .context-menu .menu-item:hover,
     .context-menu .menu-item:focused {
         -fx-background-color: #f3f4f6;
+        -fx-background-radius: 8;
     }
 
     .context-menu .separator .line {
@@ -2847,4 +2849,639 @@
 
     .google-sync-btn:hover {
         -fx-background-color: #f0fdf4;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════════════
+   KANBAN BOARD STYLES
+   Add these to your calendar.css or main stylesheet
+   ════════════════════════════════════════════════════════════════════════════════ */
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN TOGGLE BUTTON - Special styling
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-toggle-btn {
+        -fx-background-color: linear-gradient(to right, #8b5cf6, #6366f1);
+        -fx-text-fill: white;
+        -fx-font-weight: 700;
+        -fx-background-radius: 8;
+        -fx-border-radius: 8;
+        -fx-padding: 8 16;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.3), 8, 0, 0, 2);
+    }
+
+    .kanban-toggle-btn:hover {
+        -fx-background-color: linear-gradient(to right, #7c3aed, #4f46e5);
+        -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.5), 12, 0, 0, 4);
+    }
+
+    .kanban-toggle-btn:selected {
+        -fx-background-color: linear-gradient(to right, #7c3aed, #4338ca);
+        -fx-border-color: white;
+        -fx-border-width: 2;
+        -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.6), 15, 0, 0, 5);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN BOARD CONTAINER
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-board {
+        -fx-background-color: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+        -fx-padding: 20;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN COLUMNS
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-column {
+        -fx-background-color: #ffffff;
+        -fx-background-radius: 16;
+        -fx-border-radius: 16;
+        -fx-border-color: #e2e8f0;
+        -fx-border-width: 1;
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 10, 0, 0, 4);
+    }
+
+    .kanban-column-header {
+        -fx-background-color: white;
+        -fx-background-radius: 16 16 0 0;
+        -fx-padding: 16;
+        -fx-border-color: #e2e8f0;
+        -fx-border-width: 0 0 1 0;
+    }
+
+    .kanban-column-title {
+        -fx-font-size: 15;
+        -fx-font-weight: 700;
+        -fx-text-fill: #1e293b;
+    }
+
+    .kanban-column-count {
+        -fx-font-size: 12;
+        -fx-font-weight: 700;
+        -fx-padding: 4 10;
+        -fx-background-radius: 12;
+    }
+
+    /* Column-specific colors */
+    .kanban-column-todo .kanban-column-count {
+        -fx-background-color: rgba(99, 102, 241, 0.15);
+        -fx-text-fill: #6366f1;
+    }
+
+    .kanban-column-inprogress .kanban-column-count {
+        -fx-background-color: rgba(245, 158, 11, 0.15);
+        -fx-text-fill: #f59e0b;
+    }
+
+    .kanban-column-blocked .kanban-column-count {
+        -fx-background-color: rgba(239, 68, 68, 0.15);
+        -fx-text-fill: #ef4444;
+    }
+
+    .kanban-column-completed .kanban-column-count {
+        -fx-background-color: rgba(16, 185, 129, 0.15);
+        -fx-text-fill: #10b981;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN TASK CARDS
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-task-card {
+        -fx-background-color: white;
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-padding: 14 16;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 8, 0, 0, 2);
+    }
+
+    .kanban-task-card:hover {
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 12, 0, 0, 4);
+        -fx-scale-x: 1.02;
+        -fx-scale-y: 1.02;
+    }
+
+    .kanban-task-card.dragging {
+        -fx-opacity: 0.6;
+        -fx-scale-x: 1.05;
+        -fx-scale-y: 1.05;
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0, 0, 8);
+    }
+
+    /* Priority border colors */
+    .kanban-task-card.priority-low {
+        -fx-border-color: #94a3b8;
+        -fx-border-width: 0 0 0 4;
+    }
+
+    .kanban-task-card.priority-medium {
+        -fx-border-color: #3b82f6;
+        -fx-border-width: 0 0 0 4;
+    }
+
+    .kanban-task-card.priority-high {
+        -fx-border-color: #f97316;
+        -fx-border-width: 0 0 0 4;
+    }
+
+    .kanban-task-card.priority-urgent {
+        -fx-border-color: #ef4444;
+        -fx-border-width: 0 0 0 4;
+    }
+
+    .kanban-task-title {
+        -fx-font-size: 14;
+        -fx-font-weight: 600;
+        -fx-text-fill: #1e293b;
+    }
+
+    .kanban-task-title.completed {
+        -fx-strikethrough: true;
+        -fx-text-fill: #94a3b8;
+    }
+
+    .kanban-task-description {
+        -fx-font-size: 12;
+        -fx-text-fill: #64748b;
+    }
+
+    .kanban-task-meta {
+        -fx-font-size: 11;
+        -fx-text-fill: #94a3b8;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN BADGES
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-badge {
+        -fx-font-size: 10;
+        -fx-font-weight: 700;
+        -fx-padding: 3 8;
+        -fx-background-radius: 12;
+    }
+
+    .kanban-badge-priority-low {
+        -fx-background-color: rgba(148, 163, 184, 0.2);
+        -fx-text-fill: #64748b;
+    }
+
+    .kanban-badge-priority-medium {
+        -fx-background-color: rgba(59, 130, 246, 0.15);
+        -fx-text-fill: #3b82f6;
+    }
+
+    .kanban-badge-priority-high {
+        -fx-background-color: rgba(249, 115, 22, 0.15);
+        -fx-text-fill: #f97316;
+    }
+
+    .kanban-badge-priority-urgent {
+        -fx-background-color: rgba(239, 68, 68, 0.15);
+        -fx-text-fill: #ef4444;
+    }
+
+    .kanban-badge-overdue {
+        -fx-background-color: #fef2f2;
+        -fx-text-fill: #dc2626;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN DROP ZONE (when dragging)
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-column.drag-over {
+        -fx-border-color: #6366f1;
+        -fx-border-width: 2;
+        -fx-border-style: dashed;
+        -fx-background-color: rgba(99, 102, 241, 0.08);
+    }
+
+    .kanban-column-todo.drag-over {
+        -fx-border-color: #6366f1;
+        -fx-background-color: rgba(99, 102, 241, 0.08);
+    }
+
+    .kanban-column-inprogress.drag-over {
+        -fx-border-color: #f59e0b;
+        -fx-background-color: rgba(245, 158, 11, 0.08);
+    }
+
+    .kanban-column-blocked.drag-over {
+        -fx-border-color: #ef4444;
+        -fx-background-color: rgba(239, 68, 68, 0.08);
+    }
+
+    .kanban-column-completed.drag-over {
+        -fx-border-color: #10b981;
+        -fx-background-color: rgba(16, 185, 129, 0.08);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN EMPTY STATE
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-empty-state {
+        -fx-background-color: #f1f5f9;
+        -fx-background-radius: 12;
+        -fx-border-color: #e2e8f0;
+        -fx-border-width: 2;
+        -fx-border-style: dashed;
+        -fx-border-radius: 12;
+        -fx-padding: 30 20;
+    }
+
+    .kanban-empty-icon {
+        -fx-font-size: 28;
+        -fx-opacity: 0.6;
+    }
+
+    .kanban-empty-text {
+        -fx-font-size: 13;
+        -fx-font-weight: 500;
+        -fx-text-fill: #94a3b8;
+    }
+
+    .kanban-empty-hint {
+        -fx-font-size: 11;
+        -fx-text-fill: #cbd5e1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN USER AVATAR
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-avatar {
+        -fx-background-color: linear-gradient(to bottom right, #6366f1, #8b5cf6);
+        -fx-background-radius: 12;
+        -fx-min-width: 24;
+        -fx-min-height: 24;
+        -fx-max-width: 24;
+        -fx-max-height: 24;
+    }
+
+    .kanban-avatar-label {
+        -fx-text-fill: white;
+        -fx-font-size: 11;
+        -fx-font-weight: 700;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN SCROLLBAR
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-scroll .scroll-bar:vertical {
+        -fx-background-color: transparent;
+        -fx-pref-width: 8;
+    }
+
+    .kanban-scroll .scroll-bar:vertical .thumb {
+        -fx-background-color: #cbd5e1;
+        -fx-background-radius: 4;
+    }
+
+    .kanban-scroll .scroll-bar:vertical .thumb:hover {
+        -fx-background-color: #94a3b8;
+    }
+
+    .kanban-scroll .scroll-bar:vertical .increment-button,
+    .kanban-scroll .scroll-bar:vertical .decrement-button {
+        -fx-pref-height: 0;
+        -fx-opacity: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN CONTEXT MENU
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-context-menu {
+        -fx-background-color: white;
+        -fx-background-radius: 12;
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 15, 0, 0, 5);
+        -fx-padding: 6;
+    }
+
+    .kanban-context-menu .menu-item {
+        -fx-padding: 10 16;
+        -fx-background-radius: 8;
+    }
+
+    .kanban-context-menu .menu-item:hover {
+        -fx-background-color: #f1f5f9;
+    }
+
+    .kanban-context-menu .menu-item:focused {
+        -fx-background-color: #e0e7ff;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════════════
+   KANBAN VIEW BUTTON STYLES
+   Add this to your calendar.css file
+   ════════════════════════════════════════════════════════════════════════════════ */
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN TOGGLE BUTTON - Special gradient styling
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .view-btn.kanban-btn {
+        -fx-background-color: linear-gradient(to right, #8b5cf6, #6366f1);
+        -fx-text-fill: white;
+        -fx-font-weight: 700;
+        -fx-padding: 8 14;
+        -fx-background-radius: 0 8 8 0;
+        -fx-border-radius: 0 8 8 0;
+    }
+
+    .view-btn.kanban-btn:hover {
+        -fx-background-color: linear-gradient(to right, #7c3aed, #4f46e5);
+    }
+
+    .view-btn.kanban-btn:selected {
+        -fx-background-color: linear-gradient(to right, #6d28d9, #4338ca);
+        -fx-border-color: #a78bfa;
+        -fx-border-width: 0 0 2 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       Adjust the "Year" button to not have last styling when Kanban is present
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .view-btn.last:not(.kanban-btn) {
+        -fx-background-radius: 0;
+        -fx-border-radius: 0;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════════════
+    KANBAN CONTEXT MENU STYLES - FIXED VERSION
+
+    FIXES:
+    1. Full row highlighting on hover (not just text)
+    2. Proper submenu behavior
+
+    Add these to your calendar.css or create as separate file
+    ════════════════════════════════════════════════════════════════════════════════ */
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       CONTEXT MENU CONTAINER
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .context-menu {
+        -fx-background-color: white;
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-border-color: #e2e8f0;
+        -fx-border-width: 1;
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 20, 0, 0, 8);
+        -fx-padding: 6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       MENU ITEMS - FULL ROW HOVER FIX
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .context-menu .menu-item {
+        -fx-background-color: transparent;
+        -fx-background-radius: 8;
+        -fx-padding: 10 16 10 16;
+        -fx-background-insets: 2;
+    }
+
+    /* FULL ROW HIGHLIGHT ON HOVER */
+    .context-menu .menu-item:hover,
+    .context-menu .menu-item:focused {
+        -fx-background-color: #f1f5f9;
+        -fx-background-radius: 8;
+        -fx-background-insets: 2;
+    }
+
+    /* Text color on normal state */
+    .context-menu .menu-item .label {
+        -fx-text-fill: #374151;
+        -fx-font-size: 13;
+        -fx-font-weight: 500;
+    }
+
+    /* Text color on hover - darker */
+    .context-menu .menu-item:hover .label,
+    .context-menu .menu-item:focused .label {
+        -fx-text-fill: #1e293b;
+        -fx-font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       SUBMENU (Move to) - FIXED BEHAVIOR
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .context-menu .menu {
+        -fx-background-color: transparent;
+        -fx-background-radius: 8;
+        -fx-padding: 10 16 10 16;
+        -fx-background-insets: 2;
+    }
+
+    .context-menu .menu:hover,
+    .context-menu .menu:focused,
+    .context-menu .menu:showing {
+        -fx-background-color: #f1f5f9;
+        -fx-background-radius: 8;
+    }
+
+    .context-menu .menu .label {
+        -fx-text-fill: #374151;
+        -fx-font-size: 13;
+        -fx-font-weight: 500;
+    }
+
+    .context-menu .menu:hover .label,
+    .context-menu .menu:focused .label,
+    .context-menu .menu:showing .label {
+        -fx-text-fill: #1e293b;
+        -fx-font-weight: 600;
+    }
+
+    /* Arrow for submenu */
+    .context-menu .menu > .arrow-button {
+        -fx-padding: 0 0 0 8;
+        -fx-background-color: transparent;
+    }
+
+    .context-menu .menu > .arrow-button > .arrow {
+        -fx-background-color: #94a3b8;
+        -fx-padding: 3;
+        -fx-shape: "M0,0 L6,5 L0,10 Z";
+    }
+
+    .context-menu .menu:hover > .arrow-button > .arrow,
+    .context-menu .menu:showing > .arrow-button > .arrow {
+        -fx-background-color: #6366f1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       SUBMENU POPUP
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .menu .context-menu {
+        -fx-background-color: white;
+        -fx-background-radius: 10;
+        -fx-border-radius: 10;
+        -fx-border-color: #e2e8f0;
+        -fx-border-width: 1;
+        -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 15, 0, 0, 5);
+        -fx-padding: 6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       DELETE ITEM - RED STYLING
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    /* Target delete item specifically - items after separator */
+    .context-menu .separator ~ .menu-item {
+        /* This targets items after a separator */
+    }
+
+    /* For delete styling, we need to use a workaround with inline styles
+       or add a style class programmatically */
+
+    /* Delete hover effect */
+    .menu-item-danger:hover,
+    .menu-item-danger:focused {
+        -fx-background-color: #fef2f2 !important;
+        -fx-background-insets: 2;
+    }
+
+    .menu-item-danger .label {
+        -fx-text-fill: #ef4444 !important;
+    }
+
+    .menu-item-danger:hover .label {
+        -fx-text-fill: #dc2626 !important;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       SEPARATOR
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .context-menu .separator {
+        -fx-padding: 6 8;
+    }
+
+    .context-menu .separator .line {
+        -fx-border-color: #f1f5f9;
+        -fx-border-width: 1 0 0 0;
+        -fx-border-insets: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       STATUS ITEMS IN SUBMENU - Colored dots
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    /* To Do - Indigo */
+    .status-todo:hover {
+        -fx-background-color: rgba(99, 102, 241, 0.1) !important;
+    }
+
+    .status-todo:hover .label {
+        -fx-text-fill: #6366f1 !important;
+    }
+
+    /* In Progress - Amber */
+    .status-inprogress:hover {
+        -fx-background-color: rgba(245, 158, 11, 0.1) !important;
+    }
+
+    .status-inprogress:hover .label {
+        -fx-text-fill: #f59e0b !important;
+    }
+
+    /* Blocked - Red */
+    .status-blocked:hover {
+        -fx-background-color: rgba(239, 68, 68, 0.1) !important;
+    }
+
+    .status-blocked:hover .label {
+        -fx-text-fill: #ef4444 !important;
+    }
+
+    /* Completed - Emerald */
+    .status-completed:hover {
+        -fx-background-color: rgba(16, 185, 129, 0.1) !important;
+    }
+
+    .status-completed:hover .label {
+        -fx-text-fill: #10b981 !important;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       CONFIRMATION DIALOG STYLING
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .dialog-pane {
+        -fx-background-color: white;
+        -fx-background-radius: 16;
+    }
+
+    .dialog-pane > .header-panel {
+        -fx-background-color: white;
+        -fx-padding: 20 24 16 24;
+    }
+
+    .dialog-pane > .header-panel .label {
+        -fx-font-size: 16;
+        -fx-font-weight: 700;
+        -fx-text-fill: #1e293b;
+    }
+
+    .dialog-pane > .content.label {
+        -fx-padding: 0 24 20 24;
+        -fx-font-size: 14;
+        -fx-text-fill: #64748b;
+    }
+
+    .dialog-pane > .button-bar {
+        -fx-padding: 16 24;
+        -fx-background-color: #f8fafc;
+        -fx-border-color: #f1f5f9;
+        -fx-border-width: 1 0 0 0;
+    }
+
+    .dialog-pane > .button-bar > .container {
+        -fx-spacing: 12;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       KANBAN MENU BUTTON (Three dots on cards)
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    .kanban-menu-btn {
+        -fx-background-color: transparent;
+        -fx-text-fill: #94a3b8;
+        -fx-font-size: 14;
+        -fx-font-weight: bold;
+        -fx-padding: 4 8;
+        -fx-background-radius: 6;
+        -fx-cursor: hand;
+    }
+
+    .kanban-menu-btn:hover {
+        -fx-background-color: #f1f5f9;
+        -fx-text-fill: #475569;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════════
+       FIX FOR GRAPHIC IN MENU ITEMS
+       ═══════════════════════════════════════════════════════════════════════════════ */
+
+    /* Ensure the graphic (colored dot) is properly aligned */
+    .context-menu .menu-item > .graphic-container {
+        -fx-padding: 0 8 0 0;
+    }
+
+    /* Circle dots in status items */
+    .context-menu .menu-item .circle {
+        -fx-stroke-width: 0;
     }

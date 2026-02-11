@@ -80,4 +80,9 @@ public class Project {
     public void setActive(boolean active) {
         isActive = active;
     }
+
+    @Override
+    public String toString() {
+        return name != null ? name : "No Project";
+    }
 }
