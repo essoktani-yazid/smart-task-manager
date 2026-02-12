@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ProjectService {
-    private String baseUrl = "http://127.0.0.1:8090/api/projects";
+    private String baseUrl = "http://127.0.0.1:8080/api/projects";
     private final Gson gson = GsonUtils.getGson();
 
     // Constructeur 1 : Sans arguments (pour la compatibilité)

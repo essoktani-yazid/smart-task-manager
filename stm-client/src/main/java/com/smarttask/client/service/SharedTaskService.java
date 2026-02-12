@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SharedTaskService {
-    private static final String BASE_URL = "http://localhost:8090/api/shared-tasks";
+    private static final String BASE_URL = "http://localhost:8080/api/shared-tasks";
     private final Gson gson = GsonUtils.getGson();
 
     public List<SharedTask> getSharedByTask(String taskId) {

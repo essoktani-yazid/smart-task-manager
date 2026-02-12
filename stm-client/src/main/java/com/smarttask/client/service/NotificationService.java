@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 public class NotificationService {
-    private static final String BASE_URL = "http://localhost:8090/api/notifications";
+    private static final String BASE_URL = "http://localhost:8080/api/notifications";
     private final Gson gson = GsonUtils.getGson();
 
     public List<Notification> getUserNotifications(String userId) {

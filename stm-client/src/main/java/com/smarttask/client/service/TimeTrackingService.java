@@ -17,7 +17,7 @@ public class TimeTrackingService {
     private final HttpClient client;
 
     public TimeTrackingService() {
-        this("http://127.0.0.1:8090/api/timetracking");
+        this("http://127.0.0.1:8080/api/timetracking");
     }
 
     public TimeTrackingService(String baseUrl) {

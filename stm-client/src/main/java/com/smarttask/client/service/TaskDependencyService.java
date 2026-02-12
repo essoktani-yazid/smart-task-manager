@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Arrays;
 
 public class TaskDependencyService {
-    private String baseUrl = "http://localhost:8090/api/task-dependencies";
+    private String baseUrl = "http://localhost:8080/api/task-dependencies";
     private final HttpClient client;
 
     public TaskDependencyService() {

@@ -16,7 +16,7 @@ import java.util.List;
 
 public class CommentService {
     // Port 8090 (Correspond à votre serveur)
-    private String baseUrl = "http://localhost:8090/api/comments";
+    private String baseUrl = "http://localhost:8080/api/comments";
 
     private final HttpClient client;
     private final Gson gson;

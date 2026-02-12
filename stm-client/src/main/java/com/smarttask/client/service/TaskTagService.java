@@ -20,7 +20,7 @@ public class TaskTagService {
      * Pointe automatiquement vers le serveur local port 8090.
      */
     public TaskTagService() {
-        this.baseUrl = "http://localhost:8090";
+        this.baseUrl = "http://localhost:8080";
         this.client = HttpClient.newHttpClient();
     }
 

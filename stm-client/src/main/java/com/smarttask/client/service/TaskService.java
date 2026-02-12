@@ -25,7 +25,7 @@ import java.util.List;
 public class TaskService {
 
     // URL par défaut
-    private String baseUrl = "http://localhost:8090/api/tasks";
+    private String baseUrl = "http://localhost:8080/api/tasks";
 
     private final HttpClient client;
     private final Gson gson;

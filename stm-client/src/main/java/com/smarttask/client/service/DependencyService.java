@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class DependencyService {
-    private static final String BASE_URL = "http://localhost:8090/api/dependencies";
+    private static final String BASE_URL = "http://localhost:8080/api/dependencies";
     private final Gson gson = GsonUtils.getGson();
 
     public List<TaskDependency> getPredecessors(String taskId) {

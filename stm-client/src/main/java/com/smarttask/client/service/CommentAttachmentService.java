@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Arrays;
 
 public class CommentAttachmentService {
-    private String baseUrl = "http://localhost:8090/api/comment-attachments";
+    private String baseUrl = "http://localhost:8080/api/comment-attachments";
     private final HttpClient client;
 
     public CommentAttachmentService() {
