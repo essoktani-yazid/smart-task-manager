@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class CommentService {
-    // Port 8090 (Correspond à votre serveur)
+
     private String baseUrl = AppConfig.API_URL + "/comments";
 
     private final HttpClient client;

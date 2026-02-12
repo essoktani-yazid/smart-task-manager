@@ -50,6 +50,24 @@
                   <Button fx:id="analyticsButton" maxWidth="Infinity" onAction="#showAnalytics" 
                           styleClass="nav-button-creative" text="Reports" />
 
+                  <StackPane alignment="TOP_RIGHT" maxWidth="Infinity">
+                     <Button fx:id="notificationButton" maxWidth="Infinity" onAction="#showNotifications" 
+                              styleClass="nav-button-creative" text="Notifications" />
+                     
+                     <Label fx:id="notificationBadge" visible="false" text="0"
+                           style="-fx-background-color: #FF4B4B; 
+                                    -fx-text-fill: white; 
+                                    -fx-background-radius: 10; 
+                                    -fx-min-width: 18; 
+                                    -fx-min-height: 18; 
+                                    -fx-alignment: center; 
+                                    -fx-font-size: 10px; 
+                                    -fx-font-weight: bold;
+                                    -fx-translate-x: -5; 
+                                    -fx-translate-y: 5;"
+                           mouseTransparent="true" />
+                  </StackPane>
+
                   <Region prefHeight="15.0" />
                   <Label text="INTELLIGENCE" styleClass="menu-category-label" />
                   

@@ -19,7 +19,6 @@ import java.util.List;
  */
 public class UserService {
 
-    // Assurez-vous que le port correspond à votre stm-server (8080 ou autre)
     private static final String BASE_URL = AppConfig.API_URL + "/users";
 
     private final HttpClient client;
@@ -108,4 +107,22 @@ public class UserService {
         }
         throw new IOException("Erreur création user: " + response.body());
     }
+
+	/**
+	 * Récupère un utilisateur par son username.
+	 */
+	public User findByUsername(String username) throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(BASE_URL + "/username/" + username))
+				.GET()
+				.build();
+
+		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+		if (response.statusCode() == 200) {
+			return GsonUtils.getGson().fromJson(response.body(), User.class);
+		}
+
+		return null;
+	}
 }

@@ -39,7 +39,7 @@ public class CreateTeamDialogController {
 
     @FXML
     public void initialize() {
-        System.out.println("🌱 CreateTeamDialogController initializing");
+        System.out.println("CreateTeamDialogController initializing");
         colorPicker.setValue(Color.web("#6a7cff")); // Default project theme color
         loadUsers();
     }
@@ -112,6 +112,7 @@ public class CreateTeamDialogController {
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
     }
+
 
     public void setOnTeamCreated(Runnable onTeamCreated) {
         this.onTeamCreated = onTeamCreated;

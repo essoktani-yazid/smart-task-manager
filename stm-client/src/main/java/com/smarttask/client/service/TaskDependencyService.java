@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Arrays;
 
 public class TaskDependencyService {
+
     private String baseUrl = AppConfig.API_URL + "/task-dependencies";
+
     private final HttpClient client;
 
     public TaskDependencyService() {

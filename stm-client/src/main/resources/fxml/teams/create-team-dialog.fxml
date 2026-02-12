@@ -11,57 +11,52 @@
       fx:controller="com.smarttask.client.view.controller.teams.CreateTeamDialogController"
       spacing="18"
       styleClass="create-team-dialog"
-	  stylesheets="@../../css/teams/create-team-dialog.css">
+      stylesheets="@../../css/teams/create-team-dialog.css">
 
     <padding>
         <Insets topRightBottomLeft="25"/>
     </padding>
 
-    <!-- Header -->
     <VBox spacing="4">
-        <Label text="Create new team" styleClass="dialog-title">
+        <Label text="Créer une nouvelle équipe" styleClass="dialog-title">
             <font>
                 <Font name="System Bold" size="20"/>
             </font>
         </Label>
-        <Label text="Set up your team workspace"
+        <Label text="Configurez l'espace de travail de votre équipe"
                styleClass="dialog-subtitle"/>
     </VBox>
 
-    <!-- Team name -->
     <VBox spacing="6">
-        <Label text="Team name" styleClass="field-label"/>
+        <Label text="Nom de l'équipe" styleClass="field-label"/>
         <TextField fx:id="nameField"
-                   promptText="e.g. Product Team"
+                   promptText="ex: Équipe Produit"
                    styleClass="dialog-input"/>
     </VBox>
 
-    <!-- Description -->
     <VBox spacing="6">
         <Label text="Description" styleClass="field-label"/>
         <TextArea fx:id="descriptionField"
-                  promptText="What is this team about?"
+                  promptText="Quel est l'objectif de cette équipe ?"
                   prefRowCount="3"
                   wrapText="true"
                   styleClass="dialog-textarea"/>
     </VBox>
 
-    <!-- Color picker -->
     <VBox spacing="6">
-        <Label text="Team color" styleClass="field-label"/>
+        <Label text="Couleur de l'équipe" styleClass="field-label"/>
         <ColorPicker fx:id="colorPicker"
                      styleClass="dialog-color-picker"/>
     </VBox>
 
-    <!-- Member selection -->
     <VBox spacing="6">
-        <Label text="Add members" styleClass="field-label"/>
+        <Label text="Ajouter des membres" styleClass="field-label"/>
         <HBox spacing="10" alignment="CENTER_LEFT">
             <ComboBox fx:id="userSelectionCombo"
-                      promptText="Select a user..."
+                      promptText="Sélectionner un utilisateur..."
                       prefWidth="300"
                       styleClass="dialog-combo"/>
-            <Button text="Add"
+            <Button text="Ajouter"
                     onAction="#handleAddMember"
                     styleClass="dialog-button-add"/>
         </HBox>
@@ -71,16 +66,14 @@
                   styleClass="selected-members-pane"/>
     </VBox>
 
-    <!-- Actions -->
     <HBox spacing="12" alignment="CENTER_RIGHT">
-        <Button text="Cancel"
+        <Button text="Annuler"
                 onAction="#handleCancel"
                 styleClass="dialog-button-secondary"/>
 
-        <Button text="Create team"
+        <Button text="Créer l'équipe"
                 onAction="#handleCreate"
                 styleClass="dialog-button-primary"/>
     </HBox>
 
 </VBox>
-

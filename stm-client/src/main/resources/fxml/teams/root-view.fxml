@@ -45,7 +45,7 @@
                 </HBox>
 
                 <!-- Create team -->
-                <Button text="+ Create team"
+                <Button text="+ Nouvelle équipe team"
                         onAction="#handleCreateTeam"
                         styleClass="primary-action-button"/>
             </HBox>

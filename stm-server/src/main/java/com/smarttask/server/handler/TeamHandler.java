@@ -1,6 +1,7 @@
 package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.smarttask.model.Team;
 import com.smarttask.model.TeamMember;
 import com.smarttask.server.dao.TeamDAO;
@@ -13,12 +14,15 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import com.smarttask.server.util.GsonUtils;
 
 public class TeamHandler implements HttpHandler {
 
     private final TeamDAO teamDAO = new TeamDAO();
+
     private final Gson gson = GsonUtils.getGson();
 
     @Override
@@ -72,17 +76,16 @@ public class TeamHandler implements HttpHandler {
                 switch (method) {
                     case "GET" -> handleGetMembers(exchange, teamId);
                     case "POST" -> handleAddMember(exchange, teamId);
-                    case "PUT" -> handleUpdateMember(exchange, teamId);
                     case "DELETE" -> handleRemoveMember(exchange, teamId, query);
                 }
                 return;
             }
 
-            System.err.println("⚠️ No route matched for " + method + " " + path);
+            System.err.println("No route matched for " + method + " " + path);
             sendResponse(exchange, 404, "Not found (Route mismatch): " + path);
 
         } catch (Exception e) {
-            System.err.println("💥 Error in TeamHandler: " + e.getMessage());
+            System.err.println("Error in TeamHandler: " + e.getMessage());
             e.printStackTrace();
             sendResponse(exchange, 500, "Internal server error: " + e.getMessage());
         }
@@ -109,9 +112,9 @@ public class TeamHandler implements HttpHandler {
 
     private void handleCreateTeam(HttpExchange exchange) throws IOException {
         Team team = readBody(exchange, Team.class);
-        System.out.println("📝 Creating team: " + team.getName() + " for owner: " + team.getOwnerId());
+        System.out.println("Creating team: " + team.getName() + " for owner: " + team.getOwnerId());
         String id = teamDAO.create(team);
-        System.out.println("✅ Team created with ID: " + id);
+        System.out.println("Team created with ID: " + id);
         sendResponse(exchange, 201, id);
     }
 
@@ -119,12 +122,20 @@ public class TeamHandler implements HttpHandler {
         Team team = readBody(exchange, Team.class);
         team.setId(teamId);
         teamDAO.update(team);
-        sendResponse(exchange, 204, "");
+        exchange.sendResponseHeaders(204, -1);
+		exchange.close();
     }
 
     private void handleDeleteTeam(HttpExchange exchange, String teamId) throws IOException {
-        teamDAO.deactivate(teamId);
-        sendResponse(exchange, 204, "");
+        try {
+            teamDAO.delete(teamId);
+            exchange.sendResponseHeaders(204, -1);
+        } catch (Exception e) {
+            String response = "{\"error\":\"" + e.getMessage() + "\"}";
+            sendResponse(exchange, 500, response);
+        } finally {
+            exchange.close();
+        }
     }
 
     private void handleGetMembers(HttpExchange exchange, String teamId) throws IOException {
@@ -134,14 +145,8 @@ public class TeamHandler implements HttpHandler {
 
     private void handleAddMember(HttpExchange exchange, String teamId) throws IOException {
         TeamMember member = readBody(exchange, TeamMember.class);
-        teamDAO.addMember(teamId, member.getUserId(), member.getRole());
+        teamDAO.addMember(teamId, member.getUserId());
         sendResponse(exchange, 201, "");
-    }
-
-    private void handleUpdateMember(HttpExchange exchange, String teamId) throws IOException {
-        TeamMember member = readBody(exchange, TeamMember.class);
-        teamDAO.updateMemberRole(teamId, member.getUserId(), member.getRole());
-        sendResponse(exchange, 204, "");
     }
 
     private void handleRemoveMember(HttpExchange exchange, String teamId, String query) throws IOException {

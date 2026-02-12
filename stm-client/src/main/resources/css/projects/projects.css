@@ -1,67 +1,82 @@
 /* =============================================================================
-   1. VARIABLES & RESET GLOBAL
+   1. VARIABLES & GLOBAL ROOT
    ============================================================================= */
+
 .root {
-    /* Palette de couleurs "Modern SaaS" */
-    -primary-color: #4f46e5;        /* Indigo professionnel */
-    -primary-hover: #4338ca;
-    -secondary-color: #64748b;      /* Slate Gray */
-    -danger-color: #ef4444;         /* Red */
-    -success-color: #10b981;        /* Emerald */
-    -warning-bg: #fef3c7;           /* Amber light */
-    -warning-text: #d97706;         /* Amber dark */
 
-    -bg-app: #f3f4f6;               /* Gris très clair pour le fond d'app */
-    -bg-panel: #ffffff;             /* Blanc pur pour les cartes/modales */
-    -border-color: #e5e7eb;         /* Gris subtil pour les bordures */
+    /* === Palette Modern SaaS === */
+    -app-primary-color: #4f46e5;
+    -app-primary-hover: #4338ca;
+    -app-secondary-color: #64748b;
+    -app-danger-color: #ef4444;
+    -app-success-color: #10b981;
 
-    -text-main: #111827;            /* Noir adouci */
-    -text-muted: #6b7280;           /* Gris moyen */
+    -app-warning-bg: #fef3c7;
+    -app-warning-text: #d97706;
+
+    -app-bg-app: #f3f4f6;
+    -app-bg-panel: #ffffff;
+    -app-border-color: #e5e7eb;
+
+    -app-text-main: #111827;
+    -app-text-muted: #6b7280;
 
     /* Typography */
-    -fx-font-family: 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
+    -fx-font-family: "Segoe UI", "Roboto", "Helvetica", sans-serif;
 
-    /* Focus Ring (remplace le bleu par défaut de JavaFX) */
-    -fx-focus-color: -primary-color;
+    /* Focus ring */
+    -fx-focus-color: -app-primary-color;
     -fx-faint-focus-color: rgba(79, 70, 229, 0.2);
 }
 
+
 /* =============================================================================
-   2. CHAMPS DE FORMULAIRE (TextField, TextArea, DatePicker, Combo)
+   2. FORM CONTROLS
    ============================================================================= */
-.text-field, .text-area, .combo-box, .date-picker .text-field, .choice-box {
-    -fx-background-color: -bg-panel;
-    -fx-border-color: -border-color;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
-    -fx-padding: 8px;
-    -fx-prompt-text-fill: -text-muted;
-    -fx-text-fill: -text-main;
+
+.text-field,
+.text-area,
+.combo-box,
+.choice-box,
+.date-picker .text-field {
+
+    -fx-background-color: -app-bg-panel;
+    -fx-border-color: -app-border-color;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-prompt-text-fill: -app-text-muted;
+    -fx-text-fill: -app-text-main;
 }
 
-.text-field:focused, .text-area:focused, .combo-box:focused, .date-picker:focused .text-field {
-    -fx-border-color: -primary-color;
-    -fx-background-color: -bg-panel;
-    -fx-effect: dropshadow(gaussian, rgba(79, 70, 229, 0.15), 4, 0, 0, 0);
+.text-field:focused,
+.text-area:focused,
+.combo-box:focused,
+.date-picker:focused .text-field {
+
+    -fx-border-color: -app-primary-color;
+    -fx-effect: dropshadow(gaussian, rgba(79,70,229,0.15), 4, 0, 0, 0);
 }
 
 .label {
-    -fx-text-fill: -text-main;
+    -fx-text-fill: -app-text-main;
 }
 
+
 /* =============================================================================
-   3. BOUTONS
+   3. BUTTONS
    ============================================================================= */
+
 .button {
-    -fx-background-color: -bg-panel;
-    -fx-border-color: -border-color;
-    -fx-text-fill: -text-main;
+
+    -fx-background-color: -app-bg-panel;
+    -fx-border-color: -app-border-color;
+    -fx-text-fill: -app-text-main;
     -fx-font-weight: 600;
-    -fx-background-radius: 6px;
-    -fx-border-radius: 6px;
-    -fx-padding: 8px 16px;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 8 16;
     -fx-cursor: hand;
-    -fx-transition: all 0.2s;
 }
 
 .button:hover {
@@ -69,152 +84,297 @@
     -fx-border-color: #d1d5db;
 }
 
-/* Bouton Primaire (Action principale: Save, Create) */
-.primary-action-button, .button:default {
-    -fx-background-color: -primary-color;
+
+/* === Primary Button === */
+
+.primary-action-button,
+.button:default {
+
+    -fx-background-color: -app-primary-color;
     -fx-text-fill: white;
-    -fx-border-color: -primary-color;
+    -fx-border-color: -app-primary-color;
 }
 
-.primary-action-button:hover, .button:default:hover {
-    -fx-background-color: -primary-hover;
-    -fx-border-color: -primary-hover;
+.primary-action-button:hover,
+.button:default:hover {
+
+    -fx-background-color: -app-primary-hover;
+    -fx-border-color: -app-primary-hover;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);
 }
 
-/* Bouton Danger (Delete) */
+
+/* === Danger Button === */
+
 .danger-button {
-    -fx-text-fill: -danger-color;
+
+    -fx-text-fill: -app-danger-color;
     -fx-border-color: transparent;
 }
+
 .danger-button:hover {
+
     -fx-background-color: #fef2f2;
     -fx-border-color: #fecaca;
 }
 
+
 /* =============================================================================
-   4. MODALES & FORMULAIRES (ProjectForm, TaskForm)
+   4. FORMS / MODALS
    ============================================================================= */
+
 .form-root {
-    -fx-background-color: -bg-panel;
-    -fx-padding: 24px;
+
+    -fx-background-color: -app-bg-panel;
+    -fx-padding: 24;
 }
 
 .form-title {
-    -fx-font-size: 20px;
+
+    -fx-font-size: 20;
     -fx-font-weight: 700;
-    -fx-text-fill: -text-main;
-    -fx-padding: 0 0 16px 0;
-    -fx-border-color: transparent transparent -border-color transparent;
+    -fx-text-fill: -app-text-main;
+
+    -fx-padding: 0 0 16 0;
+    -fx-border-color: transparent transparent -app-border-color transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-margin: 0 0 20px 0;
 }
+
 
 /* =============================================================================
-   5. VUE PRINCIPALE (Root View)
+   5. MAIN PROJECT VIEW
    ============================================================================= */
 .projects-root {
-    -fx-background-color: -bg-app;
+
+    -app-primary-color: #4f46e5;
+    -app-primary-hover: #4338ca;
+    -app-secondary-color: #64748b;
+    -app-danger-color: #ef4444;
+    -app-success-color: #10b981;
+
+    -app-warning-bg: #fef3c7;
+    -app-warning-text: #d97706;
+
+    -app-bg-app: #f3f4f6;
+    -app-bg-panel: #ffffff;
+    -app-border-color: #e5e7eb;
+
+    -app-text-main: #111827;
+    -app-text-muted: #6b7280;
+
+    -fx-background-color: -app-bg-app;
 }
 
+
 .header-container {
-    -fx-background-color: -bg-panel;
+
+    -fx-background-color: -app-bg-panel;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 2);
-    -fx-padding: 0 0 1 0; /* Pour la ligne de séparation */
+    -fx-padding: 16;
 }
 
 .app-title {
-    -fx-font-size: 22px;
+
+    -fx-font-size: 22;
     -fx-font-weight: 800;
-    -fx-text-fill: -text-main;
+    -fx-text-fill: -app-text-main;
 }
 
 .projects-container {
     -fx-background-color: transparent;
 }
 
-/* Style pour les cartes de projets (à appliquer dynamiquement dans le contrôleur) */
+
+/* =============================================================================
+   6. PROJECT CARDS
+   ============================================================================= */
+
 .project-card {
-    -fx-background-color: -bg-panel;
-    -fx-background-radius: 12px;
+
+    -fx-background-color: -app-bg-panel;
+    -fx-background-radius: 12;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0, 0, 2);
-    -fx-padding: 16px;
-    -fx-min-width: 250px;
-    -fx-min-height: 150px;
+    -fx-padding: 16;
+    -fx-min-width: 250;
+    -fx-min-height: 150;
     -fx-border-color: transparent;
     -fx-cursor: hand;
 }
+
 .project-card:hover {
-    -fx-effect: dropshadow(gaussian, rgba(79, 70, 229, 0.15), 12, 0, 0, 4);
-    -fx-translate-y: -2px;
+
+    -fx-effect: dropshadow(gaussian, rgba(79,70,229,0.15), 12, 0, 0, 4);
+    -fx-translate-y: -2;
 }
 
+
 /* =============================================================================
-   6. DÉTAILS DE LA TÂCHE (Task Detail View)
+   7. TABS
    ============================================================================= */
+
 .tab-pane {
     -fx-background-color: transparent;
 }
 
 .tab-pane .tab-header-area .tab-header-background {
+
     -fx-background-color: transparent;
-    -fx-border-color: transparent transparent -border-color transparent;
+    -fx-border-color: transparent transparent -app-border-color transparent;
     -fx-border-width: 0 0 1 0;
 }
 
 .tab {
+
     -fx-background-color: transparent;
-    -fx-padding: 10px 15px;
-    -fx-border-width: 0 0 3 0; /* Ligne sous l'onglet */
+    -fx-padding: 10 15;
+    -fx-border-width: 0 0 3 0;
     -fx-border-color: transparent;
 }
 
 .tab:selected {
-    -fx-border-color: -primary-color;
-    -fx-background-color: transparent;
+
+    -fx-border-color: -app-primary-color;
 }
 
 .tab-label {
-    -fx-text-fill: -text-muted;
+
+    -fx-text-fill: -app-text-muted;
     -fx-font-weight: 600;
 }
 
 .tab:selected .tab-label {
-    -fx-text-fill: -primary-color;
+
+    -fx-text-fill: -app-primary-color;
 }
 
+
+/* =============================================================================
+   8. LIST VIEW
+   ============================================================================= */
+
 .list-view {
-    -fx-background-color: -bg-panel;
-    -fx-background-radius: 8px;
-    -fx-border-color: -border-color;
-    -fx-border-radius: 8px;
-    -fx-padding: 5px;
+
+    -fx-background-color: -app-bg-panel;
+    -fx-background-radius: 8;
+    -fx-border-color: -app-border-color;
+    -fx-border-radius: 8;
+    -fx-padding: 5;
 }
 
 .list-cell {
+
     -fx-background-color: transparent;
-    -fx-padding: 8px;
-}
-.list-cell:filled:selected, .list-cell:filled:hover {
-    -fx-background-color: #f3f4f6;
-    -fx-text-fill: -text-main;
+    -fx-padding: 8;
 }
 
-/* Badges (Status/Priority) */
+.list-cell:filled:selected,
+.list-cell:filled:hover {
+
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: -app-text-main;
+}
+
+
+/* =============================================================================
+   9. BADGES
+   ============================================================================= */
+
 .badge-status {
+
     -fx-background-color: #e5e7eb;
     -fx-text-fill: #374151;
-    -fx-background-radius: 12px;
-    -fx-padding: 4px 10px;
-    -fx-font-size: 12px;
+    -fx-background-radius: 12;
+    -fx-padding: 4 10;
+    -fx-font-size: 12;
     -fx-font-weight: bold;
 }
 
 .badge-priority-high {
+
     -fx-background-color: #fee2e2;
     -fx-text-fill: #b91c1c;
-    -fx-background-radius: 12px;
-    -fx-padding: 4px 10px;
-    -fx-font-size: 12px;
+    -fx-background-radius: 12;
+    -fx-padding: 4 10;
+    -fx-font-size: 12;
     -fx-font-weight: bold;
+}
+
+/* =============================================================================
+   10. PROJECTS ROOT SPECIFIC
+   ============================================================================= */
+
+/* Zone de contenu principale */
+.main-content-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent; /* Pour enlever le fond par défaut du ScrollPane */
+}
+
+/* Container qui contient les cartes */
+.projects-grid-container {
+    -fx-padding: 30 40 30 40;
+}
+
+/* Adaptation de la carte pour une liste horizontale plein format */
+.project-card-row {
+    -fx-background-color: -app-bg-panel;
+    -fx-background-radius: 12;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 10, 0, 0, 2);
+    -fx-border-color: -app-border-color;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.project-card-row:hover {
+    -fx-border-color: -app-primary-color;
+    -fx-effect: dropshadow(gaussian, rgba(79,70,229,0.12), 15, 0, 0, 5);
+    -fx-translate-y: -2;
+}
+
+/* Typographie interne aux cartes */
+.project-title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -app-text-main;
+}
+
+.project-desc-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -app-text-muted;
+    -fx-wrap-text: true;
+}
+
+/* Boutons d'actions rapides (icon-style ou petits boutons) */
+.action-btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: -app-border-color;
+    -fx-text-fill: -app-secondary-color;
+}
+
+.action-btn-secondary:hover {
+    -fx-background-color: #f3f4f6;
+    -fx-border-color: -app-secondary-color;
+}
+
+.project-icon-container {
+    -fx-min-width: 54px;
+    -fx-max-width: 54px;
+    -fx-min-height: 54px;
+    -fx-max-height: 54px;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-width: 1.5;
+}
+
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -app-text-main;
+}
+
+.tab-pane .table-view {
+    -fx-background-color: -app-bg-panel;
+    -fx-border-color: -app-border-color;
+    -fx-border-radius: 8;
 }

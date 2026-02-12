@@ -1,68 +1,69 @@
-/* Style pour les cartes de projet */
-.project-card {
+/* ================================
+   PROJECT TABLE
+   ================================ */
+
+.projects-table {
+    -fx-background-color: white;
     -fx-border-color: #e5e7eb;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
-    -fx-background-color: white;
-    -fx-padding: 15;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 2);
-    -fx-cursor: hand;
 }
 
-.project-card:hover {
-    -fx-border-color: #d1d5db;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 6, 0, 0, 3);
+/* Header row */
+
+.project-table-header {
+    -fx-background-color: #f9fafb;
+    -fx-padding: 12 16;
+    -fx-border-color: transparent transparent #e5e7eb transparent;
+    -fx-border-width: 0 0 1 0;
 }
 
-.project-card-selected {
-    -fx-border-color: #4f46e5;
-    -fx-border-width: 2;
-    -fx-effect: dropshadow(three-pass-box, rgba(79,70,229,0.3), 6, 0, 0, 3);
-}
-
-.project-card-color-bar {
-    -fx-min-height: 4;
-    -fx-padding: 0 0 10 0;
-}
-
-.project-card-title {
-    -fx-font-size: 14px;
+.project-header-label {
     -fx-font-weight: bold;
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 12px;
+}
+
+/* Data rows */
+
+.project-row {
+    -fx-padding: 12 16;
+    -fx-border-color: transparent transparent #f3f4f6 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-color: #ffffff;
+}
+
+.project-row:hover {
+    -fx-background-color: #f9fafb;
+}
+
+.project-row-selected {
+    -fx-background-color: #eef2ff;
+}
+
+/* Columns */
+
+.project-name {
+    -fx-font-weight: 600;
     -fx-text-fill: #111827;
 }
 
-.project-card-meta {
-    -fx-font-size: 11px;
-    -fx-text-fill: #9ca3af;
-}
-
-/* Style pour la description modal au hover */
-.project-description-tooltip {
-    -fx-border-color: #374151;
-    -fx-border-radius: 8;
-    -fx-background-color: #1f2937;
-    -fx-text-fill: white;
-    -fx-padding: 12;
-    -fx-font-size: 12px;
-    -fx-max-width: 300;
-    -fx-wrap-text: true;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 2, 2);
-}
-
-.project-info-panel {
-    -fx-border-color: #f3f4f6;
-    -fx-border-radius: 8;
-    -fx-background-color: #f9fafb;
-    -fx-padding: 15;
-}
-
-.project-form-section {
-    -fx-padding: 10 0;
-}
-
-.form-section-title {
-    -fx-font-weight: bold;
-    -fx-font-size: 13px;
+.project-description {
     -fx-text-fill: #6b7280;
-    -fx-padding: 10 0 8 0;
+    -fx-font-size: 12px;
+}
+
+/* Actions */
+
+.project-actions .button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #4f46e5;
+    -fx-font-size: 12px;
+}
+
+.project-actions .button:hover {
+    -fx-background-color: #eef2ff;
+    -fx-background-radius: 6;
 }

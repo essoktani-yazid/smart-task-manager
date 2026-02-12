@@ -12,6 +12,11 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class ProjectFormController {
+    public enum Mode {
+        CREATE,
+        EDIT
+    }
+
     @FXML private TextField nameField;
     @FXML private TextArea descriptionField;
     @FXML private ColorPicker colorPicker;
@@ -19,6 +24,9 @@ public class ProjectFormController {
     @FXML private Label colorCodeLabel;
     @FXML private Button saveBtn;
     @FXML private Button cancelBtn;
+    @FXML private Label titleLabel;
+
+    private Mode mode = Mode.CREATE;
 
     private Project project;
     private Stage stage;
@@ -31,6 +39,21 @@ public class ProjectFormController {
         colorPicker.setOnAction(event -> updateColorPreview());
     }
     
+    public void setMode(Mode mode) {
+        this.mode = mode;
+        updateFormMode();
+    }
+    private void updateFormMode() {
+
+        if (mode == Mode.CREATE) {
+            titleLabel.setText("Créer un nouveau projet");
+            saveBtn.setText("Créer le projet");
+        } else {
+            titleLabel.setText("Modifier le projet");
+            saveBtn.setText("Enregistrer les modifications");
+        }
+    }
+    
     private void updateColorPreview() {
         Color selectedColor = colorPicker.getValue();
         if (selectedColor != null) {
@@ -41,7 +64,14 @@ public class ProjectFormController {
 
     public void setProject(Project project) {
         this.project = project;
-        if (project == null) project = new Project();
+
+        if (project == null) {
+            this.project = new Project();
+            setMode(Mode.CREATE);
+        } else {
+            setMode(Mode.EDIT);
+        }
+
         nameField.setText(project.getName() != null ? project.getName() : "");
         descriptionField.setText(project.getDescription() != null ? project.getDescription() : "");
         try {
