@@ -53,6 +53,24 @@
                      styleClass="dialog-color-picker"/>
     </VBox>
 
+    <!-- Member selection -->
+    <VBox spacing="6">
+        <Label text="Add members" styleClass="field-label"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <ComboBox fx:id="userSelectionCombo"
+                      promptText="Select a user..."
+                      prefWidth="300"
+                      styleClass="dialog-combo"/>
+            <Button text="Add"
+                    onAction="#handleAddMember"
+                    styleClass="dialog-button-add"/>
+        </HBox>
+        <FlowPane fx:id="selectedMembersPane"
+                  hgap="6"
+                  vgap="6"
+                  styleClass="selected-members-pane"/>
+    </VBox>
+
     <!-- Actions -->
     <HBox spacing="12" alignment="CENTER_RIGHT">
         <Button text="Cancel"

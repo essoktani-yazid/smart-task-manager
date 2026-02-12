@@ -73,6 +73,33 @@ public class ProjectDAO {
         return list;
     }
 
+    public List<Project> getProjectsByUserId(String userId) {
+        String sql = "SELECT * FROM projects WHERE user_id = ? AND is_active = TRUE ORDER BY name";
+        List<Project> projects = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Project project = new Project();
+                project.setId(rs.getString("id"));
+                project.setName(rs.getString("name"));
+                project.setDescription(rs.getString("description"));
+                project.setColor(rs.getString("color"));
+                projects.add(project);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error fetching projects: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return projects;
+    }
+
     public void update(Project project) {
         String sql = "UPDATE projects SET name = ?, description = ?, color = ?, updated_at = ?, is_active = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
