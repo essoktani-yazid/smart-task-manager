@@ -1,5 +1,7 @@
 package com.smarttask.model;
 
+
+
 import java.time.LocalDateTime;
 
 /**
@@ -9,17 +11,34 @@ public class TeamMember {
 
     private String teamId;
     private String userId;
-    private String role;
+    private User user;
+	private Team team;
 	private LocalDateTime joinedAt;
 
     public TeamMember() {
     }
 
-    public TeamMember(String teamId, String userId, String role) {
+    public TeamMember(String teamId, String userId) {
         this.teamId = teamId;
         this.userId = userId;
-        this.role = role;
         this.joinedAt = LocalDateTime.now();
+    }
+
+	public TeamMember(Team team, User user, String joinedAt) {
+		this();
+        this.team = team;
+        this.user = user;
+
+        if (joinedAt != null && !joinedAt.isEmpty()) {
+            try {
+                this.joinedAt = LocalDateTime.parse(joinedAt);
+            } catch (Exception e) {
+                // Fallback si le format est différent ou invalide
+                this.joinedAt = LocalDateTime.now();
+            }
+        } else {
+            this.joinedAt = LocalDateTime.now();
+        }
     }
 
     public String getTeamId() {
@@ -38,12 +57,20 @@ public class TeamMember {
         this.userId = userId;
     }
 
-    public String getRole() {
-        return role;
+    public User getUser() {
+        return user;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(Team newTeam) {
+        this.team = newTeam;
     }
 
     public LocalDateTime getJoinedAt() {
@@ -59,7 +86,6 @@ public class TeamMember {
         return "TeamMember{" +
                 "teamId='" + teamId + '\'' +
                 ", userId='" + userId + '\'' +
-                ", role='" + role + '\'' +
                 ", joinedAt=" + joinedAt +
                 '}';
     }

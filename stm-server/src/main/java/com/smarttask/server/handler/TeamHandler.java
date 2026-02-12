@@ -48,10 +48,6 @@ public class TeamHandler implements HttpHandler {
         String query = exchange.getRequestURI().getQuery();
 
         try {
-			System.out.println("handling");
-			System.out.println(method);
-			System.out.println(path);
-			System.out.println(query);
             if (path.equals("/api/teams") && method.equals("GET")) {
                 handleGetUserTeams(exchange, query);
                 return;
@@ -64,7 +60,7 @@ public class TeamHandler implements HttpHandler {
             }
 
             if (path.matches("/api/teams/[^/]+")) {
-                String teamId = path.split("/")[2];
+                String teamId = path.split("/")[3];
 
                 switch (method) {
                     case "GET" -> handleGetTeam(exchange, teamId);
@@ -75,12 +71,11 @@ public class TeamHandler implements HttpHandler {
             }
 
             if (path.matches("/api/teams/[^/]+/members")) {
-                String teamId = path.split("/")[2];
+                String teamId = path.split("/")[3];
 
                 switch (method) {
                     case "GET" -> handleGetMembers(exchange, teamId);
                     case "POST" -> handleAddMember(exchange, teamId);
-                    case "PUT" -> handleUpdateMember(exchange, teamId);
                     case "DELETE" -> handleRemoveMember(exchange, teamId, query);
                 }
                 return;
@@ -127,12 +122,20 @@ public class TeamHandler implements HttpHandler {
         Team team = readBody(exchange, Team.class);
         team.setId(teamId);
         teamDAO.update(team);
-        sendResponse(exchange, 204, "");
+        exchange.sendResponseHeaders(204, -1);
+		exchange.close();
     }
 
     private void handleDeleteTeam(HttpExchange exchange, String teamId) throws IOException {
-        teamDAO.deactivate(teamId);
-        sendResponse(exchange, 204, "");
+        try {
+            teamDAO.delete(teamId);
+            exchange.sendResponseHeaders(204, -1);
+        } catch (Exception e) {
+            String response = "{\"error\":\"" + e.getMessage() + "\"}";
+            sendResponse(exchange, 500, response);
+        } finally {
+            exchange.close();
+        }
     }
 
     private void handleGetMembers(HttpExchange exchange, String teamId) throws IOException {
@@ -142,14 +145,8 @@ public class TeamHandler implements HttpHandler {
 
     private void handleAddMember(HttpExchange exchange, String teamId) throws IOException {
         TeamMember member = readBody(exchange, TeamMember.class);
-        teamDAO.addMember(teamId, member.getUserId(), member.getRole());
+        teamDAO.addMember(teamId, member.getUserId());
         sendResponse(exchange, 201, "");
-    }
-
-    private void handleUpdateMember(HttpExchange exchange, String teamId) throws IOException {
-        TeamMember member = readBody(exchange, TeamMember.class);
-        teamDAO.updateMemberRole(teamId, member.getUserId(), member.getRole());
-        sendResponse(exchange, 204, "");
     }
 
     private void handleRemoveMember(HttpExchange exchange, String teamId, String query) throws IOException {

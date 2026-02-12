@@ -3,6 +3,7 @@ package com.smarttask.client.service;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.smarttask.client.util.GsonUtil;
+import com.smarttask.model.User;
 import com.smarttask.model.Team;
 import com.smarttask.model.TeamMember;
 import org.apache.http.client.methods.*;
@@ -22,8 +23,8 @@ public class TeamService {
 
     private static final String BASE_URL = "http://localhost:8080/api/teams";
     private final Gson gson = GsonUtil.createLocalDateTimeGsonAdapter();
+	private final UserService userService = new UserService();
 
-    /** Get teams where user is owner or member */
     public List<Team> getMyTeams(String userId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(BASE_URL + "?userId=" + userId);
@@ -45,7 +46,6 @@ public class TeamService {
         }
     }
 
-    /** Get a single team */
     public Optional<Team> getTeam(String teamId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(BASE_URL + "/" + teamId);
@@ -67,7 +67,6 @@ public class TeamService {
         }
     }
 
-    /** Create a new team */
     public boolean createTeam(Team team) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost request = new HttpPost(BASE_URL);
@@ -87,7 +86,6 @@ public class TeamService {
         }
     }
 
-    /** Update team info */
     public boolean updateTeam(Team team) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPut request = new HttpPut(BASE_URL + "/" + team.getId());
@@ -107,7 +105,6 @@ public class TeamService {
         }
     }
 
-    /** Soft delete / deactivate team */
     public boolean deleteTeam(String teamId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpDelete request = new HttpDelete(BASE_URL + "/" + teamId);
@@ -121,7 +118,6 @@ public class TeamService {
         }
     }
 
-    /** Get members of a team */
     public List<TeamMember> getMembers(String teamId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(BASE_URL + "/" + teamId + "/members");
@@ -143,7 +139,6 @@ public class TeamService {
         }
     }
 
-    /** Add a member to team */
     public boolean addMember(String teamId, String userId, String role) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost request = new HttpPost(BASE_URL + "/" + teamId + "/members");
@@ -151,7 +146,6 @@ public class TeamService {
 
             TeamMember member = new TeamMember();
             member.setUserId(userId);
-            member.setRole(role);
 
             request.setEntity(new StringEntity(
                     gson.toJson(member),
@@ -167,31 +161,6 @@ public class TeamService {
         }
     }
 
-    /** Update member role */
-    public boolean updateMemberRole(String teamId, String userId, String role) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPut request = new HttpPut(BASE_URL + "/" + teamId + "/members");
-            request.setHeader("Content-Type", "application/json");
-
-            TeamMember member = new TeamMember();
-            member.setUserId(userId);
-            member.setRole(role);
-
-            request.setEntity(new StringEntity(
-                    gson.toJson(member),
-                    StandardCharsets.UTF_8
-            ));
-
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                return response.getStatusLine().getStatusCode() == 204;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /** Remove member from team */
     public boolean removeMember(String teamId, String userId) {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpDelete request = new HttpDelete(
@@ -206,5 +175,25 @@ public class TeamService {
             return false;
         }
     }
+
+	public boolean addMemberByUsername(String teamId, String username) {
+		try {
+			User user = userService.findByUsername(username);
+			if (user == null) return false;
+
+			List<TeamMember> members = getMembers(teamId);
+			boolean alreadyMember = members.stream()
+					.anyMatch(m -> m.getUserId().equals(user.getId()));
+
+			if (alreadyMember) return false;
+
+			addMember(teamId, user.getId(), "MEMBER");
+			return true;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 }
 

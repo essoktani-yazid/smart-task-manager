@@ -85,3 +85,38 @@
     -fx-background-color: white;
 }
 
+.team-name {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c2f4a;
+}
+
+.team-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b6f9c;
+}
+
+/* Boutons TeamCard */
+.team-card .btn-primary {
+    -fx-background-color: linear-gradient(to right, #6a7cff, #9b6cff);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 16;
+    -fx-padding: 6 16;
+}
+
+.team-card .btn-secondary {
+    -fx-background-color: rgba(106,124,255,0.15);
+    -fx-text-fill: #4b5cff;
+    -fx-font-weight: bold;
+    -fx-background-radius: 16;
+    -fx-padding: 6 14;
+}
+
+.team-card .btn-danger {
+    -fx-background-color: #ff6b6b;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 16;
+    -fx-padding: 6 14;
+}

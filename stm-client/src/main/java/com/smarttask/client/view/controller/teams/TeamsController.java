@@ -43,7 +43,7 @@ public class TeamsController {
 
             Stage dialogStage = new Stage();
             dialogStage.initModality(Modality.APPLICATION_MODAL);
-            dialogStage.setTitle("Create team");
+            dialogStage.setTitle("Créer une équipe");
 
             Scene scene = new Scene(root);
             dialogStage.setScene(scene);

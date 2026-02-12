@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.smarttask.client.view.controller.teams.EditTeamDialogController"
+      spacing="18"
+      styleClass="create-team-dialog"
+      stylesheets="@../../css/teams/create-team-dialog.css">
+
+    <padding>
+        <Insets topRightBottomLeft="25"/>
+    </padding>
+
+    <!-- Header -->
+    <VBox spacing="4">
+        <Label text="Edit team" styleClass="dialog-title">
+            <font>
+                <Font name="System Bold" size="20"/>
+            </font>
+        </Label>
+        <Label text="Update your team information"
+               styleClass="dialog-subtitle"/>
+    </VBox>
+
+    <!-- Team name -->
+    <VBox spacing="6">
+        <Label text="Team name" styleClass="field-label"/>
+        <TextField fx:id="nameField"
+                   promptText="Team name"
+                   styleClass="dialog-input"/>
+    </VBox>
+
+    <!-- Description -->
+    <VBox spacing="6">
+        <Label text="Description" styleClass="field-label"/>
+        <TextArea fx:id="descriptionField"
+                  promptText="Describe your team"
+                  prefRowCount="3"
+                  wrapText="true"
+                  styleClass="dialog-textarea"/>
+    </VBox>
+
+    <!-- Color picker -->
+    <VBox spacing="6">
+        <Label text="Team color" styleClass="field-label"/>
+        <ColorPicker fx:id="colorPicker"
+                     styleClass="dialog-color-picker"/>
+    </VBox>
+
+    <!-- Actions -->
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Cancel"
+                onAction="#handleCancel"
+                styleClass="dialog-button-secondary"/>
+        <Button text="Save changes"
+                onAction="#handleSave"
+                styleClass="dialog-button-primary"/>
+    </HBox>
+</VBox>
+

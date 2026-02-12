@@ -37,6 +37,22 @@ public class UserHandler implements HttpHandler {
         try {
             // 2. ROUTAGE
 
+			if (path.startsWith("/api/users/username/")) {
+				String username = path.substring("/api/users/username/".length());
+
+				if (username.isEmpty()) {
+					sendResponse(exchange, 400, "{\"error\":\"Missing username\"}");
+					return;
+				}
+
+				if ("GET".equals(method)) {
+					handleGetByUsername(exchange, username);
+				} else {
+					sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
+				}
+				return;
+			}
+
             // CAS A : /api/users (Collection)
             if (path.equals("/api/users")) {
                 if ("GET".equals(method)) {
@@ -158,6 +174,16 @@ public class UserHandler implements HttpHandler {
             sendResponse(exchange, 500, "{\"error\":\"Delete failed\"}");
         }
     }
+
+	private void handleGetByUsername(HttpExchange exchange, String username) throws IOException {
+		Optional<User> userOpt = dao.findByUsername(username);
+
+		if (userOpt.isPresent()) {
+			sendResponse(exchange, 200, gson.toJson(userOpt.get()));
+		} else {
+			sendResponse(exchange, 404, "{\"error\":\"User not found\"}");
+		}
+	}
 
     // --- UTILITAIRES ---
 
