@@ -176,7 +176,16 @@ CREATE TABLE calendar_event (
     place_in_month VARCHAR(20),
     yearly_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    visibility VARCHAR(20) DEFAULT 'PUBLIC',
+    shared_with_user_ids TEXT,
+    shared_with_emails TEXT,
+    creator_user_id VARCHAR(36),
+    has_meeting_link BOOLEAN DEFAULT FALSE,
+    meeting_link TEXT,
+    meeting_platform VARCHAR(50),
+    meeting_password VARCHAR(255),
+    location VARCHAR(500)
 );
 
 -- Table Projects
