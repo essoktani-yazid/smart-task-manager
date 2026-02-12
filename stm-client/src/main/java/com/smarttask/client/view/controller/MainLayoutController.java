@@ -1,8 +1,9 @@
 package com.smarttask.client.view.controller;
 
 import com.smarttask.client.view.controller.teams.TeamsController;
+import com.smarttask.model.Project;
 import com.smarttask.model.User;
-import com.smarttask.client.view.controller.projects.ProjectsViewController;
+import com.smarttask.client.view.controller.projects.ProjectViewController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -31,9 +32,15 @@ public class MainLayoutController {
 
     private User currentUser;
     private Button currentActiveButton;
+    private static MainLayoutController instance;
+
+    public static MainLayoutController getInstance() {
+        return instance;
+    }
 
     @FXML
     private void initialize() {
+        instance = this;
         // Définir le bouton par défaut
         setActiveButton(tasksButton);
         showTasks();
@@ -69,7 +76,7 @@ public class MainLayoutController {
     }
 
     @FXML private void showProjects() {
-        if(loadView("/fxml/projects/projects-view.fxml")) setActiveButton(projectsButton);
+        if(loadView("/fxml/projects/root-view.fxml")) setActiveButton(projectsButton);
     }
 
     @FXML private void showAnalytics() {
@@ -114,8 +121,8 @@ public class MainLayoutController {
                 ((ProfileController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof TeamsController && currentUser != null) {
                 ((TeamsController) controller).setCurrentUser(currentUser);
-            } else if (controller instanceof ProjectsViewController && currentUser != null) {
-                ((ProjectsViewController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof ProjectViewController && currentUser != null) {
+                ((ProjectViewController) controller).setCurrentUser(currentUser);
             }
 
             contentPane.getChildren().clear();
@@ -140,6 +147,34 @@ public class MainLayoutController {
                 button.getStyleClass().add("active");
             }
             currentActiveButton = button;
+        }
+    }
+
+    public void navigateTo(String fxmlPath, Object data) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent view = loader.load();
+            
+            Object controller = loader.getController();
+
+            if (controller instanceof ProjectViewController) {
+                ProjectViewController pvc = (ProjectViewController) controller;
+                pvc.setCurrentUser(currentUser);
+                if (data instanceof Project) pvc.setProject((Project) data);
+            } else if (controller instanceof ProfileController) {
+                ProfileController pfc = (ProfileController) controller;
+                pfc.setCurrentUser(currentUser);
+            } else if (controller instanceof DashboardController) {
+                DashboardController pvc = (DashboardController) controller;
+                pvc.setCurrentUser(currentUser);
+            } else if (controller instanceof TeamsController) {
+                TeamsController pvc = (TeamsController) controller;
+                pvc.setCurrentUser(currentUser);
+            }
+
+            contentPane.getChildren().setAll(view);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
