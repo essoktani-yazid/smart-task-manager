@@ -185,12 +185,8 @@ public class TaskHandler implements HttpHandler {
     }
 
     private void handleDeleteTask(HttpExchange exchange, String taskId) throws IOException, SQLException {
-        // Appel de la méthode de suppression du DAO
-        // Assurez-vous que taskDAO a une méthode deleteById(String id) ou delete(String id)
-        // taskDAO.deleteById(taskId);
+        taskDAO.deleteById(taskId);
 
-        // Comme je ne suis pas sûr du nom dans votre TaskDAO actuel, je mets un message générique
-        // Décommentez la ligne ci-dessus si la méthode existe
         sendResponse(exchange, 200, "{\"message\":\"Task deleted\"}");
     }
 

@@ -3,4 +3,7 @@ uvicorn[standard]
 websockets
 python-dotenv
 mysql-connector-python
-httpx
+httpx[http2]
+edge-tts
+pydub
+vosk

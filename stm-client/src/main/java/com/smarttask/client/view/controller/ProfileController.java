@@ -15,28 +15,28 @@ import javafx.util.Duration;
 
 public class ProfileController {
 
-    // --- EN-TÊTE ---
+    // --- HEADER ---
     @FXML private Text avatarText;
     @FXML private Label usernameLabel;
     @FXML private Label roleLabel;
 
-    // --- INFOS PERSO ---
+    // --- PERSONAL INFO ---
     @FXML private TextField usernameField;
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
     @FXML private TextField emailField;
     @FXML private Label profileStatusLabel;
 
-    // --- SÉCURITÉ : VÉRIFICATION ---
+    // --- SECURITY: VERIFICATION ---
     @FXML private PasswordField currentPasswordField;
-    @FXML private TextField currentPasswordText; // Le champ visible
+    @FXML private TextField currentPasswordText;
     @FXML private Button verifyPasswordButton;
     @FXML private Label verifyStatusLabel;
 
-    // --- SÉCURITÉ : NOUVEAU MOT DE PASSE ---
+    // --- SECURITY: NEW PASSWORD ---
     @FXML private VBox newPasswordSection;
     @FXML private PasswordField newPasswordField;
-    @FXML private TextField newPasswordText; // Le champ visible
+    @FXML private TextField newPasswordText;
     @FXML private PasswordField confirmPasswordField;
     @FXML private Button changePasswordButton;
     @FXML private Label passwordStatusLabel;
@@ -51,7 +51,7 @@ public class ProfileController {
     public void initialize() {
         resetPasswordSection();
 
-        // 1. Validation en temps réel de l'email
+        // 1. Real-time email validation
         emailField.textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null || newVal.isEmpty()) {
                 clearFieldValidation(emailField);
@@ -62,10 +62,8 @@ public class ProfileController {
             }
         });
 
-        // 2. Synchronisation pour le Toggle Password (Vérification)
+        // 2. Setup Password Sync (Current & New)
         setupPasswordSync(currentPasswordField, currentPasswordText);
-
-        // 3. Synchronisation pour le Toggle Password (Nouveau)
         setupPasswordSync(newPasswordField, newPasswordText);
     }
 
@@ -82,19 +80,25 @@ public class ProfileController {
         lastNameField.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
         emailField.setText(currentUser.getEmail());
 
-        // Initiale Avatar
+        // Avatar Initial
         if (avatarText != null) {
             String initial = (currentUser.getUsername() != null && !currentUser.getUsername().isEmpty())
                     ? currentUser.getUsername().substring(0, 1).toUpperCase()
                     : "?";
             avatarText.setText(initial);
         }
-        if (usernameLabel != null) usernameLabel.setText(currentUser.getFirstName() + " " + currentUser.getLastName());
+
+        // Display Name (Handling nulls)
+        if (usernameLabel != null) {
+            String fName = currentUser.getFirstName() != null ? currentUser.getFirstName() : "";
+            String lName = currentUser.getLastName() != null ? currentUser.getLastName() : "";
+            usernameLabel.setText((fName + " " + lName).trim().isEmpty() ? currentUser.getUsername() : (fName + " " + lName));
+        }
 
         resetPasswordSection();
     }
 
-    // --- ACTIONS PROFIL ---
+    // --- PROFILE ACTIONS ---
 
     @FXML
     private void handleSaveProfile() {
@@ -102,7 +106,7 @@ public class ProfileController {
 
         String email = emailField.getText();
         if (!isValidEmail(email)) {
-            showStatus(profileStatusLabel, false, "Format d'email invalide");
+            showStatus(profileStatusLabel, false, "Invalid email format");
             setFieldValidation(emailField, false);
             return;
         }
@@ -112,49 +116,40 @@ public class ProfileController {
         currentUser.setEmail(email);
 
         boolean success = userService.updateUser(currentUser);
-        showStatus(profileStatusLabel, success, success ? "✓ Profil mis à jour" : "✗ Erreur de mise à jour");
+        showStatus(profileStatusLabel, success, success ? "✓ Profile updated" : "✗ Update failed");
     }
 
     @FXML
     private void handleEditAvatar() {
-        // Pour l'instant, simple log ou feedback visuel
-        showStatus(profileStatusLabel, true, "ℹ️ Fonctionnalité d'upload bientôt disponible");
+        showStatus(profileStatusLabel, true, "ℹ️ Upload feature coming soon");
     }
 
-    // --- ACTIONS MOT DE PASSE ---
+    // --- PASSWORD ACTIONS ---
 
     @FXML
     private void handleVerifyPassword() {
-        String input = currentPasswordField.getText(); // La valeur est sync avec currentPasswordText
+        String input = currentPasswordField.getText();
 
         if (input == null || input.isEmpty()) {
-            showStatus(verifyStatusLabel, false, "Entrez votre mot de passe");
+            showStatus(verifyStatusLabel, false, "Please enter your password");
             return;
         }
 
+        // Verification via service
         boolean verified = authService.verifyPassword(currentUser.getUsername(), input);
 
         if (verified) {
             passwordVerified = true;
-            showStatus(verifyStatusLabel, true, "✓ Identité vérifiée");
+            showStatus(verifyStatusLabel, true, "✓ Identity verified");
             enablePasswordChange();
         } else {
             passwordVerified = false;
-            showStatus(verifyStatusLabel, false, "✗ Mot de passe incorrect");
+            showStatus(verifyStatusLabel, false, "✗ Incorrect password");
         }
     }
 
-    // Toggle Visibility : Champ Actuel
-    @FXML
-    private void toggleCurrentPassword() {
-        toggleVisibility(currentPasswordField, currentPasswordText);
-    }
-
-    // Toggle Visibility : Nouveau Champ
-    @FXML
-    private void toggleNewPassword() {
-        toggleVisibility(newPasswordField, newPasswordText);
-    }
+    @FXML private void toggleCurrentPassword() { toggleVisibility(currentPasswordField, currentPasswordText); }
+    @FXML private void toggleNewPassword() { toggleVisibility(newPasswordField, newPasswordText); }
 
     @FXML
     private void handleChangePassword() {
@@ -164,12 +159,12 @@ public class ProfileController {
         String confirmPass = confirmPasswordField.getText();
 
         if (newPass == null || newPass.length() < 6) {
-            showStatus(passwordStatusLabel, false, "Minimum 6 caractères requis");
+            showStatus(passwordStatusLabel, false, "Minimum 6 characters required");
             return;
         }
 
         if (!newPass.equals(confirmPass)) {
-            showStatus(passwordStatusLabel, false, "Les mots de passe ne correspondent pas");
+            showStatus(passwordStatusLabel, false, "Passwords do not match");
             return;
         }
 
@@ -177,37 +172,31 @@ public class ProfileController {
         boolean success = userService.updateUser(currentUser);
 
         if (success) {
-            showStatus(passwordStatusLabel, true, "Mot de passe modifié !");
+            showStatus(passwordStatusLabel, true, "Password changed successfully!");
             PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
             delay.setOnFinished(e -> resetPasswordSection());
             delay.play();
         } else {
-            showStatus(passwordStatusLabel, false, "Erreur serveur");
+            showStatus(passwordStatusLabel, false, "Server error");
         }
     }
 
-    // --- LOGIQUE INTERNE ---
+    // --- INTERNAL LOGIC ---
 
     private void setupPasswordSync(PasswordField pass, TextField text) {
-        // Binding bidirectionnel : ce qu'on tape dans l'un va dans l'autre
-        text.textProperty().bindBidirectional(pass.textProperty());
+        if (pass != null && text != null) {
+            text.textProperty().bindBidirectional(pass.textProperty());
+        }
     }
 
     private void toggleVisibility(PasswordField pass, TextField text) {
-        // Si le TextField est visible, on le cache et on montre le PasswordField
         boolean isTextVisible = text.isVisible();
-
-        if (isTextVisible) {
-            text.setVisible(false);
-            text.setManaged(false);
-            pass.setVisible(true);
-            pass.setManaged(true);
-        } else {
-            text.setVisible(true);
-            text.setManaged(true);
-            pass.setVisible(false);
-            pass.setManaged(false);
-        }
+        text.setVisible(!isTextVisible);
+        text.setManaged(!isTextVisible);
+        pass.setVisible(isTextVisible);
+        pass.setManaged(isTextVisible);
+        
+        if (!isTextVisible) text.requestFocus(); else pass.requestFocus();
     }
 
     private void enablePasswordChange() {
@@ -215,36 +204,39 @@ public class ProfileController {
         newPasswordSection.setOpacity(1.0);
         verifyPasswordButton.setDisable(true);
         currentPasswordField.setDisable(true);
-        currentPasswordText.setDisable(true); // Bloquer aussi le champ visible si ouvert
+        currentPasswordText.setDisable(true);
         newPasswordField.requestFocus();
     }
 
     private void resetPasswordSection() {
         passwordVerified = false;
 
-        currentPasswordField.setText("");
-        newPasswordField.setText("");
-        confirmPasswordField.setText("");
+        if (currentPasswordField != null) currentPasswordField.setText("");
+        if (newPasswordField != null) newPasswordField.setText("");
+        if (confirmPasswordField != null) confirmPasswordField.setText("");
 
-        // Reset visibilité (remettre en mode caché par défaut)
-        currentPasswordText.setVisible(false); currentPasswordText.setManaged(false);
-        currentPasswordField.setVisible(true); currentPasswordField.setManaged(true);
+        // Set default visibility (hidden)
+        if (currentPasswordText != null) { currentPasswordText.setVisible(false); currentPasswordText.setManaged(false); }
+        if (currentPasswordField != null) { currentPasswordField.setVisible(true); currentPasswordField.setManaged(true); }
 
-        newPasswordText.setVisible(false); newPasswordText.setManaged(false);
-        newPasswordField.setVisible(true); newPasswordField.setManaged(true);
+        if (newPasswordText != null) { newPasswordText.setVisible(false); newPasswordText.setManaged(false); }
+        if (newPasswordField != null) { newPasswordField.setVisible(true); newPasswordField.setManaged(true); }
 
-        currentPasswordField.setDisable(false);
-        currentPasswordText.setDisable(false);
-        verifyPasswordButton.setDisable(false);
+        if (verifyPasswordButton != null) verifyPasswordButton.setDisable(false);
+        if (currentPasswordField != null) currentPasswordField.setDisable(false);
+        if (currentPasswordText != null) currentPasswordText.setDisable(false);
 
-        newPasswordSection.setDisable(true);
-        newPasswordSection.setOpacity(0.5);
+        if (newPasswordSection != null) {
+            newPasswordSection.setDisable(true);
+            newPasswordSection.setOpacity(0.5);
+        }
 
-        verifyStatusLabel.setVisible(false);
-        passwordStatusLabel.setVisible(false);
+        if (verifyStatusLabel != null) verifyStatusLabel.setVisible(false);
+        if (passwordStatusLabel != null) passwordStatusLabel.setVisible(false);
     }
 
     private void showStatus(Label label, boolean success, String message) {
+        if (label == null) return;
         label.setText(message);
         label.setVisible(true);
         label.getStyleClass().removeAll("status-success", "status-error");
@@ -254,8 +246,6 @@ public class ProfileController {
         pause.setOnFinished(e -> label.setVisible(false));
         pause.play();
     }
-
-    // --- VALIDATION VISUELLE ---
 
     private boolean isValidEmail(String email) {
         return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");

@@ -9,6 +9,7 @@ import com.smarttask.client.service.CommentAttachmentService;
 import com.smarttask.client.service.TaskDependencyService;
 import com.smarttask.client.service.SharedTaskService;
 import com.smarttask.client.util.SessionManager;
+import com.smarttask.client.view.controller.MainLayoutController;
 import com.smarttask.model.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -18,20 +19,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public class ProjectsViewController {
-
-    // --- LISTE DES PROJETS ---
-    @FXML private ListView<Project> projectsList;
+public class ProjectViewController {
 
     // --- TABLEAU PRINCIPAL (Tâches Parente) ---
     @FXML private TableView<Task> tasksTable;
@@ -57,9 +57,8 @@ public class ProjectsViewController {
     @FXML private Button addSubtaskBtn;
 
     // --- SERVICES ---
-    // Note : Assurez-vous que vos classes Services ont l'URL http://localhost:8090 codée en dur ou par défaut
-    private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
+    private final ProjectService projectService = new ProjectService();
     private final TaskTagService tagService = new TaskTagService();
     private final CommentService commentService = new CommentService();
     private final TimeTrackingService timeTrackingService = new TimeTrackingService();
@@ -71,7 +70,7 @@ public class ProjectsViewController {
     private LocalDateTime timeTrackingStart = null;
 
     // --- DONNÉES ---
-    private ObservableList<Project> projects = FXCollections.observableArrayList();
+    private Project project = null;
     private ObservableList<Task> tasks = FXCollections.observableArrayList();
     private ObservableList<TaskTag> tags = FXCollections.observableArrayList();
     private ObservableList<Comment> comments = FXCollections.observableArrayList();
@@ -79,89 +78,27 @@ public class ProjectsViewController {
     private User currentUser;
     private Task selectedTask = null;
 
+    public void setProject(Project p) {
+        project = p;
+        if (project != null) {
+            loadTasks(project);
+            refreshTeamsList();
+            System.out.println("[DEBUG] Données chargées pour le projet: " + project.getName());
+        }
+    }
+
+    @FXML private TableView<Team> teamsTable;
+    @FXML private TableColumn<Team, String> colTeamName;
+    @FXML private TableColumn<Team, String> colTeamDescription;
+
     @FXML
     public void initialize() {
 
-        if (projectsList.getScene() != null) {
-            projectsList.getScene().getStylesheets().add(getClass().getResource("/css/projects-style.css").toExternalForm());
-        } else {
-            // Si la scène est null au moment de initialize, on ajoute un listener
-            projectsList.sceneProperty().addListener((obs, oldScene, newScene) -> {
-                if (newScene != null) {
-                    newScene.getStylesheets().add(getClass().getResource("/css/projects-style.css").toExternalForm());
-                }
-            });
-        }
-        // 1. Config Projets
-        projectsList.setItems(projects);
-        projectsList.setCellFactory(lv -> new ListCell<>() {
-            private final Label nameLabel = new Label();
-            private final Button editBtn = new Button("✎");
-            private final Button deleteBtn = new Button("✕");
-            private final HBox hbox = new HBox(8);
-            
-            {
-                nameLabel.setStyle("-fx-font-size: 12; -fx-text-fill: #1e293b;");
-                nameLabel.setMaxWidth(Double.MAX_VALUE);
-                HBox.setHgrow(nameLabel, javafx.scene.layout.Priority.ALWAYS);
-                
-                editBtn.setStyle("-fx-font-size: 10; -fx-padding: 2 6; -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 4; -fx-background-radius: 4;");
-                editBtn.setOnMouseEntered(e -> editBtn.setStyle("-fx-font-size: 10; -fx-padding: 2 6; -fx-background-color: #2563eb; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 4; -fx-background-radius: 4;"));
-                editBtn.setOnMouseExited(e -> editBtn.setStyle("-fx-font-size: 10; -fx-padding: 2 6; -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 4; -fx-background-radius: 4;"));
-                editBtn.setOnAction(e -> {
-                    Project p = getItem();
-                    if (p != null) {
-                        onEditProject();
-                    }
-                });
-                
-                deleteBtn.setStyle("-fx-font-size: 10; -fx-padding: 2 6; -fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 4; -fx-background-radius: 4;");
-                deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle("-fx-font-size: 10; -fx-padding: 2 6; -fx-background-color: #dc2626; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 4; -fx-background-radius: 4;"));
-                deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle("-fx-font-size: 10; -fx-padding: 2 6; -fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 4; -fx-background-radius: 4;"));
-                deleteBtn.setOnAction(e -> {
-                    Project p = getItem();
-                    if (p != null && confirmAction("Supprimer le projet \"" + p.getName() + "\" ?")) {
-                        try {
-                            projectService.deleteProject(p.getId());
-                            loadProjects();
-                        } catch(Exception ex) { ex.printStackTrace(); }
-                    }
-                });
-                
-                hbox.setStyle("-fx-alignment: center-left; -fx-padding: 4;");
-                hbox.getChildren().addAll(nameLabel, editBtn, deleteBtn);
-            }
-            
-            @Override protected void updateItem(Project item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    nameLabel.setText(item.getName());
-                    setGraphic(hbox);
-                    setText(null);
-                }
-            }
-        });
-
-        // 2. Config Tableaux
         setupMainTable();
         setupSubTasksTable();
+        setupTeamsTable();
         setupDetailLists();
 
-        // 3. Listener Sélection Projet
-        projectsList.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
-            System.out.println("[DEBUG] Listener Sélection Projet - newSel: " + (newSel != null ? newSel.getName() : "NULL"));
-            if (newSel != null) {
-                loadTasks(newSel);
-            } else {
-                tasks.clear();
-                subTasksTable.getItems().clear();
-            }
-        });
-
-        // 4. Listener Sélection Tâche Principale
         tasksTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
             if (newSel != null) {
                 selectedTask = newSel;
@@ -173,7 +110,99 @@ public class ProjectsViewController {
             }
         });
 
-        // 5. Les projets seront chargés quand setCurrentUser() sera appelé
+        if (project != null) {
+            loadTasks(project);
+            refreshTeamsList();
+        }
+    }
+
+    public void loadInitialData() {
+        if (project != null) {
+            loadTasks(project);
+            refreshTeamsList();
+        }
+    }
+
+    private void refreshTeamsList() {
+        if (project == null) return;
+        try {
+            List<Team> teams = projectService.getTeamsByProject(project.getId());
+            if (teams != null) {
+                teamsTable.setItems(FXCollections.observableArrayList(teams));
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] Erreur lors du chargement des équipes: " + e.getMessage());
+        }
+    }
+
+    private void setupTeamsTable() {
+        colTeamName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colTeamDescription.setCellValueFactory(new PropertyValueFactory<>("description"));
+    }
+
+    @FXML
+    private void onAddTeam() {
+        String teamId = showTeamSelectionDialog();
+        if (teamId != null) {
+            boolean success = projectService.addTeamToProject(project.getId(), teamId);
+            if (success) refreshTeamsList();
+        }
+    }
+
+    @FXML
+    private void onRemoveTeam() {
+        Team selected = teamsTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            boolean confirm = showConfirmation("Voulez-vous retirer l'équipe " + selected.getName() + " de ce projet ?");
+            if (confirm) {
+                boolean success = projectService.removeTeamFromProject(project.getId(), selected.getId());
+                if (success) refreshTeamsList();
+            }
+        }
+    }
+
+    private String showTeamSelectionDialog() {
+        com.smarttask.client.service.TeamService teamService = new com.smarttask.client.service.TeamService();
+        List<Team> userTeams = teamService.getMyTeams(currentUser.getId());
+
+        if (userTeams == null || userTeams.isEmpty()) {
+            showAlert("Information", "Vous ne faites partie d'aucune équipe.");
+            return null;
+        }
+
+        ChoiceDialog<Team> dialog = new ChoiceDialog<>(userTeams.get(0), userTeams);
+        dialog.setTitle("Ajouter une équipe");
+        dialog.setHeaderText("Sélectionnez l'équipe à ajouter au projet " + project.getName());
+        dialog.setContentText("Équipe :");
+
+        javafx.util.StringConverter<Team> converter = new javafx.util.StringConverter<Team>() {
+            @Override
+            public String toString(Team team) {
+                return (team == null) ? "" : team.getName();
+            }
+
+            @Override
+            public Team fromString(String string) {
+                return null;
+            }
+        };
+
+        Control listView = (Control) dialog.getDialogPane().lookup(".combo-box");
+        if (listView instanceof ComboBox) {
+            ((ComboBox<Team>) listView).setConverter(converter);
+        }
+        
+        Optional<Team> result = dialog.showAndWait();
+        return result.map(Team::getId).orElse(null);
+    }
+
+    private boolean showConfirmation(String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmation");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
     }
 
     private void setupMainTable() {
@@ -212,43 +241,6 @@ public class ProjectsViewController {
                 }
             }
         });
-
-        // Colonne Actions avec boutons Modifier et Supprimer
-        colActions.setCellFactory(col -> new TableCell<Task, Void>() {
-            private final Button editBtn = new Button("✎");
-            private final Button deleteBtn = new Button("✕");
-            private final HBox pane = new HBox(6, editBtn, deleteBtn);
-            
-            {
-                editBtn.setStyle("-fx-font-size: 12; -fx-padding: 4 10; -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 6; -fx-background-radius: 6;");
-                editBtn.setOnMouseEntered(e -> editBtn.setStyle("-fx-font-size: 12; -fx-padding: 4 10; -fx-background-color: #2563eb; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 6; -fx-background-radius: 6;"));
-                editBtn.setOnMouseExited(e -> editBtn.setStyle("-fx-font-size: 12; -fx-padding: 4 10; -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 6; -fx-background-radius: 6;"));
-                editBtn.setOnAction(e -> {
-                    Task t = getTableView().getItems().get(getIndex());
-                    if (t != null) openTaskForm(t, false);
-                });
-                
-                deleteBtn.setStyle("-fx-font-size: 12; -fx-padding: 4 10; -fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 6; -fx-background-radius: 6;");
-                deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle("-fx-font-size: 12; -fx-padding: 4 10; -fx-background-color: #dc2626; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 6; -fx-background-radius: 6;"));
-                deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle("-fx-font-size: 12; -fx-padding: 4 10; -fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand; -fx-border-radius: 6; -fx-background-radius: 6;"));
-                deleteBtn.setOnAction(e -> {
-                    Task t = getTableView().getItems().get(getIndex());
-                    if (t != null && confirmAction("Supprimer la tâche ?")) {
-                        try {
-                            taskService.deleteTask(t.getId());
-                            loadTasks(projectsList.getSelectionModel().getSelectedItem());
-                        } catch(Exception ex) { ex.printStackTrace(); }
-                    }
-                });
-                
-                pane.setStyle("-fx-alignment: center;");
-            }
-            
-            @Override protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : pane);
-            }
-        });
     }
 
     private void setupSubTasksTable() {
@@ -259,7 +251,6 @@ public class ProjectsViewController {
                 c.getValue().getUser() != null ? c.getValue().getUser().getUsername() : "-"
         ));
 
-        // Listener Sélection Sous-tâche
         subTasksTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
             if (newSel != null) {
                 selectedTask = newSel;
@@ -301,23 +292,6 @@ public class ProjectsViewController {
     public void setCurrentUser(User user) {
         this.currentUser = user;
         System.out.println("[DEBUG] ProjectsViewController.setCurrentUser appelée avec: " + (user != null ? user.getUsername() : "NULL"));
-        loadProjects();
-    }
-
-    private void loadProjects() {
-        try {
-            String uid = currentUser != null ? currentUser.getId() : "550e8400-e29b-41d4-a716-446655440000"; // ID par défaut
-            List<Project> list = projectService.getProjectsByUser(uid);
-            projects.setAll(list == null ? java.util.Collections.emptyList() : list);
-            System.out.println("[DEBUG] Projets chargés: " + projects.size());
-            if (!projects.isEmpty()) {
-                System.out.println("[DEBUG] Sélection du premier projet...");
-                projectsList.getSelectionModel().select(0);
-            }
-        } catch (Exception e) {
-            System.err.println("Erreur chargement projets: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
     private void loadTasks(Project project) {
@@ -405,6 +379,11 @@ public class ProjectsViewController {
         }
     }
 
+    @FXML
+    private void onBackToProjects() {
+        MainLayoutController.getInstance().navigateTo("/fxml/projects/root-view.fxml", project);
+    }
+
     private void updateTaskStatus(Task task) {
         try {
             taskService.updateTask(task);
@@ -438,17 +417,13 @@ public class ProjectsViewController {
                     if (currentUser != null && result.getUser() == null) result.setUser(currentUser);
                     Task created = taskService.createTask(result);
                     System.out.println("[DEBUG] Tâche créée avec ID: " + (created != null ? created.getId() : "NULL"));
-                    // Rechargement pour ajouter la nouvelle tâche
-                    Project p = projectsList.getSelectionModel().getSelectedItem();
-                    if (p != null) loadTasks(p);
+                    if (project != null) loadTasks(project);
                 } else {
                     System.out.println("[DEBUG] Mise à jour tâche existante: " + result.getId());
                     taskService.updateTask(result);
-                    
-                    // Après mise à jour, recharger les tâches pour garantir l'affichage correct
-                    Project p = projectsList.getSelectionModel().getSelectedItem();
-                    if (p != null) {
-                        loadTasks(p);
+
+                    if (project != null) {
+                        loadTasks(project);
                         System.out.println("[DEBUG] Tâches rechargées après mise à jour");
                     }
                 }
@@ -463,63 +438,10 @@ public class ProjectsViewController {
     // --- BOUTONS ---
 
     @FXML
-    private void onAddProject() {
-        // Logique simplifiée pour l'exemple (à adapter avec ProjectFormController si existant)
-        TextInputDialog d = new TextInputDialog("Nouveau Projet");
-        d.setTitle("Projet");
-        d.setHeaderText("Créer un projet");
-        d.showAndWait().ifPresent(name -> {
-            Project p = new Project();
-            p.setName(name);
-            p.setUserId(currentUser != null ? currentUser.getId() : "550e8400-e29b-41d4-a716-446655440000");
-            try { projectService.createProject(p); loadProjects(); } catch(Exception e) { e.printStackTrace(); }
-        });
-    }
-
-    @FXML
-    private void onEditProject() {
-        Project p = projectsList.getSelectionModel().getSelectedItem();
-        if (p == null) {
-            showAlert("Info", "Sélectionnez un projet à modifier");
-            return;
-        }
-        
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/projects/project-form.fxml"));
-            Parent root = loader.load();
-            ProjectFormController ctrl = loader.getController();
-            
-            Stage stage = new Stage();
-            ctrl.setStage(stage);
-            ctrl.setProject(p);
-            
-            stage.setScene(new Scene(root));
-            stage.initOwner(projectsList.getScene().getWindow());
-            stage.showAndWait();
-            
-            Project result = ctrl.getProject();
-            if (result != null && result.getId() != null) {
-                projectService.updateProject(result);
-                loadProjects();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Erreur", "Impossible d'ouvrir le formulaire: " + e.getMessage());
-        }
-    }
-    @FXML private void onDeleteProject() {
-        Project p = projectsList.getSelectionModel().getSelectedItem();
-        if (p != null && confirmAction("Supprimer le projet ?")) {
-            try { projectService.deleteProject(p.getId()); loadProjects(); } catch(Exception e) { e.printStackTrace(); }
-        }
-    }
-
-    @FXML
     private void onAddTask() {
-        Project p = projectsList.getSelectionModel().getSelectedItem();
-        if (p == null) { showAlert("Info", "Sélectionnez un projet"); return; }
+        if (project == null) { showAlert("Info", "Sélectionnez un projet"); return; }
         Task t = new Task();
-        t.setProjectId(p.getId());
+        t.setProjectId(project.getId());
         openTaskForm(t, false);
     }
 
@@ -535,7 +457,7 @@ public class ProjectsViewController {
         if (t != null && confirmAction("Supprimer la tâche ?")) {
             try {
                 taskService.deleteTask(t.getId());
-                loadTasks(projectsList.getSelectionModel().getSelectedItem());
+                loadTasks(project);
             } catch(Exception e) { e.printStackTrace(); }
         }
     }

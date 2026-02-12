@@ -176,3 +176,17 @@
     -fx-background-color: transparent;
     -fx-padding: 0; 
 }
+
+.has-notification {
+    -fx-border-color: #FF4B4B;
+    -fx-border-width: 2px;
+}
+
+.notification-badge {
+    -fx-background-color: #FF4B4B;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 2 5 2 5;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}

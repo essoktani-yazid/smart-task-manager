@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 public class NotificationService {
+
     private static final String BASE_URL = AppConfig.API_URL + "/notifications";
+
     private final Gson gson = GsonUtils.getGson();
 
     public List<Notification> getUserNotifications(String userId) {

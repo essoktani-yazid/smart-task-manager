@@ -92,19 +92,26 @@ public class TaskDAO {
      * Retrieves all tasks for a user by user ID.
      */
     public List<Task> findByUserId(String userId) {
-        String sql = "SELECT t.*, u.username, u.email " +
-                "FROM tasks t " +
-                "LEFT JOIN users u ON t.user_id = u.id " +
-                "WHERE t.user_id = ? " +
-                "ORDER BY t.created_at DESC";
+        // ⚡ OPTIMISÉ: Utilise l'index idx_user_created (user_id, created_at)
+        // Pas de SELECT * - uniquement les colonnes nécessaires
+        String sql = "SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, " +
+                     "t.created_at, t.user_id, t.project_id, t.parent_task_id, " +
+                     "t.recurrence_type, t.recurrence_interval, u.username, u.email " +
+                     "FROM tasks t " +
+                     "FORCE INDEX (idx_user_id) " +  // Force utilisation index
+                     "LEFT JOIN users u ON t.user_id = u.id " +
+                     "WHERE t.user_id = ? " +
+                     "ORDER BY t.created_at DESC " +
+                     "LIMIT 1000";  // Limite de sécurité
 
         List<Task> tasks = new ArrayList<>();
-        System.out.println("🔍 TaskDAO.findByUserId() called with userId: " + userId);
+        long startTime = System.currentTimeMillis();
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, userId);
+            pstmt.setFetchSize(100);  // ⚡ Fetch par batch de 100
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -114,7 +121,8 @@ public class TaskDAO {
                         System.err.println("❌ Failed to map task: " + e.getMessage());
                     }
                 }
-                System.out.println("📊 Total tasks loaded for user " + userId + ": " + tasks.size());
+                long duration = System.currentTimeMillis() - startTime;
+                System.out.println("⚡ Tasks loaded in " + duration + "ms for user " + userId + ": " + tasks.size());
             }
         } catch (SQLException e) {
             System.err.println("❌ SQL Error in findByUserId: " + e.getMessage());

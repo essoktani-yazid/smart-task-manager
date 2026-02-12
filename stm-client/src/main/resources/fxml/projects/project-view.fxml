@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox prefHeight="700.0" prefWidth="1000.0" spacing="10.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smarttask.client.view.controller.projects.ProjectViewController">
+    <children>
+        <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-background-color: #f4f4f4; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
+            <children>
+                <Button mnemonicParsing="false" onAction="#onBackToProjects" 
+                    style="-fx-background-color: #95a5a6; -fx-text-fill: white;" text="← Retour" />
+                <Label text="Gestion du Projet">
+                    <font>
+                        <Font name="System Bold" size="18.0" />
+                    </font>
+                </Label>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#onAddTask" style="-fx-background-color: #2ecc71; -fx-text-fill: white;" text="+ Nouvelle Tâche" />
+                <Button mnemonicParsing="false" onAction="#onEditTask" text="Modifier" />
+                <Button mnemonicParsing="false" onAction="#onDeleteTask" style="-fx-background-color: #e74c3c; -fx-text-fill: white;" text="Supprimer" />
+                <Separator orientation="VERTICAL" />
+                <Button mnemonicParsing="false" onAction="#onShareTask" text="Partager" />
+            </children>
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+            </padding>
+        </HBox>
+
+        <SplitPane dividerPositions="0.6" VBox.vgrow="ALWAYS">
+            <items>
+                <VBox spacing="5.0">
+                    <children>
+                        <Label text="Tâches Principales">
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                        </Label>
+                        <TableView fx:id="tasksTable" onMouseClicked="#onTaskClicked" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colTitle" prefWidth="200.0" text="Titre" />
+                                <TableColumn fx:id="colStatus" prefWidth="120.0" text="Statut" />
+                                <TableColumn fx:id="colPriority" prefWidth="100.0" text="Priorité" />
+                                <TableColumn fx:id="colDueDate" prefWidth="100.0" text="Échéance" />
+                                <TableColumn fx:id="colAssignee" prefWidth="120.0" text="Assigné à" />
+                                <TableColumn fx:id="colActions" prefWidth="50.0" text="..." />
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                            </columnResizePolicy>
+                        </TableView>
+                    </children>
+                    <padding>
+                        <Insets bottom="10.0" left="10.0" right="5.0" top="10.0" />
+                    </padding>
+                </VBox>
+
+                <TabPane tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                        <Tab text="Sous-tâches">
+                            <content>
+                                <VBox spacing="10.0">
+                                    <padding>
+                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                    <children>
+                                        <HBox spacing="5.0">
+                                            <children>
+                                                <Button fx:id="addSubtaskBtn" mnemonicParsing="false" onAction="#onAddSubtask" text="+ Sous-tâche" />
+                                                <Button mnemonicParsing="false" onAction="#onAddDependency" text="Lier Dépendance" />
+                                            </children>
+                                        </HBox>
+                                        <TableView fx:id="subTasksTable" onMouseClicked="#onSubtaskClicked" VBox.vgrow="ALWAYS">
+                                            <columns>
+                                                <TableColumn fx:id="subTitleCol" text="Titre" />
+                                                <TableColumn fx:id="subStatusCol" text="Statut" />
+                                                <TableColumn fx:id="subPriorityCol" text="Priorité" />
+                                                <TableColumn fx:id="subAssigneeCol" text="Assigné" />
+                                            </columns>
+                                            <columnResizePolicy>
+                                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                            </columnResizePolicy>
+                                        </TableView>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <Tab text="Détails &amp; Échanges">
+                            <content>
+                                <VBox spacing="10.0">
+                                    <padding>
+                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                    <children>
+                                        <Label text="Tags" />
+                                        <ListView fx:id="tagsList" prefHeight="100.0" />
+                                        <HBox spacing="5.0">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#onAddTag" text="+" />
+                                                <Button mnemonicParsing="false" onAction="#onRemoveTag" text="-" />
+                                            </children>
+                                        </HBox>
+                                        
+                                        <Separator />
+                                        
+                                        <Label text="Commentaires" />
+                                        <ListView fx:id="commentsList" VBox.vgrow="ALWAYS" />
+                                        <HBox spacing="5.0">
+                                            <children>
+                                                <TextField fx:id="commentField" promptText="Écrire un commentaire..." HBox.hgrow="ALWAYS" />
+                                                <Button mnemonicParsing="false" onAction="#onAddComment" text="Envoyer" />
+                                                <Button mnemonicParsing="false" onAction="#onAttachFileToComment" text="📎" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <Tab text="Équipes">
+                            <content>
+                                <VBox spacing="10.0">
+                                    <padding>
+                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                    </padding>
+                                    <children>
+                                        <HBox spacing="10.0" alignment="CENTER_LEFT">
+                                            <children>
+                                                <Label text="Équipes collaboratrices" styleClass="section-title" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Button mnemonicParsing="false" onAction="#onAddTeam" 
+                                                        styleClass="primary-action-button" text="+ Ajouter une équipe" />
+                                            </children>
+                                        </HBox>
+                                        
+                                        <TableView fx:id="teamsTable" VBox.vgrow="ALWAYS">
+                                            <columns>
+                                                <TableColumn fx:id="colTeamName" prefWidth="200.0" text="Nom de l'équipe" />
+                                                <TableColumn fx:id="colTeamDescription" prefWidth="300.0" text="Description" />
+                                            </columns>
+                                            <columnResizePolicy>
+                                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                            </columnResizePolicy>
+                                        </TableView>
+
+                                        <HBox alignment="CENTER_RIGHT">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#onRemoveTeam" 
+                                                        styleClass="danger-button" text="Retirer l'équipe" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
+                    </tabs>
+                </TabPane>
+            </items>
+        </SplitPane>
+
+        <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: #34495e;">
+            <padding>
+                <Insets bottom="5.0" left="15.0" right="15.0" top="5.0" />
+            </padding>
+            <children>
+                <Label text="Temps passé :" textFill="WHITE" />
+                <Label fx:id="timeTrackingLabel" text="0h 0m" textFill="#2ecc71">
+                    <font>
+                        <Font name="System Bold" size="13.0" />
+                    </font>
+                </Label>
+                <Button mnemonicParsing="false" onAction="#onStartTimeTracking" style="-fx-background-color: #27ae60; -fx-text-fill: white;" text="Démarrer" />
+                <Button mnemonicParsing="false" onAction="#onStopTimeTracking" style="-fx-background-color: #c0392b; -fx-text-fill: white;" text="Arrêter" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button mnemonicParsing="false" onAction="#onSetRecurrence" text="Récurrence" />
+            </children>
+        </HBox>
+    </children>
+</VBox>

@@ -1,9 +1,11 @@
 package com.smarttask.server;
 
 import com.smarttask.server.config.DatabaseConnection;
+import com.smarttask.server.socket.NotificationWebSocketServer;
 import com.smarttask.server.handler.AuthHandler;
 import com.smarttask.server.handler.TaskHandler;
 import com.smarttask.server.handler.TeamHandler;
+
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -16,8 +18,8 @@ import java.sql.SQLException;
  * Launches the server on port 8080 and configures routes.
  */
 public class MainServer {
-    // private static final int PORT = 8090;
     private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+    private static final int WS_PORT = Integer.parseInt(System.getenv().getOrDefault("WS_PORT", "8887"));
 
     public static void main(String[] args) {
         try {
@@ -53,6 +55,9 @@ public class MainServer {
             // Start server
             server.setExecutor(null); // Uses default thread pool
             server.start();
+
+            NotificationWebSocketServer wsServer = new NotificationWebSocketServer(WS_PORT);
+            wsServer.start();
 
             System.out.println("=== SmartTaskManager Server ===");
             System.out.println("Server started on port " + PORT);

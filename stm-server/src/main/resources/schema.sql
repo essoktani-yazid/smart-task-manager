@@ -39,8 +39,17 @@ CREATE TABLE tasks (
     project_id VARCHAR(36),
     recurrence_type ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'NONE') DEFAULT 'NONE',
     
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
+    -- ⚡ INDEXES POUR PERFORMANCE
+    INDEX idx_user_id (user_id),
+    INDEX idx_status (status),
+    INDEX idx_priority (priority),
+    INDEX idx_due_date (due_date),
+    INDEX idx_created_at (created_at),
+    INDEX idx_project_id (project_id),
+    INDEX idx_user_status (user_id, status),
+    INDEX idx_user_due_date (user_id, due_date)
 );
 
 -- Table sub_tasks
