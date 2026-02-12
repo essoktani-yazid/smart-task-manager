@@ -2,6 +2,8 @@ package com.smarttask.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,6 +51,20 @@ public class CalendarEvent {
         END_OF_MONTH
     }
 
+    public enum EventVisibility {
+        PUBLIC("Public - Everyone can see"),      // Everyone in system can see
+        PRIVATE("Private - Only me"),             // Only creator can see
+        SHARED("Shared - Selected people");       // Only shared users can see
+
+        private final String displayName;
+
+        EventVisibility(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() { return displayName; }
+    }
+
     // Core properties
     private String id;
     private String title;
@@ -72,6 +88,18 @@ public class CalendarEvent {
     private LocalDate createdAt;
     private LocalDate lastModified;
 
+    // Visibility & Sharing
+    private EventVisibility visibility;  // PUBLIC, PRIVATE, SHARED
+    private List<String> sharedWithUserIds;  // List of user IDs who can see this event
+    private List<String> sharedWithEmails;   // List of external emails
+    private String creatorUserId;  // Who created the event
+    private boolean hasMeetingLink;
+    private String meetingLink;  // Google Meet, Zoom, etc.
+    private String meetingPlatform;  // "google_meet", "zoom", "teams"
+    private String meetingPassword;
+
+    private String location;
+
     // Constructors
     public CalendarEvent() {
         this.id = UUID.randomUUID().toString();
@@ -83,6 +111,10 @@ public class CalendarEvent {
         this.lastModified = LocalDate.now();
         this.startTime = LocalTime.of(9, 0);
         this.endTime = LocalTime.of(10, 0);
+        this.visibility = EventVisibility.PUBLIC;
+        this.sharedWithUserIds = new ArrayList<>();
+        this.sharedWithEmails = new ArrayList<>();
+        this.hasMeetingLink = false;
     }
 
     public CalendarEvent(String title, Priority priority, String description) {
@@ -144,6 +176,44 @@ public class CalendarEvent {
             default:
                 return false;
         }
+    }
+
+    public void shareWithUser(String userId) {
+        if (!sharedWithUserIds.contains(userId)) {
+            sharedWithUserIds.add(userId);
+            if (visibility == EventVisibility.PRIVATE) {
+                visibility = EventVisibility.SHARED;
+            }
+        }
+    }
+
+    public void shareWithEmail(String email) {
+        if (!sharedWithEmails.contains(email)) {
+            sharedWithEmails.add(email);
+            if (visibility == EventVisibility.PRIVATE) {
+                visibility = EventVisibility.SHARED;
+            }
+        }
+    }
+
+    public void removeSharedUser(String userId) {
+        sharedWithUserIds.remove(userId);
+        if (sharedWithUserIds.isEmpty() && sharedWithEmails.isEmpty()) {
+            visibility = EventVisibility.PRIVATE;
+        }
+    }
+
+    public boolean canUserView(String userId) {
+        if (visibility == EventVisibility.PUBLIC) {
+            return true;
+        }
+        if (visibility == EventVisibility.PRIVATE) {
+            return userId.equals(creatorUserId);
+        }
+        if (visibility == EventVisibility.SHARED) {
+            return userId.equals(creatorUserId) || sharedWithUserIds.contains(userId);
+        }
+        return false;
     }
 
     public String getColor() {
@@ -236,6 +306,57 @@ public class CalendarEvent {
 
     public LocalDate getLastModified() { return lastModified; }
     public void setLastModified(LocalDate lastModified) { this.lastModified = lastModified; }
+
+    public EventVisibility getVisibility() { return visibility; }
+    public void setVisibility(EventVisibility visibility) {
+        this.visibility = visibility;
+        this.lastModified = LocalDate.now();
+    }
+
+    public List<String> getSharedWithUserIds() { return new ArrayList<>(sharedWithUserIds); }
+    public void setSharedWithUserIds(List<String> userIds) {
+        this.sharedWithUserIds = new ArrayList<>(userIds);
+        this.lastModified = LocalDate.now();
+    }
+
+    public List<String> getSharedWithEmails() { return new ArrayList<>(sharedWithEmails); }
+    public void setSharedWithEmails(List<String> emails) {
+        this.sharedWithEmails = new ArrayList<>(emails);
+        this.lastModified = LocalDate.now();
+    }
+
+    public String getCreatorUserId() { return creatorUserId; }
+    public void setCreatorUserId(String creatorUserId) {
+        this.creatorUserId = creatorUserId;
+    }
+
+    public boolean hasMeetingLink() { return hasMeetingLink; }
+    public void setHasMeetingLink(boolean hasMeetingLink) {
+        this.hasMeetingLink = hasMeetingLink;
+    }
+
+    public String getMeetingLink() { return meetingLink; }
+    public void setMeetingLink(String meetingLink) {
+        this.meetingLink = meetingLink;
+        this.hasMeetingLink = (meetingLink != null && !meetingLink.isEmpty());
+        this.lastModified = LocalDate.now();
+    }
+
+    public String getMeetingPlatform() { return meetingPlatform; }
+    public void setMeetingPlatform(String platform) {
+        this.meetingPlatform = platform;
+    }
+
+    public String getMeetingPassword() { return meetingPassword; }
+    public void setMeetingPassword(String password) {
+        this.meetingPassword = password;
+    }
+
+    public String getLocation() { return location; }
+    public void setLocation(String location) {
+        this.location = location;
+        this.lastModified = LocalDate.now();
+    }
 
     @Override
     public String toString() {

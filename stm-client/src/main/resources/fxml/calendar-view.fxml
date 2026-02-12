@@ -11,6 +11,7 @@
     ╔══════════════════════════════════════════════════════════════════════════════╗
     ║                    SMARTTASK CALENDAR - ASANA-INSPIRED DESIGN                 ║
     ║                    Modern • Professional • Beautiful                          ║
+    ║                    ✨ NOW WITH KANBAN VIEW ✨                                  ║
     ╚══════════════════════════════════════════════════════════════════════════════╝
 -->
 
@@ -27,16 +28,11 @@
     <!-- ═══════════════════════════════════════════════════════════════════════════
          HEADER - Clean, minimal top bar inspired by Asana
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <!-- ═══════════════════════════════════════════════════════════════════════════════════════════════
-     OPTION 1: SINGLE LINE COMPACT HEADER
-     Replace your entire <top> section in calendar.fxml with this
-     ═══════════════════════════════════════════════════════════════════════════════════════════════ -->
-
     <top>
         <VBox spacing="0" styleClass="header-wrapper">
 
             <!-- ═══════════════════════════════════════════════════════════════════════════════════════
-                 ROW 1: Logo | Today + Date | View Toggle
+                 ROW 1: Logo | Today + Date | View Toggle (with Kanban!)
                  ═══════════════════════════════════════════════════════════════════════════════════════ -->
             <HBox alignment="CENTER_LEFT" spacing="0" styleClass="main-header-row">
                 <padding>
@@ -63,12 +59,14 @@
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <!-- RIGHT: View Toggle -->
+                <!-- RIGHT: View Toggle - ✨ NOW WITH KANBAN ✨ -->
                 <HBox alignment="CENTER" spacing="0" styleClass="view-toggle-group">
                     <ToggleButton fx:id="dayViewButton" text="Day" toggleGroup="$viewToggleGroup" styleClass="view-btn, first"/>
                     <ToggleButton fx:id="weekViewButton" text="Week" toggleGroup="$viewToggleGroup" styleClass="view-btn"/>
                     <ToggleButton fx:id="monthViewButton" text="Month" toggleGroup="$viewToggleGroup" styleClass="view-btn"/>
-                    <ToggleButton fx:id="yearViewButton" text="Year" toggleGroup="$viewToggleGroup" styleClass="view-btn, last"/>
+                    <ToggleButton fx:id="yearViewButton" text="Year" toggleGroup="$viewToggleGroup" styleClass="view-btn"/>
+                    <!-- ✨ KANBAN VIEW BUTTON ✨ -->
+                    <ToggleButton fx:id="kanbanViewButton" text="📋 Kanban" toggleGroup="$viewToggleGroup" styleClass="view-btn, last, kanban-btn"/>
                 </HBox>
             </HBox>
 
@@ -93,8 +91,8 @@
                     <MenuButton fx:id="typeFilterBtn" styleClass="filter-menu-btn">
                         <graphic>
                             <HBox alignment="CENTER" spacing="5">
-                                <Label  styleClass="filter-btn-text"/>
-                                <Label  styleClass="filter-btn-arrow"/>
+                                <Label styleClass="filter-btn-text"/>
+                                <Label styleClass="filter-btn-arrow"/>
                             </HBox>
                         </graphic>
                         <items>
@@ -107,8 +105,8 @@
                     <MenuButton fx:id="priorityFilterBtn" styleClass="filter-menu-btn">
                         <graphic>
                             <HBox alignment="CENTER" spacing="5">
-                                <Label  styleClass="filter-btn-text"/>
-                                <Label  styleClass="filter-btn-arrow"/>
+                                <Label styleClass="filter-btn-text"/>
+                                <Label styleClass="filter-btn-arrow"/>
                             </HBox>
                         </graphic>
                         <items>
@@ -151,12 +149,12 @@
                     <MenuButton fx:id="statusFilterBtn" styleClass="filter-menu-btn">
                         <graphic>
                             <HBox alignment="CENTER" spacing="5">
-                                <Label  styleClass="filter-btn-text"/>
-                                <Label  styleClass="filter-btn-arrow"/>
+                                <Label styleClass="filter-btn-text"/>
+                                <Label styleClass="filter-btn-arrow"/>
                             </HBox>
                         </graphic>
                         <items>
-                            <CheckMenuItem fx:id="showCompleted" text=" Show completed" selected="true"/>
+                            <CheckMenuItem fx:id="showCompleted" text=" Show completed" selected="false"/>
                         </items>
                     </MenuButton>
                 </HBox>
@@ -205,10 +203,6 @@
     <!-- ═══════════════════════════════════════════════════════════════════════════
          RIGHT SIDEBAR - Upcoming items & Details
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <!-- ═══════════════════════════════════════════════════════════════════════════
-     REDESIGNED RIGHT SIDEBAR - Full Height, Streamlined Design
-     Replace the <right> section in your calendar.fxml with this
-     ═══════════════════════════════════════════════════════════════════════════ -->
     <right>
         <VBox prefWidth="360" styleClass="sidebar-redesigned" VBox.vgrow="ALWAYS">
 
@@ -222,8 +216,6 @@
                     <Label text="Next 30 days" styleClass="sidebar-subtitle-new"/>
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
-<!--                &lt;!&ndash; Optional: Filter/Sort button &ndash;&gt;-->
-<!--                <Button text="⋮" styleClass="sidebar-menu-btn"/>-->
             </HBox>
 
             <!-- Quick Stats Bar -->
@@ -263,14 +255,6 @@
                 </VBox>
             </ScrollPane>
 
-            <!-- Empty State (shown when no items) - Optional -->
-            <!--
-            <VBox alignment="CENTER" spacing="12" styleClass="empty-state" VBox.vgrow="ALWAYS">
-                <Label text="📭" styleClass="empty-icon"/>
-                <Label text="No upcoming items" styleClass="empty-title"/>
-                <Label text="Tasks and events will appear here" styleClass="empty-subtitle"/>
-            </VBox>
-            -->
             <!-- Divider before Google Calendar section -->
             <HBox styleClass="sidebar-divider">
                 <padding>
@@ -284,11 +268,9 @@
                 <padding>
                     <Insets top="8" right="16" bottom="16" left="16"/>
                 </padding>
-                <!-- The GoogleCalendarSettingsPanel will be added here programmatically -->
             </VBox>
 
         </VBox>
     </right>
-
 
 </BorderPane>

@@ -14,7 +14,7 @@ public class AudioCaptureService {
 
     // --- ⚡ PARAMÈTRES DÉTECTION SILENCE ---
     private static final double SILENCE_THRESHOLD = 0.005; // Seuil réduit pour plus de sensibilité
-    private static final long SILENCE_DURATION_MS = 2000;  // 2s de silence après parole → fin de phrase
+    private static final long SILENCE_DURATION_MS = 1500;  // 1.5s de silence après parole → fin de phrase
     private static final long MIN_SPEECH_DURATION_MS = 300; // Durée minimum de parole
     private static final long MAX_LISTENING_TIMEOUT_MS = 10000; // 10s max sans parole → auto-récupération
     

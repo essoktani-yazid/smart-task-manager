@@ -1,11 +1,9 @@
 .create-team-dialog {
-    -fx-background-color: linear-gradient(
-        to bottom right,
-        rgba(255,255,255,0.75),
-        rgba(245,247,255,0.9)
-    );
+    -fx-background-color: linear-gradient(to bottom right,
+            rgba(255, 255, 255, 0.75),
+            rgba(245, 247, 255, 0.9));
     -fx-background-radius: 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 25, 0.3, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 25, 0.3, 0, 8);
 }
 
 .dialog-title {
@@ -26,13 +24,13 @@
 .dialog-textarea {
     -fx-background-radius: 10;
     -fx-border-radius: 10;
-    -fx-border-color: rgba(120,130,255,0.3);
-    -fx-background-color: rgba(255,255,255,0.9);
+    -fx-border-color: rgba(120, 130, 255, 0.3);
+    -fx-background-color: rgba(255, 255, 255, 0.9);
     -fx-padding: 10;
 }
 
 .dialog-textarea {
-    -fx-control-inner-background: rgba(255,255,255,0.9);
+    -fx-control-inner-background: rgba(255, 255, 255, 0.9);
 }
 
 .dialog-color-picker {
@@ -50,9 +48,54 @@
 .dialog-button-secondary {
     -fx-background-radius: 12;
     -fx-background-color: transparent;
-    -fx-border-color: rgba(120,130,255,0.4);
+    -fx-border-color: rgba(120, 130, 255, 0.4);
     -fx-border-radius: 12;
     -fx-text-fill: #4A4F77;
     -fx-padding: 8 18;
 }
 
+/* Member Selection */
+.dialog-combo {
+    -fx-background-radius: 10;
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-color: rgba(120, 130, 255, 0.3);
+    -fx-border-radius: 10;
+}
+
+.dialog-button-add {
+    -fx-background-color: #6a7cff;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 6 14;
+    -fx-font-weight: bold;
+}
+
+.selected-members-pane {
+    -fx-padding: 8 0 0 0;
+}
+
+.member-chip-tag {
+    -fx-background-color: rgba(106, 124, 255, 0.12);
+    -fx-background-radius: 14;
+    -fx-padding: 4 10;
+    -fx-border-color: rgba(106, 124, 255, 0.2);
+    -fx-border-radius: 14;
+}
+
+.member-chip-tag .label {
+    -fx-text-fill: #5a6cff;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.chip-remove-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ff6a6a;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 0 4;
+}
+
+.chip-remove-btn:hover {
+    -fx-text-fill: #ff4d4d;
+}
