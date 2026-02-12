@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 
 public class TeamsController {
 
-	@FXML
-	private FlowPane teamsFlow;
+    @FXML
+    private FlowPane teamsFlow;
 
 	@FXML
 	private ScrollPane cardsScroll;
@@ -268,8 +268,7 @@ public class TeamsController {
 			dialogStage.initModality(Modality.APPLICATION_MODAL);
 			dialogStage.setTitle(team == null ? "Create team" : "Edit team");
 
-			Scene scene = new Scene(root);
-			dialogStage.setScene(scene);
+            Parent root = loader.load();
 
 			CreateTeamDialogController controller = loader.getController();
 			if (controller != null) {
@@ -280,7 +279,8 @@ public class TeamsController {
 				controller.setOnTeamCreated(this::loadTeams);
 			}
 
-			dialogStage.showAndWait();
+            Scene scene = new Scene(root);
+            dialogStage.setScene(scene);
 
 		} catch (Exception e) {
 			e.printStackTrace();

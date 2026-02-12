@@ -2,9 +2,19 @@ package com.smarttask.client.service;
 
 import com.google.gson.Gson;
 import com.smarttask.client.util.GsonUtils;
+import com.smarttask.client.config.AppConfig;
 import com.google.gson.reflect.TypeToken;
 import com.smarttask.model.Project;
-import com.smarttask.client.config.AppConfig;
+import com.smarttask.model.Team;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,7 +25,9 @@ import java.util.List;
 import java.util.Collections;
 
 public class ProjectService {
+
     private String baseUrl = AppConfig.API_URL + "/projects";
+
     private final Gson gson = GsonUtils.getGson();
     // ⚡ OPTIMISÉ: HttpClient réutilisable avec HTTP/2
     private final HttpClient client;
@@ -129,5 +141,47 @@ public class ProjectService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public boolean addTeamToProject(String projectId, String teamId) {
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        // Format typique REST: POST /api/projects/{id}/teams/{teamId}
+        HttpPost request = new HttpPost(baseUrl + "/" + projectId + "/teams/" + teamId);
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            return response.getStatusLine().getStatusCode() == 200;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
+    public boolean removeTeamFromProject(String projectId, String teamId) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpDelete request = new HttpDelete(baseUrl + "/" + projectId + "/teams/" + teamId);
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                return response.getStatusLine().getStatusCode() == 200;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Team> getTeamsByProject(String projectId) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(baseUrl + "/" + projectId + "/teams");
+            request.setHeader("Content-Type", "application/json");
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    Type listType = new TypeToken<List<Team>>(){}.getType();
+                    return gson.fromJson(body, listType);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

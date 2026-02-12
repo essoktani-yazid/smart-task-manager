@@ -3,6 +3,7 @@ package com.smarttask.server.dao;
 import com.smarttask.model.Notification;
 import com.smarttask.model.User;
 import com.smarttask.server.config.DatabaseConnection;
+import com.smarttask.server.socket.NotificationWebSocketServer;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -105,6 +106,28 @@ public class NotificationDAO {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    public void createAndSend(String userId, String type, String title, String message) {
+        Notification notif = new Notification();
+        User recipient = new User();
+        recipient.setId(userId);
+
+        notif.setUser(recipient);
+        notif.setType(type);
+        notif.setTitle(title);
+        notif.setMessage(message);
+        notif.setIsRead(false);
+
+        this.saveAndNotify(notif); 
+    }
+
+    private String saveAndNotify(Notification notif) {
+        String id = save(notif);
+
+        NotificationWebSocketServer.sendToUser(notif.getUser().getId(), notif);
+        
+        return id;
     }
 
     private Notification map(ResultSet rs) throws SQLException {

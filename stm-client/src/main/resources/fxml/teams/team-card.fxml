@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
@@ -29,13 +30,11 @@
         </VBox>
     </HBox>
 
-    <!-- Meta Info -->
     <HBox alignment="CENTER_LEFT" styleClass="meta-container">
         <StackPane styleClass="member-chip">
             <Label fx:id="memberCountLabel" text="0 members" styleClass="member-count-label"/>
         </StackPane>
         <Region HBox.hgrow="ALWAYS"/>
-        <!-- Optional: Hover indicator or button could go here -->
     </HBox>
 
 </VBox>

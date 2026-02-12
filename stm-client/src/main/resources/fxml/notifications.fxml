@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.smarttask.client.view.controller.NotificationsController"
+      style="-fx-background-color: #F8FAFC; -fx-background-radius: 20;">
+    
+    <padding>
+        <Insets top="30" right="30" bottom="30" left="30"/>
+    </padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="20">
+        <Label text="Mes Notifications" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button text="Tout marquer comme lu" onAction="#handleMarkAllAsRead" 
+                style="-fx-background-color: transparent; -fx-text-fill: #6366F1; -fx-cursor: hand; -fx-font-weight: bold;"/>
+    </HBox>
+
+    <ListView fx:id="notificationsListView" VBox.vgrow="ALWAYS" 
+              style="-fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0;"/>
+</VBox>

@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Arrays;
 
 public class CommentAttachmentService {
+
     private String baseUrl = AppConfig.API_URL + "/comment-attachments";
+
     private final HttpClient client;
 
     public CommentAttachmentService() {

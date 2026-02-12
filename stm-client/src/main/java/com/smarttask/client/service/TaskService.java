@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class TaskService {
 
-    // URL par défaut
+
     private String baseUrl = AppConfig.API_URL + "/tasks";
 
     private final HttpClient client;

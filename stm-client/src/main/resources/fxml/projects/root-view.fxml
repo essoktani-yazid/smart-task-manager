@@ -3,60 +3,31 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21"
+<BorderPane xmlns="http://javafx.com/javafx/21" 
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.smarttask.client.view.controller.projects.ProjectsController"
+            fx:controller="com.smarttask.client.view.controller.projects.ProjectsRootController"
             styleClass="projects-root"
-			stylesheets="@../../css/projects/projects.css">
-
-    <fx:define>
-        <ToggleGroup fx:id="viewToggleGroup"/>
-    </fx:define>
-
-    <!-- HEADER -->
-    <top>
+            stylesheets="@../../css/projects/projects.css"> <top>
         <VBox styleClass="header-container">
-            <HBox alignment="CENTER_LEFT" spacing="15" styleClass="toolbar">
-                <padding>
-                    <Insets topRightBottomLeft="15"/>
-                </padding>
-
-                <Label text="Teams" styleClass="app-title">
-                    <font>
-                        <Font name="System Bold" size="24"/>
-                    </font>
-                </Label>
-
-                <Region HBox.hgrow="ALWAYS"/>
-
-                <!-- Create project -->
-                <Button text="+ Create project"
-                        onAction="#handleCreateProject"
-                        styleClass="primary-action-button"/>
+            <padding><Insets top="25" right="40" bottom="25" left="40"/></padding>
+            <HBox alignment="CENTER_LEFT" spacing="20">
+                <VBox spacing="5">
+                    <Label text="Mes Projets" styleClass="app-title" />
+                    <Label text="Sélectionnez un projet pour voir les tâches" style="-fx-text-fill: -app-text-muted;" />
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="+ Nouveau Projet" onAction="#handleCreateProject" 
+                        styleClass="primary-action-button" />
             </HBox>
-
-            <Separator/>
         </VBox>
     </top>
 
-    <!-- CONTENT -->
     <center>
-        <StackPane styleClass="projects-container">
-            <padding>
-                <Insets topRightBottomLeft="25"/>
-            </padding>
-
-            <!-- Cards container -->
-            <FlowPane fx:id="projectsFlow"
-                      hgap="20"
-                      vgap="20"
-                      prefWrapLength="900"
-                      alignment="TOP_CENTER"/>
-        </StackPane>
+        <ScrollPane fitToWidth="true" styleClass="main-content-scroll">
+            <content>
+                <VBox fx:id="projectsContainer" spacing="15" styleClass="projects-grid-container" />
+            </content>
+        </ScrollPane>
     </center>
-
 </BorderPane>
-
-

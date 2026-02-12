@@ -19,7 +19,9 @@ import java.nio.charset.StandardCharsets;
  * Communique avec le serveur pour les opérations de login et register.
  */
 public class AuthService {
+
     private static final String BASE_URL = AppConfig.API_URL + "/auth";
+
     private final Gson gson = GsonUtils.getGson();
 
     /**

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.smarttask.client.view.controller.teams.TeamMembersDialogController"
+      spacing="16"
+      styleClass="create-team-dialog"
+      stylesheets="@../../css/teams/create-team-dialog.css">
+
+    <padding>
+        <Insets topRightBottomLeft="20"/>
+    </padding>
+
+    <Label text="Team Members" styleClass="dialog-title"/>
+
+    <TableView fx:id="membersTable" prefHeight="300">
+        <columns>
+            <TableColumn fx:id="colName" text="Name" prefWidth="150"/>
+            <TableColumn fx:id="colEmail" text="Email" prefWidth="180"/>
+            <TableColumn fx:id="colAction" text="Action" prefWidth="80"/>
+        </columns>
+    </TableView>
+
+	<HBox spacing="10" alignment="CENTER_LEFT">
+		<TextField fx:id="usernameField"
+				   promptText="Enter username"
+				   prefWidth="200"/>
+
+		<Button text="Add Member"
+				onAction="#handleAddMember"
+				styleClass="dialog-button-primary"/>
+	</HBox>
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="Close" onAction="#handleClose" styleClass="dialog-button-secondary"/>
+    </HBox>
+</VBox>
+
