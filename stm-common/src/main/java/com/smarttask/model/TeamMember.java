@@ -13,6 +13,7 @@ public class TeamMember {
     private String userId;
     private User user;
 	private Team team;
+    private String role;
 	private LocalDateTime joinedAt;
 
     public TeamMember() {
@@ -70,6 +71,14 @@ public class TeamMember {
 
     public void setTeam(Team newTeam) {
         this.team = newTeam;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String newRole) {
+        this.role = newRole;
     }
 
     public LocalDateTime getJoinedAt() {

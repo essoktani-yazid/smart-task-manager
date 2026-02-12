@@ -228,8 +228,6 @@ public class MainLayoutController {
                 ((DashboardController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof ProfileController && currentUser != null) {
                 ((ProfileController) controller).setCurrentUser(currentUser);
-            } else if (controller instanceof TeamsController && currentUser != null) {
-                ((TeamsController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof ProjectViewController && currentUser != null) {
                 ((ProjectViewController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof NotificationsController && currentUser != null) {
@@ -282,9 +280,6 @@ public class MainLayoutController {
                 pfc.setCurrentUser(currentUser);
             } else if (controller instanceof DashboardController) {
                 DashboardController pvc = (DashboardController) controller;
-                pvc.setCurrentUser(currentUser);
-            } else if (controller instanceof TeamsController) {
-                TeamsController pvc = (TeamsController) controller;
                 pvc.setCurrentUser(currentUser);
             } else if (currentController instanceof NotificationsController && currentUser != null) {
                 ((NotificationsController) currentController).setCurrentUser(currentUser);

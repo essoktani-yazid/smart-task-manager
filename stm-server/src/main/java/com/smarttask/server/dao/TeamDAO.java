@@ -187,7 +187,7 @@ public class TeamDAO {
         }
     }
 
-    public List<TeamMember> findMembers(String teamId) {
+    public void updateMemberRole(String teamId, String userId, String role) {
         String sql = """
                     UPDATE team_members
                     SET role = ?
@@ -207,7 +207,18 @@ public class TeamDAO {
     }
 
     public List<TeamMember> findMembers(String teamId) {
-        String sql = "SELECT * FROM team_members WHERE team_id = ?";
+        String sql = """
+            SELECT 
+                tm.team_id AS tm_team_id, 
+                tm.user_id AS tm_user_id, 
+                joined_at,
+                u.username, u.email,
+                t.name AS team_name, t.description AS team_desc, t.color AS team_color, t.owner_id AS team_owner, t.created_at AS team_created_at
+            FROM team_members tm
+            JOIN users u ON tm.user_id = u.id
+            JOIN teams t ON tm.team_id = t.id
+            WHERE tm.team_id = ?
+        """;
         List<TeamMember> members = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getConnection();
