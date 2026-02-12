@@ -33,7 +33,6 @@ public class TeamMember {
             try {
                 this.joinedAt = LocalDateTime.parse(joinedAt);
             } catch (Exception e) {
-                // Fallback si le format est différent ou invalide
                 this.joinedAt = LocalDateTime.now();
             }
         } else {

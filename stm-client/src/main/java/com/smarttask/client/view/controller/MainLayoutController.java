@@ -3,7 +3,10 @@ package com.smarttask.client.view.controller;
 import com.smarttask.client.view.controller.teams.TeamsController;
 import com.smarttask.model.Project;
 import com.smarttask.model.User;
+import com.google.gson.JsonObject;
 import com.smarttask.client.view.controller.projects.ProjectViewController;
+
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,10 +15,36 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.animation.TranslateTransition;
+import javafx.util.Duration;
+import javafx.scene.shape.Circle;
+import javafx.scene.paint.Color;
 
 import java.io.IOException;
+import java.net.http.WebSocket;
+import java.util.concurrent.CompletionStage;
+
 
 public class MainLayoutController {
+    private final com.google.gson.Gson gson = com.smarttask.client.util.GsonUtils.getGson();
+    private class GlobalWebSocketListener implements WebSocket.Listener {
+        @Override
+        public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+            String message = data.toString();
+            JsonObject json = gson.fromJson(message, JsonObject.class);
+
+            String type = json.get("type").getAsString();
+            
+            Platform.runLater(() -> {
+                if ("NOTIFICATION".equals(type)) {
+                    handleNewNotification(json.get("payload").getAsJsonObject());
+                }
+            });
+            
+            return WebSocket.Listener.super.onText(webSocket, data, last);
+        }
+    }
+
     @FXML private StackPane contentPane;
     @FXML private Label userLabel;
     @FXML private Label userEmailLabel;
@@ -29,10 +58,48 @@ public class MainLayoutController {
     @FXML private Button analyticsButton;
     @FXML private Button logoutButton;
     @FXML private Button profileButton;
+    @FXML private Button notificationButton;
+
+    @FXML private Label notificationBadge;
 
     private User currentUser;
     private Button currentActiveButton;
     private static MainLayoutController instance;
+    private Object currentController;
+    private WebSocket webSocket;
+
+    private int notificationCount = 0;
+
+    private void handleNewNotification(JsonObject payload) {
+        Platform.runLater(() -> {
+            notificationCount++;
+            notificationBadge.setText(String.valueOf(notificationCount));
+            notificationBadge.setVisible(true);
+            shakeElement(notificationButton);
+            shakeElement(notificationBadge);
+
+            if (currentController instanceof NotificationsController) {
+                ((NotificationsController) currentController).refresh();
+
+                notificationCount = 0;
+                notificationBadge.setVisible(false);
+            }
+        });
+    }
+
+    private void shakeElement(javafx.scene.Node node) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(50), node);
+        tt.setFromX(0);
+        tt.setByX(4);
+        tt.setCycleCount(6);
+        tt.setAutoReverse(true);
+
+        if (!notificationButton.getStyleClass().contains("has-notification")) {
+            notificationButton.getStyleClass().add("has-notification");
+        }
+
+        tt.play();
+    }
 
     public static MainLayoutController getInstance() {
         return instance;
@@ -41,7 +108,7 @@ public class MainLayoutController {
     @FXML
     private void initialize() {
         instance = this;
-        // Définir le bouton par défaut
+
         setActiveButton(tasksButton);
         showTasks();
     }
@@ -54,6 +121,8 @@ public class MainLayoutController {
                           : user.getUsername();
             userLabel.setText(name);
             userEmailLabel.setText(user.getEmail());
+
+            connectWebSocket();
         }
     }
 
@@ -88,6 +157,15 @@ public class MainLayoutController {
     }
 
     @FXML
+    private void showNotifications() {
+        notificationCount = 0;
+        notificationButton.getStyleClass().remove("has-notification");
+        notificationBadge.setVisible(false);
+
+        if (loadView("/fxml/notifications.fxml")) setActiveButton(notificationButton);
+    }
+
+    @FXML
     private void handleLogout() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
@@ -113,6 +191,8 @@ public class MainLayoutController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent view = loader.load();
 
+            this.currentController = loader.getController();
+
             // Injection de l'utilisateur dans les contrôleurs enfants
             Object controller = loader.getController();
             if (controller instanceof DashboardController && currentUser != null) {
@@ -123,6 +203,8 @@ public class MainLayoutController {
                 ((TeamsController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof ProjectViewController && currentUser != null) {
                 ((ProjectViewController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof NotificationsController && currentUser != null) {
+                ((NotificationsController) controller).setCurrentUser(currentUser);
             }
 
             contentPane.getChildren().clear();
@@ -157,6 +239,8 @@ public class MainLayoutController {
             
             Object controller = loader.getController();
 
+            this.currentController = loader.getController();
+
             if (controller instanceof ProjectViewController) {
                 ProjectViewController pvc = (ProjectViewController) controller;
                 pvc.setCurrentUser(currentUser);
@@ -170,11 +254,43 @@ public class MainLayoutController {
             } else if (controller instanceof TeamsController) {
                 TeamsController pvc = (TeamsController) controller;
                 pvc.setCurrentUser(currentUser);
+            } else if (currentController instanceof NotificationsController && currentUser != null) {
+                ((NotificationsController) currentController).setCurrentUser(currentUser);
             }
 
             contentPane.getChildren().setAll(view);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void connectWebSocket() {
+        java.net.http.HttpClient.newHttpClient()
+        .newWebSocketBuilder()
+        .buildAsync(
+            java.net.URI.create("ws://localhost:8887"),
+            new WebSocket.Listener() {
+
+                @Override
+                public void onOpen(WebSocket webSocket) {
+                    MainLayoutController.this.webSocket = webSocket;
+
+                    System.out.println("WebSocket connected.");
+
+                    if (currentUser != null) {
+                        String authMessage = "AUTH:" + currentUser.getId();
+                        webSocket.sendText(authMessage, true);
+                        System.out.println("AUTH message sent: " + authMessage);
+                    }
+
+                    WebSocket.Listener.super.onOpen(webSocket);
+                }
+
+                @Override
+                public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+                    return new GlobalWebSocketListener().onText(webSocket, data, last);
+                }
+            }
+        );
     }
 }

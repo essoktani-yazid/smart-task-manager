@@ -76,7 +76,7 @@ public class TeamDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapTeam(rs));
+                    return Optional.of(mapTeam(rs, "id"));
                 }
             }
         } catch (SQLException e) {
@@ -105,7 +105,7 @@ public class TeamDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    teams.add(mapTeam(rs));
+                    teams.add(mapTeam(rs, "id"));
                 }
             }
         } catch (SQLException e) {
@@ -171,6 +171,16 @@ public class TeamDAO {
             stmt.setString(2, userId);
 
             stmt.executeUpdate();
+
+            String teamName = getTeamNameById(teamId); 
+        
+            NotificationDAO notifDAO = new NotificationDAO();
+            notifDAO.createAndSend(
+                userId, 
+                "TASK_ASSIGNED",
+                "Nouvelle Équipe !", 
+                "Vous avez été ajouté à l'équipe : " + teamName
+            );
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Error adding member", e);
@@ -193,9 +203,12 @@ public class TeamDAO {
 
     public List<TeamMember> findMembers(String teamId) {
         String sql = """
-            SELECT tm.*, 
-                u.username, u.full_name, u.email,
-                t.name AS team_name, t.description AS team_desc, t.color AS team_color, t.owner_id AS team_owner
+            SELECT 
+                tm.team_id AS tm_team_id, 
+                tm.user_id AS tm_user_id, 
+                joined_at,
+                u.username, u.email,
+                t.name AS team_name, t.description AS team_desc, t.color AS team_color, t.owner_id AS team_owner, t.created_at AS team_created_at
             FROM team_members tm
             JOIN users u ON tm.user_id = u.id
             JOIN teams t ON tm.team_id = t.id
@@ -222,21 +235,32 @@ public class TeamDAO {
 
     private TeamMember mapUserAndTeam(ResultSet rs) throws SQLException {
         TeamMember member = new TeamMember();
-        member.setTeamId(rs.getString("team_id"));
-        member.setUserId(rs.getString("user_id"));
+        member.setTeamId(rs.getString("tm_team_id"));
+        member.setUserId(rs.getString("tm_user_id"));
         member.setJoinedAt(rs.getTimestamp("joined_at").toLocalDateTime());
 
-        User user = mapUser(rs);
+        User user = new User();
+        user.setId(rs.getString("tm_user_id"));
+        user.setUsername(rs.getString("username"));
+        user.setEmail(rs.getString("email"));
+        
+        Team team = new Team();
+        team.setId(rs.getString("tm_team_id"));
+        team.setName(rs.getString("team_name"));
+        team.setDescription(rs.getString("team_desc"));
+        team.setColor(rs.getString("team_color"));
+        team.setOwnerId(rs.getString("team_owner"));
+        team.setCreatedAt(rs.getTimestamp("team_created_at").toLocalDateTime());
+    
         member.setUser(user);
-
-        Team team = mapTeam(rs);
         member.setTeam(team);
 
         return member;
     }
 
-    private Team mapTeam(ResultSet rs) throws SQLException {
+    private Team mapTeam(ResultSet rs, String idColumn) throws SQLException {
         Team team = new Team();
+
         team.setId(rs.getString("id"));
         team.setName(rs.getString("name"));
         team.setDescription(rs.getString("description"));
@@ -247,14 +271,33 @@ public class TeamDAO {
         return team;
     }
 
-    private User mapUser(ResultSet rs) throws SQLException {
-        User user = new User();
-        user.setId(rs.getString("user_id"));
-        user.setUsername(rs.getString("username"));
-        user.setFirstName(rs.getString("first_name"));
-        user.setLastName(rs.getString("last_name"));
-        user.setEmail(rs.getString("email"));
-        return user;
+    public List<String> getTeamMemberIds(String teamId) throws SQLException {
+        List<String> ids = new ArrayList<>();
+        String sql = "SELECT user_id FROM team_members WHERE team_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, teamId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) ids.add(rs.getString("user_id"));
+        }
+        return ids;
+    }
+
+    public String getTeamNameById(String teamId) {
+        String sql = "SELECT name FROM teams WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, teamId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "Équipe inconnue";
     }
 }
 

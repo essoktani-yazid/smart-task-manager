@@ -112,6 +112,7 @@ package com.smarttask.server;
 import com.smarttask.server.config.DatabaseConnection;
 import com.smarttask.server.config.SchemaUpdater; // Assurez-vous d'importer ça
 import com.smarttask.server.handler.*; // Importe tous les handlers d'un coup
+import com.smarttask.server.socket.NotificationWebSocketServer;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -126,6 +127,7 @@ import java.util.concurrent.Executors; // Import pour le multi-threading
  */
 public class MainServer {
     private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+    private static final int WS_PORT = Integer.parseInt(System.getenv().getOrDefault("WS_PORT", "8887"));
 
     public static void main(String[] args) {
         try {
@@ -164,6 +166,9 @@ public class MainServer {
             server.setExecutor(Executors.newCachedThreadPool());
             
             server.start();
+
+            NotificationWebSocketServer wsServer = new NotificationWebSocketServer(WS_PORT);
+            wsServer.start();
 
             // Logs de confirmation
             System.out.println("=== SmartTaskManager Server ===");

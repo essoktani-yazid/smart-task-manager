@@ -116,13 +116,47 @@ public class ProjectDAO {
         String sql = "INSERT IGNORE INTO team_projects (project_id, team_id) VALUES (?, ?)";
         try (Connection conn = DatabaseConnection.getConnection(); 
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setString(1, projectId);
             pstmt.setString(2, teamId);
-            pstmt.executeUpdate();
+            int affected = pstmt.executeUpdate();
+
+            if (affected > 0) {
+                TeamDAO teamDAO = new TeamDAO();
+                String projectName = getProjectNameById(projectId);
+                List<String> memberIds = teamDAO.getTeamMemberIds(teamId);
+                
+                NotificationDAO notifDAO = new NotificationDAO();
+                for (String memberId : memberIds) {
+                    notifDAO.createAndSend(
+                        memberId,
+                        "TASK_ASSIGNED", 
+                        "Nouveau Projet d'Équipe", 
+                        "Votre équipe a été assignée au projet : " + projectName
+                    );
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Error linking team to project", e);
         }
+    }
+
+    public String getProjectNameById(String projectId) {
+        String sql = "SELECT name FROM projects WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, projectId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "Projet inconnu";
     }
 
     public void removeTeamFromProject(String projectId, String teamId) {
