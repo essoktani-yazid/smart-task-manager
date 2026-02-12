@@ -1,9 +1,12 @@
 package com.smarttask.client.view.controller;
 
+import com.smarttask.client.service.EmailNotificationService;
 import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
+import com.smarttask.client.view.controller.kanban.*;
 
 import com.smarttask.client.service.PlannerManager;
+import com.smarttask.server.dao.ProjectDAO;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -37,7 +40,7 @@ import java.util.*;
 public class CalendarController implements Initializable {
 
     public enum ViewType {
-        DAY, WEEK, MONTH, YEAR
+        DAY, WEEK, MONTH, YEAR , KANBAN
     }
     // Primary Colors
     private static final String M3_PRIMARY = "#4f46e5";
@@ -117,6 +120,9 @@ public class CalendarController implements Initializable {
     @FXML private Label completedCountLabel;
     @FXML private VBox googleCalendarContainer;
 
+    @FXML private ToggleButton kanbanViewButton;  // Add this line
+
+
     // State
     private LocalDate currentDate = LocalDate.now();
     private ViewType currentView = ViewType.MONTH;
@@ -131,6 +137,8 @@ public class CalendarController implements Initializable {
     private final DateTimeFormatter monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy");
     private final DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy");
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+    private KanbanBoard kanbanBoard;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -227,7 +235,7 @@ public class CalendarController implements Initializable {
     }
 
 
-//    **
+    //    **
 //            * Create a small sync status indicator for the header
 // */
     private HBox createSyncStatusIndicator() {
@@ -307,18 +315,19 @@ public class CalendarController implements Initializable {
                 else if (newVal == weekViewButton) currentView = ViewType.WEEK;
                 else if (newVal == monthViewButton) currentView = ViewType.MONTH;
                 else if (newVal == yearViewButton) currentView = ViewType.YEAR;
+                else if (newVal == kanbanViewButton) currentView = ViewType.KANBAN;
                 updateView();
+
+
             });
 
-//            if (monthViewButton != null) {
-//                monthViewButton.setSelected(true);
-//            }
 
             // In setupViewToggle():
-                if (weekViewButton != null) {
-                    weekViewButton.setSelected(true);  // Changed from monthViewButton
-                }
+            if (weekViewButton != null) {
+                weekViewButton.setSelected(true);  // Changed from monthViewButton
+            }
         }
+        initializeKanbanBoard();
     }
 
     private void setupPersistentFilterDropdowns() {
@@ -326,6 +335,29 @@ public class CalendarController implements Initializable {
         setupPersistentMenuButton(typeFilterBtn);
         setupPersistentMenuButton(priorityFilterBtn);
         setupPersistentMenuButton(statusFilterBtn);
+    }
+
+    private void initializeKanbanBoard() {
+        kanbanBoard = new KanbanBoard();
+        kanbanBoard.setCurrentUser(currentUser);
+
+        // Set callbacks
+        kanbanBoard.setOnTaskUpdated(task -> {
+            // Save to database when task is moved
+            plannerManager.updateTask(task);
+            System.out.println("✅ Task status updated via Kanban: " + task.getTitle() + " → " + task.getStatus());
+        });
+
+        kanbanBoard.setOnTaskClicked(task -> {
+            // Open edit dialog
+            showTaskDialog(new TaskPlannerAdapter(task));
+        });
+
+        kanbanBoard.setOnTaskDeleted(task -> {
+            // Delete from database
+            plannerManager.removeTask(task);
+            System.out.println("🗑️ Task deleted via Kanban: " + task.getTitle());
+        });
     }
 
     /**
@@ -733,17 +765,57 @@ public class CalendarController implements Initializable {
         headerRow.getChildren().add(typeBadge);
 
         // Visibility badge (only show if private - tasks)
-        if (isTask) {
-            Label visibilityBadge = new Label("Private");
-            visibilityBadge.setStyle(
-                    "-fx-font-size: 10; " +
-                            "-fx-font-weight: 600; " +
-                            "-fx-padding: 4 8; " +
-                            "-fx-background-radius: 20; " +
-                            "-fx-background-color: #f1f5f9; " +
-                            "-fx-text-fill: #64748b;"
-            );
-            headerRow.getChildren().add(visibilityBadge);
+        if (!isTask) {
+            EventPlannerAdapter adapter = (EventPlannerAdapter) item;
+            CalendarEvent event = adapter.getEvent();
+
+            if (event.hasMeetingLink() && event.getMeetingLink() != null) {
+                HBox meetingRow = new HBox(8);
+                meetingRow.setAlignment(Pos.CENTER_LEFT);
+                meetingRow.setPadding(new Insets(8, 0, 0, 0));
+
+                Label meetingIcon = new Label("🎥");
+                meetingIcon.setStyle("-fx-font-size: 14;");
+
+                Button joinBtn = new Button("Join Meeting");
+                joinBtn.setStyle(
+                        "-fx-background-color: #10b981; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-font-size: 11; " +
+                                "-fx-font-weight: 600; " +
+                                "-fx-padding: 6 12; " +
+                                "-fx-background-radius: 12; " +
+                                "-fx-cursor: hand;"
+                );
+
+                joinBtn.setOnAction(e -> {
+                    try {
+                        // Open link in default browser
+                        java.awt.Desktop.getDesktop().browse(new java.net.URI(event.getMeetingLink()));
+                    } catch (Exception ex) {
+                        System.err.println("Failed to open meeting link: " + ex.getMessage());
+                    }
+                });
+
+                meetingRow.getChildren().addAll(meetingIcon, joinBtn);
+                card.getChildren().add(meetingRow);
+            }
+
+            // Show shared status
+            if (event.getVisibility() == CalendarEvent.EventVisibility.SHARED) {
+                HBox sharedRow = new HBox(6);
+                sharedRow.setAlignment(Pos.CENTER_LEFT);
+                sharedRow.setPadding(new Insets(4, 0, 0, 0));
+
+                Label sharedIcon = new Label("👥");
+                Label sharedText = new Label("Shared with " +
+                        (event.getSharedWithUserIds().size() + event.getSharedWithEmails().size()) +
+                        " people");
+                sharedText.setStyle("-fx-font-size: 10; -fx-text-fill: #64748b;");
+
+                sharedRow.getChildren().addAll(sharedIcon, sharedText);
+                card.getChildren().add(sharedRow);
+            }
         }
 
         // Completed badge (if completed)
@@ -942,7 +1014,7 @@ public class CalendarController implements Initializable {
         btn.setStyle(
                 "-fx-background-color: transparent; " +
                         "-fx-text-fill: #94a3b8; " +
-                        "-fx-font-size: 12; " +
+                        "-fx-font-size: 14; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 4 8; " +
                         "-fx-background-radius: 6; " +
@@ -952,7 +1024,7 @@ public class CalendarController implements Initializable {
         btn.setOnMouseEntered(e -> btn.setStyle(
                 "-fx-background-color: #f1f5f9; " +
                         "-fx-text-fill: #475569; " +
-                        "-fx-font-size: 12; " +
+                        "-fx-font-size: 14; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 4 8; " +
                         "-fx-background-radius: 6; " +
@@ -962,7 +1034,7 @@ public class CalendarController implements Initializable {
         btn.setOnMouseExited(e -> btn.setStyle(
                 "-fx-background-color: transparent; " +
                         "-fx-text-fill: #94a3b8; " +
-                        "-fx-font-size: 12; " +
+                        "-fx-font-size: 14; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 4 8; " +
                         "-fx-background-radius: 6; " +
@@ -1098,119 +1170,135 @@ public class CalendarController implements Initializable {
         return button;
     }
 
-    /**
-     * ✨ MODERN STYLED: Enhanced settings menu with beautiful design
-     */
     private void showEnhancedItemMenu(Node owner, PlannerItem item) {
         ContextMenu menu = new ContextMenu();
 
-        // ============= MODERN MENU STYLING =============
+        // Modern menu styling
         menu.setStyle(
                 "-fx-background-color: white; " +
                         "-fx-background-radius: 12; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 8); " +
-                        "-fx-padding: 6; " +
-                        "-fx-border-color: rgba(0,0,0,0.08); " +
+                        "-fx-border-radius: 12; " +
+                        "-fx-border-color: #e2e8f0; " +
                         "-fx-border-width: 1; " +
-                        "-fx-border-radius: 12;"
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 8); " +
+                        "-fx-padding: 6;"
         );
 
         boolean isCompleted = checkItemCompletion(item);
 
-        // ============= EDIT MENU ITEM (Blue like your screenshot) =============
-        CustomMenuItem editItem = createModernMenuItem(
-                "✏️",
-                "Edit                  ",
-                "#3b82f6",
-                () -> {
-                    if (item.getItemType() == PlannerItemType.TASK) {
-                        showTaskDialog((TaskPlannerAdapter) item);
-                    } else {
-                        showEventDialog((EventPlannerAdapter) item);
-                    }
-                    menu.hide();
-                }
-        );
+        // ════════════════════════════════════════════════════════════════════════════
+        // EDIT - Standard MenuItem (CSS handles hover)
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem editItem = new MenuItem("Edit");
+        editItem.setStyle("-fx-padding: 10 16;");
+        editItem.setOnAction(e -> {
+            if (item.getItemType() == PlannerItemType.TASK) {
+                showTaskDialog((TaskPlannerAdapter) item);
+            } else {
+                showEventDialog((EventPlannerAdapter) item);
+            }
+        });
 
-        // ============= MARK COMPLETE MENU ITEM =============
-        CustomMenuItem toggleCompleteItem = createModernMenuItem(
-                isCompleted ? "↩️" : "✓",
-                isCompleted ? "Mark as Incomplete" : "Mark as Complete",
-                isCompleted ? "#f59e0b" : "#10b981",
-                () -> {
+        // ════════════════════════════════════════════════════════════════════════════
+        // MARK AS COMPLETE / INCOMPLETE
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem toggleCompleteItem = new MenuItem(
+                isCompleted ? "Mark as Incomplete" : "Mark as Complete"
+        );
+        toggleCompleteItem.setStyle("-fx-padding: 10 16;");
+        toggleCompleteItem.setOnAction(e -> {
+            if (item.getItemType() == PlannerItemType.TASK) {
+                TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
+                Task task = adapter.getTask();
+                task.setStatus(task.getStatus() == Status.COMPLETED ? Status.TODO : Status.COMPLETED);
+                plannerManager.updateTask(task);
+            } else {
+                EventPlannerAdapter adapter = (EventPlannerAdapter) item;
+                CalendarEvent event = adapter.getEvent();
+                event.toggleCompleted();
+                plannerManager.updateEvent(event);
+            }
+            updateView();
+        });
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // LOCATE IN CALENDAR
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem locateItem = new MenuItem("Locate in Calendar");
+        locateItem.setStyle("-fx-padding: 10 16;");
+        locateItem.setOnAction(e -> {
+            currentDate = item.getDate();
+            currentView = ViewType.DAY;
+            dayViewButton.setSelected(true);
+            updateView();
+        });
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // SEPARATOR
+        // ════════════════════════════════════════════════════════════════════════════
+        SeparatorMenuItem separator = new SeparatorMenuItem();
+
+        // ════════════════════════════════════════════════════════════════════════════
+        // DELETE - Red text via inline style
+        // ════════════════════════════════════════════════════════════════════════════
+        MenuItem deleteItem = new MenuItem("🗑  Delete");
+        deleteItem.setStyle("-fx-padding: 10 16; -fx-text-fill: #ef4444;");
+        deleteItem.setOnAction(e -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Delete " + (item.getItemType() == PlannerItemType.TASK ? "Task" : "Event"));
+            alert.setHeaderText("Delete \"" + item.getTitle() + "\"?");
+            alert.setContentText("This action cannot be undone.");
+
+            // Style the dialog
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.setStyle("-fx-background-color: white;");
+
+            Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+            Button cancelButton = (Button) dialogPane.lookupButton(ButtonType.CANCEL);
+
+            if (okButton != null) {
+                okButton.setText("Delete");
+                okButton.setStyle(
+                        "-fx-background-color: #ef4444; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-padding: 8 20; " +
+                                "-fx-font-weight: 600; " +
+                                "-fx-cursor: hand;"
+                );
+            }
+
+            if (cancelButton != null) {
+                cancelButton.setStyle(
+                        "-fx-background-color: white; " +
+                                "-fx-text-fill: #374151; " +
+                                "-fx-border-color: #d1d5db; " +
+                                "-fx-border-radius: 8; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-padding: 8 20; " +
+                                "-fx-font-weight: 600; " +
+                                "-fx-cursor: hand;"
+                );
+            }
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
                     if (item.getItemType() == PlannerItemType.TASK) {
-                        TaskPlannerAdapter adapter = (TaskPlannerAdapter) item;
-                        Task task = adapter.getTask();
-                        task.setStatus(task.getStatus() == Status.COMPLETED ? Status.TODO : Status.COMPLETED);
-                        plannerManager.updateTask(task);
+                        plannerManager.removeTask(((TaskPlannerAdapter) item).getTask());
                     } else {
-                        EventPlannerAdapter adapter = (EventPlannerAdapter) item;
-                        CalendarEvent event = adapter.getEvent();
-                        event.toggleCompleted();
-                        plannerManager.updateEvent(event);
+                        plannerManager.removeEvent(((EventPlannerAdapter) item).getEvent());
                     }
                     updateView();
-                    menu.hide();
                 }
-        );
+            });
+        });
 
-        // ============= LOCATE MENU ITEM =============
-        CustomMenuItem locateItem = createModernMenuItem(
-                "📍",
-                "Locate in Calendar",
-                "#8b5cf6",
-                () -> {
-                    currentDate = item.getDate();
-                    currentView = ViewType.DAY;
-                    dayViewButton.setSelected(true);
-                    updateView();
-                    menu.hide();
-                }
-        );
-
-        // ============= DELETE MENU ITEM =============
-        CustomMenuItem deleteItem = createModernMenuItem(
-                "🗑️",
-                "Delete                 ",
-                "#ef4444",
-                () -> {
-                    menu.hide();
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("Delete " + (item.getItemType() == PlannerItemType.TASK ? "Task" : "Event"));
-                    alert.setHeaderText("Delete \"" + item.getTitle() + "\"?");
-                    alert.setContentText("This action cannot be undone.");
-
-                    alert.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.OK) {
-                            if (item.getItemType() == PlannerItemType.TASK) {
-                                plannerManager.removeTask(((TaskPlannerAdapter) item).getTask());
-                            } else {
-                                plannerManager.removeEvent(((EventPlannerAdapter) item).getEvent());
-                            }
-                            updateView();
-                        }
-                    });
-                }
-        );
-
-        // ============= ADD SEPARATORS =============
-        SeparatorMenuItem separator1 = new SeparatorMenuItem();
-        SeparatorMenuItem separator2 = new SeparatorMenuItem();
-
-        // Add all items
-        menu.getItems().addAll(
-                editItem,
-                toggleCompleteItem,
-                separator1,
-                locateItem,
-                separator2,
-                deleteItem
-        );
+        // Add all items to menu
+        menu.getItems().addAll(editItem, toggleCompleteItem, locateItem, separator, deleteItem);
 
         // Show menu
-        menu.show(owner, javafx.geometry.Side.BOTTOM, 0, 8);
+        menu.show(owner, javafx.geometry.Side.BOTTOM, 0, 5);
     }
-
     /**
      * ✨ NEW: Create modern menu item with icon, text, and hover effect
      */
@@ -1389,12 +1477,47 @@ public class CalendarController implements Initializable {
             case WEEK -> renderWeekView();
             case MONTH -> renderMonthView();
             case YEAR -> renderYearView();
+            case KANBAN -> renderKanbanView();
         }
 
         updateDateLabel();
         updateUpcomingItems();
-
         updateSidebarStats();
+    }
+
+    private void renderKanbanView() {
+        System.out.println("🎯 renderKanbanView() STARTED");
+
+        if (kanbanBoard == null) {
+            System.err.println("⚠️ kanbanBoard is NULL, initializing...");
+            initializeKanbanBoard();
+        }
+
+        System.out.println("✅ KanbanBoard initialized: " + kanbanBoard);
+
+        // Load all tasks for current user
+        List<Task> allTasks = plannerManager.getAllTasks();
+        System.out.println("📋 Loaded " + allTasks.size() + " tasks");
+
+        // Apply filters if needed
+        List<Task> filteredTasks = allTasks.stream()
+                .filter(task -> {
+                    // Show completed filter
+                    if (!isShowCompleted() && task.getStatus() == Status.COMPLETED) {
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+
+        System.out.println("🔍 After filtering: " + filteredTasks.size() + " tasks");
+
+        kanbanBoard.loadTasks(filteredTasks);
+
+        // Display in container
+        System.out.println("🖼️ Setting Kanban board in container...");
+        calendarContainer.getChildren().setAll(kanbanBoard);
+        System.out.println("✅ renderKanbanView() COMPLETED");
     }
 
     private void updateDateLabel() {
@@ -1410,6 +1533,7 @@ public class CalendarController implements Initializable {
             }
             case MONTH -> currentDateLabel.setText(currentDate.format(monthYearFormatter));
             case YEAR -> currentDateLabel.setText(String.valueOf(currentDate.getYear()));
+            case KANBAN -> currentDateLabel.setText("📋 Kanban Board");
         }
     }
 
@@ -2538,12 +2662,7 @@ public class CalendarController implements Initializable {
         dialog.showAndWait();
     }
 
-    /**
-     * ✨ FIXED: Task dialog with WORKING save button
-     */
-    /**
-     * ✨ MODERN: Task dialog with beautiful styling
-     */
+
     private void showTaskDialog(TaskPlannerAdapter existingAdapter) {
         Dialog<Task> dialog = new Dialog<>();
 
@@ -2621,6 +2740,122 @@ public class CalendarController implements Initializable {
         );
 
         descSection.getChildren().addAll(descLabel, descField);
+
+// ============= PROJECT SELECTION SECTION =============
+        VBox projectSection = new VBox(8);
+        Label projectLabel = new Label("Project");
+        projectLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        ComboBox<Project> projectCombo = new ComboBox<>();
+        projectCombo.setPrefHeight(40);
+        projectCombo.setMaxWidth(Double.MAX_VALUE);
+        projectCombo.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 0 12;"
+        );
+        projectCombo.setPromptText("Select a project (optional)");
+
+// ✨ ADD STRING CONVERTER - This is crucial!
+        projectCombo.setConverter(new StringConverter<Project>() {
+            @Override
+            public String toString(Project project) {
+                if (project == null) {
+                    return "";
+                }
+                return project.getName() != null ? project.getName() : "No Project";
+            }
+
+            @Override
+            public Project fromString(String string) {
+                return null; // Not needed for display
+            }
+        });
+
+// Load projects from database
+        ProjectDAO projectDAO = new ProjectDAO();
+        List<Project> userProjects = projectDAO.getProjectsByUserId(currentUser.getId());
+
+// Add "No Project" option
+        Project noProject = new Project();
+        noProject.setId(null);
+        noProject.setName("No Project");
+        noProject.setColor(null);
+
+        projectCombo.getItems().add(noProject);
+        projectCombo.getItems().addAll(userProjects);
+
+// Set default selection
+        projectCombo.setValue(noProject);
+
+// Custom cell factory for dropdown list
+        projectCombo.setCellFactory(listView -> new ListCell<Project>() {
+            @Override
+            protected void updateItem(Project project, boolean empty) {
+                super.updateItem(project, empty);
+                if (empty || project == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    HBox container = new HBox(10);
+                    container.setAlignment(Pos.CENTER_LEFT);
+
+                    // Color indicator
+                    if (project.getColor() != null && !project.getColor().isEmpty()) {
+                        Region colorDot = new Region();
+                        colorDot.setMinSize(10, 10);
+                        colorDot.setMaxSize(10, 10);
+                        colorDot.setStyle("-fx-background-color: " + project.getColor() + "; -fx-background-radius: 5;");
+                        container.getChildren().add(colorDot);
+                    }
+
+                    String displayName = project.getName() != null ? project.getName() : "No Project";
+                    Label nameLabel = new Label(displayName);
+                    nameLabel.setStyle("-fx-font-size: 13;");
+                    container.getChildren().add(nameLabel);
+
+                    setGraphic(container);
+                }
+            }
+        });
+
+// Button cell for selected value display
+        projectCombo.setButtonCell(new ListCell<Project>() {
+            @Override
+            protected void updateItem(Project project, boolean empty) {
+                super.updateItem(project, empty);
+                if (empty || project == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    HBox container = new HBox(8);
+                    container.setAlignment(Pos.CENTER_LEFT);
+                    container.setPadding(new Insets(0, 0, 0, 0));
+
+                    // Color dot
+                    if (project.getColor() != null && !project.getColor().isEmpty()) {
+                        Region colorDot = new Region();
+                        colorDot.setMinSize(8, 8);
+                        colorDot.setMaxSize(8, 8);
+                        colorDot.setStyle("-fx-background-color: " + project.getColor() + "; -fx-background-radius: 4;");
+                        container.getChildren().add(colorDot);
+                    }
+
+                    // Project name
+                    String displayName = project.getName() != null ? project.getName() : "No Project";
+                    Label nameLabel = new Label(displayName);
+                    nameLabel.setStyle("-fx-font-size: 13; -fx-text-fill: #374151;");
+                    container.getChildren().add(nameLabel);
+
+                    setGraphic(container);
+                    setText(null); // ← CRITICAL: Set text to null when using graphic
+                }
+            }
+        });
+
+        projectSection.getChildren().addAll(projectLabel, projectCombo);
 
         // Date & Time section
         HBox dateTimeBox = new HBox(12);
@@ -2813,6 +3048,12 @@ public class CalendarController implements Initializable {
             minuteSpinner.getValueFactory().setValue(existingAdapter.getStartTime().getMinute());
             statusCombo.setValue(task.getStatus());
 
+            // Set selected project
+            if (task.getProjectId() != null && !task.getProjectId().isEmpty()) {
+                projectCombo.getItems().stream()
+                        .filter(p -> p.getId() != null && p.getId().equals(task.getProjectId()))
+                        .findFirst()
+                        .ifPresent(projectCombo::setValue);}
             // Select priority button
             com.smarttask.model.Priority taskPriority = task.getPriority();
             for (int i = 0; i < priorityValues.length; i++) {
@@ -2830,6 +3071,7 @@ public class CalendarController implements Initializable {
         mainContent.getChildren().addAll(
                 titleSection,
                 descSection,
+                projectSection,
                 dateTimeBox,
                 prioritySection,
                 statusSection,
@@ -2927,6 +3169,14 @@ public class CalendarController implements Initializable {
                 LocalTime time = LocalTime.of(hourSpinner.getValue(), minuteSpinner.getValue());
                 task.setDueDate(date.atTime(time));
 
+                // ✨ SET PROJECT ID
+                Project selectedProject = projectCombo.getValue();
+                if (selectedProject != null && selectedProject.getId() != null) {
+                    task.setProjectId(selectedProject.getId());
+                } else {
+                    task.setProjectId(null);
+                }
+
                 if (existingAdapter == null) {
                     task.setUser(currentUser);
                 }
@@ -2945,24 +3195,33 @@ public class CalendarController implements Initializable {
             updateView();
         });
     }
-    /**
-     * ✨ FIXED: Event dialog with WORKING save button
-     */
 
     /**
-     * ✨ MODERN: Event dialog with beautiful styling (matching task dialog)
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * COMPLETE FIXED showEventDialog METHOD
+     * ═══════════════════════════════════════════════════════════════════════════════
+     *
+     * Replace your entire showEventDialog method with this one.
+     * All bugs have been fixed:
+     * - Platform buttons declared before use in event handlers
+     * - selectedPlatform array used instead of non-existent platformGroup
+     * - Complete meeting section properly structured
      */
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // 🔧 FIXED showEventDialog() - VISIBILITY SECTION NOW DISPLAYS PROPERLY
+    // ═══════════════════════════════════════════════════════════════════════════════
+    //
+    // THE PROBLEM: sharedUsersBox was not being added to visibilitySection!
+    //
+    // Replace your entire showEventDialog() method with this one.
 
-    /**
-     * ✨ FIXED: Event dialog with scrollable content - buttons always visible
-     */
-    private void showEventDialog(EventPlannerAdapter existingAdapter) {
+    public void showEventDialog(EventPlannerAdapter existingAdapter) {
         CalendarEvent existingEvent = existingAdapter != null ? existingAdapter.getEvent() : null;
 
         Dialog<CalendarEvent> dialog = new Dialog<>();
         dialog.setTitle(existingEvent == null || existingEvent.getTitle() == null ? "Add Event" : "Edit Event");
 
-        // ============= CUSTOM HEADER (Fixed at top) =============
+        // ============= CUSTOM HEADER =============
         VBox headerBox = new VBox(8);
         headerBox.setPadding(new Insets(20, 24, 16, 24));
         headerBox.setStyle("-fx-background-color: #ffffff; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;");
@@ -2974,9 +3233,8 @@ public class CalendarController implements Initializable {
                 "Create New Event" : "Edit Event");
         headerTitle.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #111827;");
 
-        Label headerSubtitle = new Label(existingEvent == null || existingEvent.getTitle() == null ?
-                "Add a public event visible to everyone" :
-                "Update event details");
+        // Dynamic subtitle based on visibility selection
+        Label headerSubtitle = new Label("Add a public event visible to everyone");
         headerSubtitle.setStyle("-fx-font-size: 13; -fx-text-fill: #6b7280;");
 
         headerBox.getChildren().addAll(headerIcon, headerTitle, headerSubtitle);
@@ -2996,7 +3254,414 @@ public class CalendarController implements Initializable {
         mainContent.setPadding(new Insets(24));
         mainContent.setStyle("-fx-background-color: #f9fafb;");
 
-        // Title section
+        // ═══════════════════════════════════════════════════════════════════════
+        // 🔧 FIX: VISIBILITY & SHARING SECTION - NOW PROPERLY DISPLAYS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        VBox visibilitySection = new VBox(12);
+        visibilitySection.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #e5e7eb; " +
+                        "-fx-border-radius: 12; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-padding: 16;"
+        );
+
+        Label visibilityLabel = new Label("Who can see this event? *");
+        visibilityLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        HBox visibilityButtons = new HBox(8);
+        visibilityButtons.setAlignment(Pos.CENTER_LEFT);
+        ToggleGroup visibilityGroup = new ToggleGroup();
+
+        ToggleButton publicBtn = new ToggleButton("🌍 Public");
+        ToggleButton privateBtn = new ToggleButton("🔒 Private");
+        ToggleButton sharedBtn = new ToggleButton("👥 Shared");
+
+        publicBtn.setToggleGroup(visibilityGroup);
+        privateBtn.setToggleGroup(visibilityGroup);
+        sharedBtn.setToggleGroup(visibilityGroup);
+
+        publicBtn.setUserData(CalendarEvent.EventVisibility.PUBLIC);
+        privateBtn.setUserData(CalendarEvent.EventVisibility.PRIVATE);
+        sharedBtn.setUserData(CalendarEvent.EventVisibility.SHARED);
+
+        // Style buttons
+        String visBtnStyle =
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-text-fill: #374151; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 10 20;";
+
+        String visBtnSelectedStyle =
+                "-fx-background-color: #3b82f6; " +
+                        "-fx-border-color: #3b82f6; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 10 20;";
+
+        publicBtn.setStyle(visBtnStyle);
+        privateBtn.setStyle(visBtnStyle);
+        sharedBtn.setStyle(visBtnStyle);
+
+        publicBtn.selectedProperty().addListener((obs, old, sel) ->
+                publicBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
+        privateBtn.selectedProperty().addListener((obs, old, sel) ->
+                privateBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
+        sharedBtn.selectedProperty().addListener((obs, old, sel) ->
+                sharedBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
+
+        visibilityButtons.getChildren().addAll(publicBtn, privateBtn, sharedBtn);
+
+        // Set default selection to PUBLIC
+        publicBtn.setSelected(true);
+
+        // Description label for current selection
+        Label visibilityDesc = new Label("🌍 Everyone can see this event");
+        visibilityDesc.setStyle("-fx-font-size: 11; -fx-text-fill: #6b7280; -fx-font-style: italic;");
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SHARED USERS SECTION (initially hidden)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        VBox sharedUsersBox = new VBox(12);
+        sharedUsersBox.setVisible(false);
+        sharedUsersBox.setManaged(false);
+        sharedUsersBox.setStyle(
+                "-fx-background-color: #f0f9ff; " +
+                        "-fx-border-color: #bae6fd; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 16;"
+        );
+
+        Label sharedLabel = new Label("Select people to share with:");
+        sharedLabel.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #0369a1;");
+
+        // User selection (from database)
+        VBox userSelectionBox = new VBox(8);
+        Label userLabel = new Label("👥 Users from system:");
+        userLabel.setStyle("-fx-font-size: 11; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
+
+        ListView<User> userListView = new ListView<>();
+        userListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        userListView.setPrefHeight(120);
+        userListView.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6;"
+        );
+
+        // Load users from database
+        try {
+            com.smarttask.server.dao.UserDAO userDAO = new com.smarttask.server.dao.UserDAO();
+            List<User> allUsers = userDAO.findAll();
+            allUsers.removeIf(u -> u.getId().equals(currentUser.getId()));
+            userListView.setItems(FXCollections.observableArrayList(allUsers));
+        } catch (Exception e) {
+            System.err.println("Error loading users: " + e.getMessage());
+        }
+
+        userListView.setCellFactory(lv -> new ListCell<User>() {
+            @Override
+            protected void updateItem(User user, boolean empty) {
+                super.updateItem(user, empty);
+                if (empty || user == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    HBox box = new HBox(8);
+                    box.setAlignment(Pos.CENTER_LEFT);
+                    Label icon = new Label("👤");
+                    Label name = new Label(user.getUsername());
+                    name.setStyle("-fx-font-size: 12;");
+                    Label email = new Label("(" + user.getEmail() + ")");
+                    email.setStyle("-fx-font-size: 10; -fx-text-fill: #6b7280;");
+                    box.getChildren().addAll(icon, name, email);
+                    setGraphic(box);
+                }
+            }
+        });
+
+        userSelectionBox.getChildren().addAll(userLabel, userListView);
+
+        // External email input
+        VBox emailBox = new VBox(8);
+        Label emailLabel = new Label("📧 External emails:");
+        emailLabel.setStyle("-fx-font-size: 11; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
+
+        Label emailNote = new Label("These users will receive an email invitation");
+        emailNote.setStyle("-fx-font-size: 10; -fx-text-fill: #059669; -fx-font-style: italic;");
+
+        HBox emailInputBox = new HBox(8);
+        emailInputBox.setAlignment(Pos.CENTER_LEFT);
+
+        TextField newEmailField = new TextField();
+        newEmailField.setPromptText("Enter email address");
+        newEmailField.setPrefHeight(36);
+        HBox.setHgrow(newEmailField, Priority.ALWAYS);
+        newEmailField.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-padding: 8;"
+        );
+
+        Button addEmailBtn = new Button("+ Add");
+        addEmailBtn.setPrefHeight(36);
+        addEmailBtn.setStyle(
+                "-fx-background-color: #3b82f6; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-padding: 8 16; " +
+                        "-fx-font-size: 11; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-cursor: hand;"
+        );
+
+        emailInputBox.getChildren().addAll(newEmailField, addEmailBtn);
+
+        FlowPane emailChipsPane = new FlowPane();
+        emailChipsPane.setHgap(6);
+        emailChipsPane.setVgap(6);
+        emailChipsPane.setPadding(new Insets(8));
+        emailChipsPane.setStyle(
+                "-fx-background-color: #f9fafb; " +
+                        "-fx-border-color: #e5e7eb; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6;"
+        );
+        emailChipsPane.setPrefWrapLength(400);
+
+        List<String> externalEmailsList = new ArrayList<>();
+
+        java.util.function.Consumer<String> addEmailChip = email -> {
+            HBox chip = new HBox(6);
+            chip.setAlignment(Pos.CENTER);
+            chip.setPadding(new Insets(4, 8, 4, 8));
+            chip.setStyle(
+                    "-fx-background-color: #dbeafe; " +
+                            "-fx-background-radius: 12; " +
+                            "-fx-border-color: #93c5fd; " +
+                            "-fx-border-radius: 12; " +
+                            "-fx-border-width: 1;"
+            );
+
+            Label chipEmailLabel = new Label(email);
+            chipEmailLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #1e40af; -fx-font-weight: 600;");
+
+            Button removeBtn = new Button("×");
+            removeBtn.setStyle(
+                    "-fx-background-color: transparent; " +
+                            "-fx-text-fill: #1e40af; " +
+                            "-fx-font-size: 14; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-padding: 0 4; " +
+                            "-fx-cursor: hand;"
+            );
+
+            removeBtn.setOnAction(e -> {
+                externalEmailsList.remove(email);
+                emailChipsPane.getChildren().remove(chip);
+            });
+
+            chip.getChildren().addAll(chipEmailLabel, removeBtn);
+            emailChipsPane.getChildren().add(chip);
+        };
+
+        java.util.function.Predicate<String> isValidEmail = email -> {
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+            return email != null && email.matches(emailRegex);
+        };
+
+        addEmailBtn.setOnAction(e -> {
+            String email = newEmailField.getText().trim();
+            if (email.isEmpty()) return;
+            if (!isValidEmail.test(email)) {
+                showEmailError("Invalid email format: " + email);
+                return;
+            }
+            if (externalEmailsList.contains(email)) {
+                showEmailError("Email already added: " + email);
+                return;
+            }
+            externalEmailsList.add(email);
+            addEmailChip.accept(email);
+            newEmailField.clear();
+            newEmailField.requestFocus();
+        });
+
+        newEmailField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                addEmailBtn.fire();
+            }
+        });
+
+        Label emailInstructions = new Label("💡 Press Enter or click 'Add' to add each email");
+        emailInstructions.setStyle("-fx-font-size: 10; -fx-text-fill: #6b7280; -fx-font-style: italic;");
+
+        emailBox.getChildren().addAll(emailLabel, emailNote, emailInputBox, emailChipsPane, emailInstructions);
+
+        // 🔧 FIX: Add everything to sharedUsersBox
+        sharedUsersBox.getChildren().addAll(sharedLabel, userSelectionBox, emailBox);
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // 🔧 FIX: VISIBILITY CHANGE LISTENER
+        // ═══════════════════════════════════════════════════════════════════════
+
+        visibilityGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle != null) {
+                CalendarEvent.EventVisibility vis = (CalendarEvent.EventVisibility) newToggle.getUserData();
+
+                switch (vis) {
+                    case PUBLIC:
+                        visibilityDesc.setText("🌍 Everyone can see this event");
+                        headerSubtitle.setText("Add a public event visible to everyone");
+                        sharedUsersBox.setVisible(false);
+                        sharedUsersBox.setManaged(false);
+                        break;
+                    case PRIVATE:
+                        visibilityDesc.setText("🔒 Only you can see this event");
+                        headerSubtitle.setText("Add a private event only you can see");
+                        sharedUsersBox.setVisible(false);
+                        sharedUsersBox.setManaged(false);
+                        break;
+                    case SHARED:
+                        visibilityDesc.setText("👥 Share with specific people");
+                        headerSubtitle.setText("Add a shared event for selected people");
+                        sharedUsersBox.setVisible(true);
+                        sharedUsersBox.setManaged(true);
+                        break;
+                }
+            }
+        });
+
+        // 🔧 FIX: ADD ALL COMPONENTS TO visibilitySection (THIS WAS THE BUG!)
+        visibilitySection.getChildren().addAll(
+                visibilityLabel,
+                visibilityButtons,
+                visibilityDesc,
+                sharedUsersBox  // ← THIS WAS MISSING!
+        );
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // MEETING LINK SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        VBox meetingSection = new VBox(12);
+        Label meetingLabel = new Label("Meeting Link (Optional)");
+        meetingLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        CheckBox hasMeetingCheck = new CheckBox("This event has an online meeting");
+        hasMeetingCheck.setStyle("-fx-font-size: 12;");
+
+        VBox meetingDetailsBox = new VBox(12);
+        meetingDetailsBox.setVisible(false);
+        meetingDetailsBox.setManaged(false);
+        meetingDetailsBox.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #e5e7eb; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 16;"
+        );
+
+        // Platform selection
+        HBox platformBox = new HBox(8);
+        Label platformLabel = new Label("Platform:");
+        platformLabel.setStyle("-fx-font-size: 11; -fx-font-weight: 600;");
+
+        ToggleGroup platformGroup = new ToggleGroup();
+
+        ToggleButton googleMeetBtn = new ToggleButton("📹 Google Meet");
+        ToggleButton zoomBtn = new ToggleButton("🎥 Zoom");
+        ToggleButton teamsBtn = new ToggleButton("💼 Teams");
+        ToggleButton customBtn = new ToggleButton("🔗 Custom");
+
+        googleMeetBtn.setToggleGroup(platformGroup);
+        zoomBtn.setToggleGroup(platformGroup);
+        teamsBtn.setToggleGroup(platformGroup);
+        customBtn.setToggleGroup(platformGroup);
+
+        googleMeetBtn.setUserData("google_meet");
+        zoomBtn.setUserData("zoom");
+        teamsBtn.setUserData("teams");
+        customBtn.setUserData("custom");
+
+        String platformBtnStyle =
+                "-fx-background-color: #f3f4f6; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-padding: 6 12; " +
+                        "-fx-font-size: 11; " +
+                        "-fx-cursor: hand;";
+
+        googleMeetBtn.setStyle(platformBtnStyle);
+        zoomBtn.setStyle(platformBtnStyle);
+        teamsBtn.setStyle(platformBtnStyle);
+        customBtn.setStyle(platformBtnStyle);
+
+        platformBox.getChildren().addAll(platformLabel, googleMeetBtn, zoomBtn, teamsBtn, customBtn);
+
+        // Meeting link field
+        TextField meetingLinkField = new TextField();
+        meetingLinkField.setPromptText("Paste your meeting link here");
+        meetingLinkField.setPrefHeight(36);
+
+        // Instructions
+        VBox linkInstructionsBox = new VBox(4);
+        Label linkInstructionLabel = new Label("💡 How to get a meeting link:");
+        linkInstructionLabel.setStyle("-fx-font-size: 10; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
+
+        Label googleInstr = new Label("• Google Meet: Go to meet.google.com → Start a meeting → Copy link");
+        Label zoomInstr = new Label("• Zoom: Schedule meeting in Zoom app → Copy invitation link");
+        Label teamsInstr = new Label("• Teams: Create meeting in Teams → Copy join link");
+
+        googleInstr.setStyle("-fx-font-size: 9; -fx-text-fill: #9ca3af;");
+        zoomInstr.setStyle("-fx-font-size: 9; -fx-text-fill: #9ca3af;");
+        teamsInstr.setStyle("-fx-font-size: 9; -fx-text-fill: #9ca3af;");
+
+        linkInstructionsBox.getChildren().addAll(linkInstructionLabel, googleInstr, zoomInstr, teamsInstr);
+
+        // Password
+        HBox passwordBox = new HBox(8);
+        Label passwordLabel = new Label("Password:");
+        passwordLabel.setStyle("-fx-font-size: 11; -fx-min-width: 70;");
+
+        TextField passwordField = new TextField();
+        passwordField.setPromptText("Optional meeting password");
+        passwordField.setPrefHeight(36);
+        HBox.setHgrow(passwordField, Priority.ALWAYS);
+
+        passwordBox.getChildren().addAll(passwordLabel, passwordField);
+
+        meetingDetailsBox.getChildren().addAll(platformBox, meetingLinkField, linkInstructionsBox, passwordBox);
+
+        hasMeetingCheck.selectedProperty().addListener((obs, old, hasCheck) -> {
+            meetingDetailsBox.setVisible(hasCheck);
+            meetingDetailsBox.setManaged(hasCheck);
+        });
+
+        meetingSection.getChildren().addAll(meetingLabel, hasMeetingCheck, meetingDetailsBox);
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // TITLE SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
         VBox titleSection = new VBox(8);
         Label titleLabel = new Label("Event Title *");
         titleLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
@@ -3015,7 +3680,10 @@ public class CalendarController implements Initializable {
 
         titleSection.getChildren().addAll(titleLabel, titleField);
 
-        // Description section
+        // ═══════════════════════════════════════════════════════════════════════
+        // DESCRIPTION SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
         VBox descSection = new VBox(8);
         Label descLabel = new Label("Description");
         descLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
@@ -3035,7 +3703,10 @@ public class CalendarController implements Initializable {
 
         descSection.getChildren().addAll(descLabel, descField);
 
-        // Date section
+        // ═══════════════════════════════════════════════════════════════════════
+        // DATE SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
         VBox dateSection = new VBox(8);
         Label dateLabel = new Label("Event Date *");
         dateLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
@@ -3052,10 +3723,12 @@ public class CalendarController implements Initializable {
 
         dateSection.getChildren().addAll(dateLabel, datePicker);
 
-        // Time section - Start and End side by side
+        // ═══════════════════════════════════════════════════════════════════════
+        // TIME SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
         HBox timeBox = new HBox(12);
 
-        // Start time
         VBox startTimeBox = new VBox(8);
         HBox.setHgrow(startTimeBox, Priority.ALWAYS);
         Label startTimeLabel = new Label("Start Time *");
@@ -3079,7 +3752,6 @@ public class CalendarController implements Initializable {
         startTimeInputBox.getChildren().addAll(startHourSpinner, startColonLabel, startMinuteSpinner);
         startTimeBox.getChildren().addAll(startTimeLabel, startTimeInputBox);
 
-        // End time
         VBox endTimeBox = new VBox(8);
         HBox.setHgrow(endTimeBox, Priority.ALWAYS);
         Label endTimeLabel = new Label("End Time *");
@@ -3105,7 +3777,10 @@ public class CalendarController implements Initializable {
 
         timeBox.getChildren().addAll(startTimeBox, endTimeBox);
 
-        // Priority section
+        // ═══════════════════════════════════════════════════════════════════════
+        // PRIORITY SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
         VBox prioritySection = new VBox(8);
         Label priorityLabel = new Label("Priority *");
         priorityLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
@@ -3113,7 +3788,6 @@ public class CalendarController implements Initializable {
         HBox priorityButtonsBox = new HBox(8);
         ToggleGroup priorityGroup = new ToggleGroup();
 
-        // Priority buttons with colors
         ToggleButton[] priorityButtons = new ToggleButton[4];
         String[] priorityNames = {"Optional", "Standard", "Important", "Urgent"};
         String[] priorityColors = {"#9E9E9E", "#2196F3", "#FF9800", "#F44336"};
@@ -3178,7 +3852,10 @@ public class CalendarController implements Initializable {
 
         prioritySection.getChildren().addAll(priorityLabel, priorityButtonsBox);
 
-        // Event Type section
+        // ═══════════════════════════════════════════════════════════════════════
+        // EVENT TYPE SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
         VBox eventTypeSection = new VBox(8);
         Label eventTypeLabel = new Label("Event Type *");
         eventTypeLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
@@ -3258,14 +3935,7 @@ public class CalendarController implements Initializable {
         );
         periodicTypeCombo.setPrefHeight(40);
         periodicTypeCombo.setMaxWidth(Double.MAX_VALUE);
-        periodicTypeCombo.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #d1d5db; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8;"
-        );
 
-        // Week days selection
         VBox weekDaysSection = new VBox(8);
         weekDaysSection.setVisible(false);
         weekDaysSection.setManaged(false);
@@ -3284,7 +3954,6 @@ public class CalendarController implements Initializable {
 
         weekDaysSection.getChildren().addAll(weekDaysLabel, weekDaysBox);
 
-        // Month place selection
         VBox monthPlaceSection = new VBox(8);
         monthPlaceSection.setVisible(false);
         monthPlaceSection.setManaged(false);
@@ -3296,12 +3965,6 @@ public class CalendarController implements Initializable {
         monthPlaceCombo.getItems().addAll(CalendarEvent.MonthPlace.values());
         monthPlaceCombo.setPrefHeight(40);
         monthPlaceCombo.setMaxWidth(Double.MAX_VALUE);
-        monthPlaceCombo.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #d1d5db; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8;"
-        );
 
         monthPlaceSection.getChildren().addAll(monthPlaceLabel, monthPlaceCombo);
 
@@ -3312,12 +3975,7 @@ public class CalendarController implements Initializable {
             monthPlaceSection.setManaged(newVal == CalendarEvent.PeriodicType.PER_MONTH);
         });
 
-        recurringBox.getChildren().addAll(
-                recurringLabel,
-                periodicTypeCombo,
-                weekDaysSection,
-                monthPlaceSection
-        );
+        recurringBox.getChildren().addAll(recurringLabel, periodicTypeCombo, weekDaysSection, monthPlaceSection);
 
         eventTypeGroup.selectedToggleProperty().addListener((obs, old, newVal) -> {
             boolean isRecurring = newVal != null &&
@@ -3330,7 +3988,10 @@ public class CalendarController implements Initializable {
         CheckBox completedCheck = new CheckBox("Mark as completed");
         completedCheck.setStyle("-fx-font-size: 13; -fx-text-fill: #374151;");
 
-        // Populate if editing
+        // ═══════════════════════════════════════════════════════════════════════
+        // POPULATE EXISTING DATA
+        // ═══════════════════════════════════════════════════════════════════════
+
         if (existingEvent != null && existingEvent.getTitle() != null) {
             titleField.setText(existingEvent.getTitle());
             descField.setText(existingEvent.getDescription());
@@ -3354,6 +4015,57 @@ public class CalendarController implements Initializable {
                     priorityButtons[i].setSelected(true);
                     break;
                 }
+            }
+
+            // Populate visibility
+            CalendarEvent.EventVisibility vis = existingEvent.getVisibility();
+            if (vis != null) {
+                switch (vis) {
+                    case PUBLIC:
+                        publicBtn.setSelected(true);
+                        break;
+                    case PRIVATE:
+                        privateBtn.setSelected(true);
+                        break;
+                    case SHARED:
+                        sharedBtn.setSelected(true);
+                        sharedUsersBox.setVisible(true);
+                        sharedUsersBox.setManaged(true);
+
+                        List<String> sharedIds = existingEvent.getSharedWithUserIds();
+                        for (User user : userListView.getItems()) {
+                            if (sharedIds.contains(user.getId())) {
+                                userListView.getSelectionModel().select(user);
+                            }
+                        }
+
+                        List<String> emails = existingEvent.getSharedWithEmails();
+                        if (emails != null && !emails.isEmpty()) {
+                            externalEmailsList.addAll(emails);
+                            for (String email : emails) {
+                                addEmailChip.accept(email);
+                            }
+                        }
+                        break;
+                }
+            }
+
+            // Populate meeting info
+            if (existingEvent.hasMeetingLink()) {
+                hasMeetingCheck.setSelected(true);
+                meetingDetailsBox.setVisible(true);
+                meetingDetailsBox.setManaged(true);
+                meetingLinkField.setText(existingEvent.getMeetingLink());
+
+                if (existingEvent.getMeetingPassword() != null) {
+                    passwordField.setText(existingEvent.getMeetingPassword());
+                }
+
+                String platform = existingEvent.getMeetingPlatform();
+                if ("google_meet".equals(platform)) googleMeetBtn.setSelected(true);
+                else if ("zoom".equals(platform)) zoomBtn.setSelected(true);
+                else if ("teams".equals(platform)) teamsBtn.setSelected(true);
+                else if (platform != null) customBtn.setSelected(true);
             }
 
             // Event type
@@ -3384,13 +4096,20 @@ public class CalendarController implements Initializable {
                 oneTimeBtn.setSelected(true);
             }
         } else {
+            // New event defaults
             datePicker.setValue(currentDate);
             priorityButtons[1].setSelected(true); // Standard
             oneTimeBtn.setSelected(true);
+            publicBtn.setSelected(true);
         }
 
-        // Add all sections to main content
+        // ═══════════════════════════════════════════════════════════════════════
+        // ADD ALL SECTIONS TO MAIN CONTENT
+        // ═══════════════════════════════════════════════════════════════════════
+
         mainContent.getChildren().addAll(
+                visibilitySection,  // ← NOW INCLUDES sharedUsersBox
+                meetingSection,
                 titleSection,
                 descSection,
                 dateSection,
@@ -3401,23 +4120,20 @@ public class CalendarController implements Initializable {
                 completedCheck
         );
 
-        // ✨ WRAP IN SCROLLPANE TO PREVENT BUTTON DISAPPEARING
+        // Wrap in ScrollPane
         ScrollPane scrollPane = new ScrollPane(mainContent);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setStyle("-fx-background: #f9fafb; -fx-background-color: #f9fafb;");
-        scrollPane.setPrefHeight(500); // Max height before scrolling
+        scrollPane.setPrefHeight(500);
         scrollPane.setMaxHeight(600);
 
-        // Combine header and scrollable content
         VBox fullContent = new VBox(0);
         fullContent.getChildren().addAll(headerBox, scrollPane);
 
         dialog.getDialogPane().setContent(fullContent);
         dialog.getDialogPane().setStyle("-fx-background-color: #f9fafb;");
-
-        // ✨ ENSURE DIALOG HAS PROPER SIZE
         dialog.getDialogPane().setPrefWidth(600);
 
         // Style buttons
@@ -3477,7 +4193,8 @@ public class CalendarController implements Initializable {
                     !titleField.getText().trim().isEmpty() &&
                     datePicker.getValue() != null &&
                     priorityGroup.getSelectedToggle() != null &&
-                    eventTypeGroup.getSelectedToggle() != null;
+                    eventTypeGroup.getSelectedToggle() != null &&
+                    visibilityGroup.getSelectedToggle() != null;
             saveButton.setDisable(!isValid);
         };
 
@@ -3485,10 +4202,14 @@ public class CalendarController implements Initializable {
         datePicker.valueProperty().addListener((obs, old, n) -> validateInput.run());
         priorityGroup.selectedToggleProperty().addListener((obs, old, n) -> validateInput.run());
         eventTypeGroup.selectedToggleProperty().addListener((obs, old, n) -> validateInput.run());
+        visibilityGroup.selectedToggleProperty().addListener((obs, old, n) -> validateInput.run());
 
         validateInput.run();
 
-        // Result converter
+        // ═══════════════════════════════════════════════════════════════════════
+        // RESULT CONVERTER
+        // ═══════════════════════════════════════════════════════════════════════
+
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
                 CalendarEvent event = existingEvent != null ? existingEvent : new CalendarEvent();
@@ -3506,6 +4227,7 @@ public class CalendarController implements Initializable {
                 ToggleButton selectedType = (ToggleButton) eventTypeGroup.getSelectedToggle();
                 event.setEventType((CalendarEvent.EventType) selectedType.getUserData());
 
+                // Handle recurring
                 if (event.getEventType() == CalendarEvent.EventType.RECURRING_EVENT) {
                     event.setPeriodicType(periodicTypeCombo.getValue());
 
@@ -3529,19 +4251,136 @@ public class CalendarController implements Initializable {
                     }
                 }
 
+                // Save visibility
+                ToggleButton selectedVis = (ToggleButton) visibilityGroup.getSelectedToggle();
+                CalendarEvent.EventVisibility visibility =
+                        (CalendarEvent.EventVisibility) selectedVis.getUserData();
+                event.setVisibility(visibility);
+
+                System.out.println("📋 Saving event with visibility: " + visibility);
+
+                // Save shared users only if SHARED
+                if (visibility == CalendarEvent.EventVisibility.SHARED) {
+                    List<String> selectedUserIds = new ArrayList<>();
+                    for (User user : userListView.getSelectionModel().getSelectedItems()) {
+                        selectedUserIds.add(user.getId());
+                    }
+                    event.setSharedWithUserIds(selectedUserIds);
+                    System.out.println("   Shared with " + selectedUserIds.size() + " users");
+
+                    event.setSharedWithEmails(new ArrayList<>(externalEmailsList));
+                    System.out.println("   Shared with " + externalEmailsList.size() + " external emails");
+                } else {
+                    event.setSharedWithUserIds(new ArrayList<>());
+                    event.setSharedWithEmails(new ArrayList<>());
+                }
+
+                // Save meeting info
+                if (hasMeetingCheck.isSelected() && !meetingLinkField.getText().trim().isEmpty()) {
+                    event.setMeetingLink(meetingLinkField.getText().trim());
+                    event.setMeetingPassword(passwordField.getText().trim());
+
+                    Toggle selectedPlatform = platformGroup.getSelectedToggle();
+                    if (selectedPlatform != null) {
+                        event.setMeetingPlatform((String) selectedPlatform.getUserData());
+                    }
+                } else {
+                    event.setMeetingLink(null);
+                    event.setHasMeetingLink(false);
+                }
+
+                // Set creator
+                if (event.getCreatorUserId() == null) {
+                    event.setCreatorUserId(currentUser.getId());
+                }
+
                 return event;
             }
             return null;
         });
 
+        // Show dialog and handle result
         dialog.showAndWait().ifPresent(event -> {
-            if (existingEvent == null || existingEvent.getTitle() == null) {
+            boolean isNew = existingEvent == null || existingEvent.getTitle() == null;
+
+            if (isNew) {
                 plannerManager.addEvent(event);
             } else {
                 plannerManager.updateEvent(event);
             }
+
+            // Send email notifications for shared events
+            if (event.getVisibility() == CalendarEvent.EventVisibility.SHARED) {
+                sendEventInvitations(event, isNew);
+            }
+
             updateView();
         });
+    }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔧 NEW: EMAIL NOTIFICATION METHOD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+    private void showEmailError(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Invalid Email");
+        alert.setHeaderText("Email Validation Error");
+        alert.setContentText(message);
+
+        // Style the dialog
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: white;");
+
+        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+        if (okButton != null) {
+            okButton.setStyle(
+                    "-fx-background-color: #f59e0b; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-background-radius: 8; " +
+                            "-fx-padding: 8 20; " +
+                            "-fx-font-weight: 600; " +
+                            "-fx-cursor: hand;"
+            );
+        }
+
+        alert.showAndWait();
+    }
+
+    /**
+     * Send email invitations to external users
+     */
+    private void sendEventInvitations(CalendarEvent event, boolean isNewEvent) {
+        List<String> externalEmails = event.getSharedWithEmails();
+
+        if (externalEmails == null || externalEmails.isEmpty()) {
+            return;
+        }
+
+        // Run in background thread to not block UI
+        new Thread(() -> {
+            try {
+                EmailNotificationService emailService = new EmailNotificationService();
+
+                for (String email : externalEmails) {
+                    boolean sent = emailService.sendEventInvitation(
+                            email,
+                            event,
+                            currentUser,
+                            isNewEvent ? "You've been invited to an event" : "Event updated"
+                    );
+
+                    if (sent) {
+                        System.out.println("📧 Email sent to: " + email);
+                    } else {
+                        System.err.println("❌ Failed to send email to: " + email);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Error sending invitations: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void setupItemContextMenu(Node node, PlannerItem item) {
@@ -3621,6 +4460,21 @@ public class CalendarController implements Initializable {
         updateView();
     }
 
+    private String generateMeetingCode() {
+        // Google Meet format: xxx-yyyy-zzz
+        Random random = new Random();
+        StringBuilder code = new StringBuilder();
+
+        for (int i = 0; i < 3; i++) {
+            if (i > 0) code.append("-");
+            for (int j = 0; j < (i == 1 ? 4 : 3); j++) {
+                code.append((char) ('a' + random.nextInt(26)));
+            }
+        }
+
+        return code.toString();
+    }
+
     public void setViewType(ViewType viewType) {
         this.currentView = viewType;
         switch (viewType) {
@@ -3628,6 +4482,7 @@ public class CalendarController implements Initializable {
             case WEEK -> weekViewButton.setSelected(true);
             case MONTH -> monthViewButton.setSelected(true);
             case YEAR -> yearViewButton.setSelected(true);
+            case KANBAN -> kanbanViewButton.setSelected(true);
         }
     }
 

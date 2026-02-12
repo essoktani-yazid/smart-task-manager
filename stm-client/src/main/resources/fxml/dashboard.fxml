@@ -27,64 +27,60 @@
                 </padding>
                 
                 <StackPane fx:id="moodContainer" styleClass="mood-indicator-container">
-                    <Label fx:id="moodEmojiLabel" style="-fx-font-size: 36px;" text="⏳" />
+                     <Label fx:id="moodEmojiLabel" style="-fx-font-size: 36px;" text="⏳" />
                 </StackPane>
 
                 <VBox spacing="5" HBox.hgrow="ALWAYS">
-                    <Label fx:id="insightTitleLabel" styleClass="insight-title" text="Connexion à votre coach..." />
-                    <Label fx:id="insightMessageLabel" styleClass="insight-message" text="Analyse de vos performances en cours..." wrapText="true" />
+                    <Label fx:id="insightTitleLabel" styleClass="insight-title" text="Analyzing..." />
+                    <Label fx:id="insightMessageLabel" styleClass="insight-message" text="Loading your stats..." wrapText="true" />
                 </VBox>
 
-                <Button fx:id="smartActionButton" styleClass="btn-smart-action" text="Optimize Schedule" visible="false">
-                    <graphic>
-                        <SVGPath content="M7.5 5.6L10 8l4-4M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" style="-fx-fill: white;" />
-                    </graphic>
-                </Button>
+                <Button fx:id="smartActionButton" styleClass="btn-smart-action" visible="false" />
             </HBox>
 
             <HBox spacing="20">
                 <VBox HBox.hgrow="ALWAYS" styleClass="metric-card">
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <StackPane styleClass="icon-container, icon-purple">
-                            <SVGPath content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" styleClass="metric-icon" />
+                            <SVGPath content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" styleClass="metric-icon" />
                         </StackPane>
-                        <Label styleClass="metric-label" text="Productivity Score" />
+                        <Label styleClass="metric-label" text="Productivity" />
                     </HBox>
                     <Region VBox.vgrow="ALWAYS" />
                     <Label fx:id="productivityScoreLabel" styleClass="metric-value" text="0%" />
-                    <Label fx:id="productivityTrendLabel" styleClass="metric-trend, trend-neutral" text="..." />
+                    <Label fx:id="productivityTrendLabel" styleClass="metric-trend" text="..." />
                 </VBox>
 
                 <VBox HBox.hgrow="ALWAYS" styleClass="metric-card">
                     <HBox alignment="CENTER_LEFT" spacing="10">
-                        <StackPane styleClass="icon-container, icon-blue">
-                            <SVGPath content="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" styleClass="metric-icon" />
+                        <StackPane styleClass="icon-container, icon-red">
+                            <SVGPath content="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" styleClass="metric-icon" />
                         </StackPane>
-                        <Label styleClass="metric-label" text="Time Tracked" />
+                        <Label styleClass="metric-label" text="Overdue" />
                     </HBox>
                     <Region VBox.vgrow="ALWAYS" />
-                    <Label fx:id="timeTrackedLabel" styleClass="metric-value" text="0h 0m" />
-                    <Label styleClass="metric-trend, trend-neutral" text="On track for goals" />
+                    <Label fx:id="overdueTasksLabel" styleClass="metric-value, text-red" text="0" />
+                    <Label styleClass="metric-trend" text="Critical tasks" />
                 </VBox>
 
                 <VBox HBox.hgrow="ALWAYS" styleClass="metric-card">
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <StackPane styleClass="icon-container, icon-green">
-                            <SVGPath content="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" styleClass="metric-icon" />
+                            <SVGPath content="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" styleClass="metric-icon" />
                         </StackPane>
-                        <Label styleClass="metric-label" text="Tasks Done" />
+                        <Label styleClass="metric-label" text="Completed" />
                     </HBox>
                     <Region VBox.vgrow="ALWAYS" />
                     <Label fx:id="tasksDoneLabel" styleClass="metric-value" text="0" />
-                    <Label styleClass="metric-trend, trend-down" text="Analytics Ready" />
+                    <Label styleClass="metric-trend" text="Total done" />
                 </VBox>
             </HBox>
 
             <HBox spacing="20" VBox.vgrow="ALWAYS">
                 <VBox HBox.hgrow="ALWAYS" styleClass="chart-card">
-                    <Label styleClass="chart-title" text="Performance Trends" />
+                    <Label styleClass="chart-title" text="Weekly Performance" />
                     <BarChart fx:id="performanceChart" legendVisible="false" verticalGridLinesVisible="false">
-                        <xAxis>
+                         <xAxis>
                             <CategoryAxis label="Day" />
                         </xAxis>
                         <yAxis>
@@ -94,8 +90,15 @@
                 </VBox>
 
                 <VBox HBox.hgrow="ALWAYS" styleClass="chart-card">
-                    <Label styleClass="chart-title" text="Time Distribution" />
-                    <PieChart fx:id="timeDistributionChart" labelsVisible="true" legendSide="BOTTOM" />
+                    <Label styleClass="chart-title" text="Project Distribution" />
+                    <PieChart fx:id="timeDistributionChart" legendSide="BOTTOM" labelsVisible="false" />
+                </VBox>
+
+                <VBox spacing="15" styleClass="chart-card" HBox.hgrow="ALWAYS" prefWidth="250">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label styleClass="chart-title" text="🔥 Urgent Tasks" />
+                    </HBox>
+                    <VBox fx:id="upcomingTasksContainer" spacing="10" />
                 </VBox>
             </HBox>
 

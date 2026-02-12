@@ -7,15 +7,15 @@
     -fx-background-color: transparent;
 }
 .dashboard-container {
-    -fx-background-color: linear-gradient(to bottom right, #fdfbfb 0%, #ebedee 100%);
+    -fx-background-color: linear-gradient(to bottom right, #f8fafc 0%, #f1f5f9 100%);
 }
 
 /* --- SMART HEADER (AI INSIGHT) --- */
 .smart-header-card {
     -fx-background-color: white;
     -fx-background-radius: 20;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 5);
-    -fx-border-color: rgba(99, 102, 241, 0.2); /* Bordure Indigo légère */
+    -fx-effect: dropshadow(three-pass-box, rgba(99, 102, 241, 0.15), 20, 0, 0, 6);
+    -fx-border-color: rgba(99, 102, 241, 0.2);
     -fx-border-radius: 20;
     -fx-border-width: 1;
 }
@@ -30,12 +30,12 @@
 .insight-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-text-fill: #4F46E5; /* Indigo */
+    -fx-text-fill: #4F46E5;
 }
 
 .insight-message {
     -fx-font-size: 14px;
-    -fx-text-fill: #4B5563; /* Gris */
+    -fx-text-fill: #4B5563;
 }
 
 .btn-smart-action {
@@ -52,11 +52,18 @@
 
 /* --- METRIC CARDS --- */
 .metric-card {
-    -fx-background-color: white;
-    -fx-background-radius: 15;
+    -fx-background-color: linear-gradient(to bottom right, #ffffff, #fdfdfd);
+    -fx-background-radius: 16;
     -fx-padding: 20;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 15, 0, 0, 4);
+    -fx-border-color: white;
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
     -fx-min-height: 140px;
+}
+.metric-card:hover {
+    -fx-translate-y: -2;
+    -fx-effect: dropshadow(three-pass-box, rgba(79, 70, 229, 0.1), 20, 0, 0, 8);
 }
 
 .metric-label {
@@ -71,15 +78,17 @@
     -fx-font-size: 28px;
 }
 
+.text-red { -fx-text-fill: #EF4444; }
+
 .metric-trend {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
 }
-.trend-up { -fx-text-fill: #10B981; } /* Vert */
-.trend-down { -fx-text-fill: #EF4444; } /* Rouge */
-.trend-neutral { -fx-text-fill: #6B7280; } /* Gris */
+.trend-up { -fx-text-fill: #10B981; }
+.trend-down { -fx-text-fill: #EF4444; }
+.trend-neutral { -fx-text-fill: #6B7280; }
 
-/* Icons backgrounds */
+/* Icons */
 .icon-container {
     -fx-background-radius: 10;
     -fx-min-width: 32px; -fx-min-height: 32px;
@@ -88,24 +97,51 @@
 .icon-purple { -fx-background-color: rgba(139, 92, 246, 0.1); }
 .icon-blue   { -fx-background-color: rgba(59, 130, 246, 0.1); }
 .icon-green  { -fx-background-color: rgba(16, 185, 129, 0.1); }
+.icon-red    { -fx-background-color: rgba(239, 68, 68, 0.1); }
 
-.metric-icon {
-    -fx-scale-x: 1.2; -fx-scale-y: 1.2;
-}
+.metric-icon { -fx-scale-x: 1.2; -fx-scale-y: 1.2; }
 .icon-purple .metric-icon { -fx-fill: #8B5CF6; }
 .icon-blue .metric-icon   { -fx-fill: #3B82F6; }
 .icon-green .metric-icon  { -fx-fill: #10B981; }
+.icon-red .metric-icon    { -fx-fill: #EF4444; }
 
 /* --- CHART CARDS --- */
 .chart-card {
     -fx-background-color: white;
-    -fx-background-radius: 15;
+    -fx-background-radius: 16;
     -fx-padding: 20;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 10, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 10, 0, 0, 3);
 }
 .chart-title {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #374151;
     -fx-padding: 0 0 10 0;
+}
+
+/* --- PIE CHART LEGEND FIX (Solution 3) --- */
+.chart-pie .chart-legend {
+    -fx-background-color: transparent;
+    -fx-padding: 10px;
+}
+.chart-pie .chart-legend-item {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4B5563;
+}
+.chart-pie .chart-legend-item-symbol {
+    -fx-background-radius: 50%;
+}
+
+/* --- TASK ROWS --- */
+.task-row {
+    -fx-background-color: #F9FAFB;
+    -fx-background-radius: 8;
+    -fx-border-color: #F3F4F6;
+    -fx-border-radius: 8;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+.task-row:hover {
+    -fx-background-color: #F3F4F6;
 }

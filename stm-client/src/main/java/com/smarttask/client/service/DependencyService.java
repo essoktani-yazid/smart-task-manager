@@ -3,6 +3,7 @@ package com.smarttask.client.service;
 import com.google.gson.Gson;
 import com.smarttask.client.util.GsonUtils;
 import com.google.gson.reflect.TypeToken;
+import com.smarttask.client.config.AppConfig;
 import com.smarttask.model.TaskDependency;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.*;
@@ -16,7 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class DependencyService {
-    private static final String BASE_URL = "http://localhost:8080/api/dependencies";
+
+    private static final String BASE_URL = AppConfig.API_URL + "/dependencies";
+
     private final Gson gson = GsonUtils.getGson();
 
     public List<TaskDependency> getPredecessors(String taskId) {

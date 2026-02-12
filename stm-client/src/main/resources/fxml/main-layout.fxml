@@ -84,7 +84,7 @@
                   <HBox alignment="CENTER_LEFT" spacing="12.0" onMouseClicked="#showProfile" style="-fx-cursor: hand;">
                      <children>
                         <StackPane styleClass="avatar-circle">
-                           <Label text="Y" textFill="WHITE" style="-fx-font-weight: bold;"/>
+                           <Label fx:id="userInitialLabel" text="U" textFill="WHITE" style="-fx-font-weight: bold;"/>
                         </StackPane>
                         <VBox>
                            <Label fx:id="userLabel" text="" styleClass="user-name" />

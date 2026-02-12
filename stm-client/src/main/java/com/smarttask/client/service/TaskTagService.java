@@ -2,7 +2,7 @@ package com.smarttask.client.service;
 
 import com.smarttask.model.TaskTag;
 import com.smarttask.client.util.GsonUtils;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -20,7 +20,7 @@ public class TaskTagService {
      * Pointe automatiquement vers le serveur local port 8090.
      */
     public TaskTagService() {
-        this.baseUrl = "http://localhost:8080";
+        this.baseUrl = AppConfig.API_URL;
         this.client = HttpClient.newHttpClient();
     }
 
@@ -34,7 +34,7 @@ public class TaskTagService {
 
     public List<TaskTag> listByTaskId(String taskId) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/tags/task/" + taskId))
+                .uri(URI.create(baseUrl + "/tags/task/" + taskId))
                 .GET()
                 .build();
         HttpResponse<String> resp = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -50,7 +50,7 @@ public class TaskTagService {
     public TaskTag add(TaskTag tag) throws IOException, InterruptedException {
         String json = GsonUtils.getGson().toJson(tag);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/tags"))
+                .uri(URI.create(baseUrl + "/tags"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -66,7 +66,7 @@ public class TaskTagService {
         String encodedTag = tagName.replace(" ", "%20");
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/api/tags/" + taskId + "/" + encodedTag))
+                .uri(URI.create(baseUrl + "/tags/" + taskId + "/" + encodedTag))
                 .DELETE()
                 .build();
         HttpResponse<String> resp = client.send(request, HttpResponse.BodyHandlers.ofString());

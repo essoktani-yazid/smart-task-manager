@@ -12,7 +12,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -49,7 +49,7 @@ public class TaskDetailController {
     @FXML private Label timerLabel;
 
     // Services
-    private final String BASE_URL = "http://localhost:8090";
+    private final String BASE_URL = AppConfig.API_URL;
     private final TaskService taskService = new TaskService();
     private final TaskTagService tagService = new TaskTagService(BASE_URL);
     private final CommentService commentService = new CommentService();

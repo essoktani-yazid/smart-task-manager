@@ -2,7 +2,7 @@ package com.smarttask.client.service;
 
 import com.smarttask.model.TaskDependency;
 import com.smarttask.client.util.GsonUtils;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Arrays;
 
 public class TaskDependencyService {
-    private String baseUrl = "http://localhost:8080/api/task-dependencies";
+
+    private String baseUrl = AppConfig.API_URL + "/task-dependencies";
+
     private final HttpClient client;
 
     public TaskDependencyService() {
@@ -21,7 +23,7 @@ public class TaskDependencyService {
 
     public TaskDependencyService(String baseUrl) {
         this.client = HttpClient.newHttpClient();
-        this.baseUrl = baseUrl.endsWith("/api/task-dependencies") ? baseUrl : baseUrl + "/api/task-dependencies";
+        this.baseUrl = baseUrl.endsWith("/api/task-dependencies") ? baseUrl : baseUrl + "/task-dependencies";
     }
 
     /**

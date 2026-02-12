@@ -26,6 +26,7 @@ import java.util.concurrent.CompletionStage;
 
 
 public class MainLayoutController {
+
     private final com.google.gson.Gson gson = com.smarttask.client.util.GsonUtils.getGson();
     private class GlobalWebSocketListener implements WebSocket.Listener {
         @Override
@@ -46,10 +47,13 @@ public class MainLayoutController {
     }
 
     @FXML private StackPane contentPane;
+    
+    // --- User Profile Components ---
     @FXML private Label userLabel;
     @FXML private Label userEmailLabel;
-    
-    // Boutons de navigation
+    @FXML private Label userInitialLabel; // Label pour l'initiale dans le cercle
+
+    // --- Navigation Buttons ---
     @FXML private Button tasksButton;
     @FXML private Button calendarButton;
     @FXML private Button aiButton;
@@ -113,47 +117,71 @@ public class MainLayoutController {
         showTasks();
     }
 
+    /**
+     * Définit l'utilisateur actuel et met à jour les éléments de la barre latérale.
+     */
     public void setCurrentUser(User user) {
         this.currentUser = user;
         if (user != null) {
-            String name = (user.getFirstName() != null && user.getLastName() != null) 
-                          ? user.getFirstName() + " " + user.getLastName() 
-                          : user.getUsername();
-            userLabel.setText(name);
+            // 1. Déterminer le nom à afficher (Prénom + Nom ou Username)
+            String displayName = user.getUsername();
+            if (user.getFirstName() != null && !user.getFirstName().isEmpty()) {
+                displayName = user.getFirstName();
+                if (user.getLastName() != null && !user.getLastName().isEmpty()) {
+                    displayName += " " + user.getLastName();
+                }
+            }
+            
+            userLabel.setText(displayName);
             userEmailLabel.setText(user.getEmail());
 
+            if (displayName != null && !displayName.isEmpty()) {
+                userInitialLabel.setText(displayName.substring(0, 1).toUpperCase());
+            } else {
+                userInitialLabel.setText("?");
+            }
+
             connectWebSocket();
+            showTasks();
         }
     }
 
-    // --- Navigation ---
+    // --- Navigation Actions ---
 
-    @FXML private void showTasks() {
-        if(loadView("/fxml/dashboard.fxml")) setActiveButton(tasksButton);
+    @FXML 
+    private void showTasks() {
+        if (loadView("/fxml/dashboard.fxml")) setActiveButton(tasksButton);
     }
 
-    @FXML private void showCalendar() {
-        if(loadView("/fxml/calendar-view.fxml")) setActiveButton(calendarButton);
+    @FXML 
+    private void showCalendar() {
+        if (loadView("/fxml/calendar-view.fxml")) setActiveButton(calendarButton);
     }
 
-    @FXML private void showAI() {
-        if(loadView("/fxml/ai-view.fxml")) setActiveButton(aiButton);
+    @FXML 
+    private void showAI() {
+        if (loadView("/fxml/ai-view.fxml")) setActiveButton(aiButton);
     }
 
-    @FXML private void showTeams() {
-        if(loadView("/fxml/teams/root-view.fxml")) setActiveButton(teamsButton);
+    @FXML 
+    private void showTeams() {
+        if (loadView("/fxml/teams/root-view.fxml")) setActiveButton(teamsButton);
     }
 
     @FXML private void showProjects() {
         if(loadView("/fxml/projects/root-view.fxml")) setActiveButton(projectsButton);
     }
 
-    @FXML private void showAnalytics() {
-        if(loadView("/fxml/analytics-view.fxml")) setActiveButton(analyticsButton);
+    @FXML 
+    private void showAnalytics() {
+        if (loadView("/fxml/analytics-view.fxml")) setActiveButton(analyticsButton);
     }
 
-    @FXML private void showProfile() {
-        if(loadView("/fxml/profile.fxml")) setActiveButton(profileButton); // Optionnel: garder le dernier bouton actif ou non
+    @FXML 
+    private void showProfile() {
+        // On charge la vue profil, mais on peut ne pas changer le bouton actif 
+        // ou avoir un bouton dédié si vous le souhaitez.
+        loadView("/fxml/profile.fxml");
     }
 
     @FXML
@@ -170,22 +198,23 @@ public class MainLayoutController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
             Parent root = loader.load();
-            Stage stage = (Stage) logoutButton.getScene().getWindow();
             
+            Stage stage = (Stage) logoutButton.getScene().getWindow();
             Scene scene = new Scene(root);
-            // Assurez-vous que le CSS login est chargé si nécessaire
-            // scene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
             
             stage.setScene(scene);
-            stage.setTitle("SmartTaskManager - Connexion");
+            stage.setTitle("SmartTask.AI - Login");
             stage.centerOnScreen();
             
-            currentUser = null;
+            this.currentUser = null;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Charge une vue FXML dans le contentPane et injecte l'utilisateur courant.
+     */
     private boolean loadView(String fxmlPath) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -193,8 +222,8 @@ public class MainLayoutController {
 
             this.currentController = loader.getController();
 
-            // Injection de l'utilisateur dans les contrôleurs enfants
             Object controller = loader.getController();
+            
             if (controller instanceof DashboardController && currentUser != null) {
                 ((DashboardController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof ProfileController && currentUser != null) {
@@ -205,25 +234,28 @@ public class MainLayoutController {
                 ((ProjectViewController) controller).setCurrentUser(currentUser);
             } else if (controller instanceof NotificationsController && currentUser != null) {
                 ((NotificationsController) controller).setCurrentUser(currentUser);
+            } else if (controller instanceof CalendarController && currentUser != null) {
+                ((CalendarController) controller).setCurrentUser(currentUser);
             }
 
             contentPane.getChildren().clear();
             contentPane.getChildren().add(view);
             return true;
         } catch (IOException e) {
-            System.err.println("Erreur chargement vue: " + fxmlPath);
+            System.err.println("Error loading view: " + fxmlPath);
             e.printStackTrace();
             return false;
         }
     }
 
+    /**
+     * Gère l'aspect visuel des boutons (style .active défini dans le CSS).
+     */
     private void setActiveButton(Button button) {
-        // Retirer la classe 'active' de l'ancien bouton
         if (currentActiveButton != null) {
             currentActiveButton.getStyleClass().remove("active");
         }
         
-        // Ajouter la classe 'active' au nouveau bouton
         if (button != null) {
             if (!button.getStyleClass().contains("active")) {
                 button.getStyleClass().add("active");
@@ -294,3 +326,4 @@ public class MainLayoutController {
         );
     }
 }
+

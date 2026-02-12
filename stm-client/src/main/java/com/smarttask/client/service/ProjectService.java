@@ -2,6 +2,7 @@ package com.smarttask.client.service;
 
 import com.google.gson.Gson;
 import com.smarttask.client.util.GsonUtils;
+import com.smarttask.client.config.AppConfig;
 import com.google.gson.reflect.TypeToken;
 import com.smarttask.model.Project;
 import com.smarttask.model.Team;
@@ -13,62 +14,86 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Collections;
 
 public class ProjectService {
-    private String baseUrl = "http://127.0.0.1:8080/api/projects";
+
+    private String baseUrl = AppConfig.API_URL + "/projects";
+
     private final Gson gson = GsonUtils.getGson();
+    // ⚡ OPTIMISÉ: HttpClient réutilisable avec HTTP/2
+    private final HttpClient client;
 
     // Constructeur 1 : Sans arguments (pour la compatibilité)
     public ProjectService() {
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
     }
 
     // Constructeur 2 : Avec l'URL (pour la flexibilité dans ProjectsViewController)
     public ProjectService(String url) {
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
         // Si l'URL reçue est juste l'hôte (ex: http://127.0.0.1:8090), on ajoute le chemin
-        if (url != null && !url.contains("/api/projects")) {
-            this.baseUrl = url + "/api/projects";
+        if (url != null && !url.contains("/projects")) {
+            this.baseUrl = url + "/projects";
         } else {
             this.baseUrl = url;
         }
     }
 
     public List<Project> getProjectsByUser(String userId) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpGet request = new HttpGet(baseUrl + "/" + userId + "/user");
-            request.setHeader("Content-Type", "application/json");
+        try {
+            // ⚡ OPTIMISÉ: Utilisation de Java 11 HttpClient
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/" + userId + "/user"))
+                    .header("Content-Type", "application/json")
+                    .GET()
+                    .build();
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                HttpEntity entity = response.getEntity();
-                String body = EntityUtils.toString(entity, StandardCharsets.UTF_8);
-                if (statusCode == 200) {
-                    Type listType = new TypeToken<List<Project>>(){}.getType();
-                    return gson.fromJson(body, listType);
-                } else {
-                    System.err.println("Error loading projects: " + body);
-                    return null;
-                }
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                Type listType = new TypeToken<List<Project>>(){}.getType();
+                return gson.fromJson(response.body(), listType);
+            } else {
+                System.err.println("Error loading projects: " + response.body());
+                return Collections.emptyList();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            return Collections.emptyList();
         }
     }
 
     public Project createProject(Project project) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPost request = new HttpPost(baseUrl);
-            request.setHeader("Content-Type", "application/json");
+        try {
+            // ⚡ OPTIMISÉ: Java 11 HttpClient
             String json = gson.toJson(project);
-            request.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int status = response.getStatusLine().getStatusCode();
-                String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                if (status == 201) return gson.fromJson(body, Project.class);
-                System.err.println("Error creating project: " + body);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 201) {
+                return gson.fromJson(response.body(), Project.class);
+            } else {
+                System.err.println("Error creating project: " + response.body());
                 return null;
             }
         } catch (Exception e) {
@@ -78,16 +103,21 @@ public class ProjectService {
     }
 
     public Project updateProject(Project project) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPut request = new HttpPut(baseUrl + "/" + project.getId());
-            request.setHeader("Content-Type", "application/json");
+        try {
+            // ⚡ OPTIMISÉ: Java 11 HttpClient
             String json = gson.toJson(project);
-            request.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int status = response.getStatusLine().getStatusCode();
-                String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                if (status == 200) return gson.fromJson(body, Project.class);
-                System.err.println("Error updating project: " + body);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/" + project.getId()))
+                    .header("Content-Type", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                return gson.fromJson(response.body(), Project.class);
+            } else {
+                System.err.println("Error updating project: " + response.body());
                 return null;
             }
         } catch (Exception e) {
@@ -97,13 +127,16 @@ public class ProjectService {
     }
 
     public boolean deleteProject(String projectId) {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpDelete request = new HttpDelete(baseUrl + "/" + projectId);
-            request.setHeader("Content-Type", "application/json");
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int status = response.getStatusLine().getStatusCode();
-                return status == 200;
-            }
+        try {
+            // ⚡ OPTIMISÉ: Java 11 HttpClient
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/" + projectId))
+                    .header("Content-Type", "application/json")
+                    .DELETE()
+                    .build();
+            
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

@@ -108,3 +108,24 @@
     -fx-text-fill: #ef4444;
     -fx-font-size: 12px;
 }
+/* Style du Spinner */
+.progress-indicator .percentage {
+    -fx-visibility: hidden; /* Cache le texte "%" */
+}
+
+.progress-indicator .indicator {
+    -fx-background-color: transparent;
+}
+
+.progress-indicator .progress {
+    -fx-stroke: #9333ea; /* Couleur violette du thème */
+    -fx-fill: null;
+}
+
+.progress-indicator:indeterminate .segment {
+    -fx-background-color: #9333ea;
+}
+
+.progress-indicator:indeterminate .segment:nth-child(2n) {
+    -fx-background-color: #ec4899; /* Touche de rose */
+}

@@ -3,7 +3,7 @@ package com.smarttask.client.service;
 import com.google.gson.Gson;
 import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.Comment;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,8 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CommentService {
-    // Port 8090 (Correspond à votre serveur)
-    private String baseUrl = "http://localhost:8080/api/comments";
+
+    private String baseUrl = AppConfig.API_URL + "/comments";
 
     private final HttpClient client;
     private final Gson gson;
@@ -32,7 +32,7 @@ public class CommentService {
         this.client = HttpClient.newHttpClient();
         this.gson = GsonUtils.getGson();
         // On s'assure que l'URL pointe bien vers le endpoint des commentaires
-        this.baseUrl = url.endsWith("/api/comments") ? url : url + "/api/comments";
+        this.baseUrl = url.endsWith("/comments") ? url : url + "/comments";
     }
 
     /**

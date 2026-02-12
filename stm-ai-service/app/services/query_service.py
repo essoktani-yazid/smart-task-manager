@@ -1,9 +1,81 @@
 import json
+import re
 from fastapi import WebSocketDisconnect
 from app.database import db
-from app.services.ai_service import call_llm
+from app.services.ai_service import stream_llm_response
 from app.rag import prompts
 from app.utils.logger import log
+
+# --- UTILITAIRES ---
+def _fix_control_chars_in_strings(s: str) -> str:
+    """Échappe les caractères de contrôle (ex: retours à la ligne) dans les valeurs des chaînes JSON."""
+    def replacer(match):
+        content = match.group(1)
+        content = content.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t")
+        for i in range(32):
+            if i not in (9, 10, 13):
+                content = content.replace(chr(i), " ")
+        return '"' + content + '"'
+    return re.sub(r'"((?:[^"\\]|\\.)*)"', replacer, s)
+
+
+def clean_llm_json(response: str) -> str:
+    """
+    Nettoie la réponse LLM pour extraction JSON.
+    Retire les balises markdown ```json et ``` si présentes.
+    Corrige les caractères de contrôle invalides (retours à la ligne bruts dans les chaînes).
+    
+    Args:
+        response: La réponse brute du LLM
+        
+    Returns:
+        JSON nettoyé sans balises markdown
+    """
+    cleaned = response.strip()
+    
+    # Retirer balises markdown ```json
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]  # Enlever ```json
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]  # Enlever ```
+        cleaned = cleaned.strip()
+    # Retirer balises markdown ```
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:]  # Enlever ```
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]  # Enlever ```
+        cleaned = cleaned.strip()
+    
+    # Corriger les caractères de contrôle invalides dans les chaînes JSON
+    cleaned = _fix_control_chars_in_strings(cleaned)
+    
+    # Extraire uniquement l'objet JSON (ignorer texte avant/après)
+    # Le LLM ajoute parfois des notes après le JSON: *(Note: ...)*
+    start = cleaned.find('{')
+    if start != -1:
+        depth = 0
+        in_string = False
+        escape = False
+        for i, ch in enumerate(cleaned[start:], start):
+            if escape:
+                escape = False
+                continue
+            if ch == '\\' and in_string:
+                escape = True
+                continue
+            if ch == '"' and not escape:
+                in_string = not in_string
+                continue
+            if not in_string:
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+                    if depth == 0:
+                        cleaned = cleaned[start:i+1]
+                        break
+    
+    return cleaned
 
 # --- UTILITAIRES D'ENVOI SÉCURISÉ ---
 async def safe_send(websocket, data: dict):
@@ -32,16 +104,23 @@ async def handle_user_request(websocket, user_id, user_message):
     
     # Appel au LLM pour obtenir le JSON (Operation + SQL)
     system_prompt = prompts.get_system_prompt_sql(user_id)
-    ai_res = await call_llm(user_message, system_prompt)
+    # IMPORTANT: return_as_string=True pour parser le JSON
+    ai_res = await stream_llm_response(user_message, system_prompt, return_as_string=True)
     
     try:
-        data = json.loads(ai_res)
+        # Nettoyer la réponse si elle contient des balises markdown
+        cleaned_res = clean_llm_json(ai_res)
+        data = json.loads(cleaned_res)
         op = data["operation_type"]
-        query = data["sql_query"]
+        # Normaliser INFO → INFORMATION
+        if op == "INFO":
+            op = "INFORMATION"
+        query = data.get("sql_query", None)  # Peut être absent pour INFORMATION
         log.ai(f"Opération : {op} | SQL : {query}")
-    except Exception as e:
+    except (KeyError, json.JSONDecodeError) as e:
         log.error(f"Erreur parsing JSON IA : {e}")
-        await send_status(websocket, "Error analyzing request.")
+        log.error(f"Réponse reçue : {ai_res}")
+        await safe_send(websocket, {"display_message": "❌ Error analyzing request. Please try again.", "requires_confirmation": False})
         return
 
     # 2. TRAITEMENT SELON LE TYPE D'OPÉRATION
@@ -62,11 +141,11 @@ async def handle_user_request(websocket, user_id, user_message):
 
         if not await send_status(websocket, f"Found {len(rows)} items. Summarizing..."): return
         
-        # Génération du résumé naturel via le LLM
-        final_text = await call_llm(
+        # Génération du résumé naturel via le LLM (en string complète)
+        final_text = await stream_llm_response(
             prompts.get_final_answer_prompt(user_message, rows), 
-            "You are a helpful assistant.", 
-            is_json=False
+            "You are a helpful assistant.",
+            return_as_string=True
         )
         
         await safe_send(websocket, {"display_message": final_text, "requires_confirmation": False})
@@ -78,10 +157,10 @@ async def handle_user_request(websocket, user_id, user_message):
         if not await send_status(websocket, "Preparing creation request..."): return
         
         # On demande à l'IA de formuler une confirmation propre
-        confirm_text = await call_llm(
+        confirm_text = await stream_llm_response(
             prompts.get_confirmation_prompt(query), 
-            "Assistant de confirmation.", 
-            is_json=False
+            "Assistant de confirmation.",
+            return_as_string=True
         )
         
         await safe_send(websocket, {
@@ -136,10 +215,10 @@ async def handle_user_request(websocket, user_id, user_message):
             if count == 0:
                 log.ai("0 résultat trouvé. Demande d'explication à l'IA...")
                 
-                no_result_msg = await call_llm(
+                no_result_msg = await stream_llm_response(
                     prompts.get_no_results_prompt(user_message, query),
-                    "You are a helpful assistant.", 
-                    is_json=False
+                    "You are a helpful assistant.",
+                    return_as_string=True
                 )
 
                 # IMPORTANT : requires_confirmation=False pour ne pas afficher les boutons
@@ -168,10 +247,10 @@ async def handle_user_request(websocket, user_id, user_message):
                 warning_msg = ""
                 try:
                     # On essaie d'appeler l'IA
-                    warning_msg = await call_llm(
+                    warning_msg = await stream_llm_response(
                         prompts.get_impact_warning_prompt(user_message, count, examples_str, op), # On passe 'op'
                         "Security Assistant",
-                        is_json=False
+                        return_as_string=True
                     )
                 except Exception as llm_error:
                     # SI L'IA PLANTE (KeyError 'choices', Timeout, etc.)
@@ -197,6 +276,17 @@ async def handle_user_request(websocket, user_id, user_message):
                 "display_message": f"❌ An internal error occurred.\nDetails: {str(critical_error)}",
                 "requires_confirmation": False
             })
+    # =========================================================================
+    # CAS 4 : INFORMATION (Requête conversationnelle, pas de SQL)
+    # =========================================================================
+    elif op == "INFORMATION":
+        # La réponse conversationnelle est déjà dans le JSON du LLM
+        response_text = data.get("response", "I'm here to help you manage your tasks! Try asking me something like 'show my tasks'.")
+        
+        await safe_send(websocket, {
+            "display_message": response_text,
+            "requires_confirmation": False
+        })
     
     log.info("--- Fin du traitement ---")
 
@@ -240,10 +330,10 @@ async def execute_and_summarize(websocket, sql_query):
         "If it failed, apologize and explain why."
     )
 
-    final_message = await call_llm(
+    final_message = await stream_llm_response(
         summary_prompt, 
-        "You are a helpful task manager assistant.", 
-        is_json=False
+        "You are a helpful task manager assistant.",
+        return_as_string=True
     )
 
     # 5. Envoi de la réponse finale au client
@@ -262,25 +352,47 @@ async def generate_dashboard_insights(websocket, user_stats):
         stats_str = json.dumps(user_stats)
         prompt_text = prompts.get_dashboard_insight_prompt(stats_str)
         
-        log.ai(f"Envoi du prompt au LLM...")
+        log.ai(f"📊 Génération insights dashboard...")
+        log.ai(f"Stats: {stats_str}")
         
-        # 2. Appel au LLM (CORRECTION ICI : Utilisation des noms de paramètres de ai_service.py)
-        content = await call_llm(
-            prompt=prompt_text,                 # 'user_message' devient 'prompt'
-            system_content="Productivity Coach", # 'system_role' devient 'system_content'
-            is_json=True
+        # 2. Appel au LLM pour obtenir le JSON d'insights
+        content = await stream_llm_response(
+            prompt=prompt_text,
+            system_content="Productivity Coach",
+            return_as_string=True  # On veut un JSON complet
         )
         
+        log.ai(f"Réponse LLM brute: {content[:100]}...")
+        
+        # 2.5 Nettoyer les balises markdown si présentes
+        cleaned_content = clean_llm_json(content)
+        
+        log.ai(f"JSON nettoyé: {cleaned_content[:100]}...")
+        
+        # 2.6 Valider que c'est du JSON valide avant d'envoyer
+        try:
+            json.loads(cleaned_content)  # Test de validation
+            log.success(f"✅ JSON d'insights valide généré")
+        except json.JSONDecodeError as json_err:
+            log.error(f"❌ JSON invalide après nettoyage: {json_err}")
+            log.error(f"Contenu: {cleaned_content}")
+            raise
+        
         # 3. Envoi au client Java
-        await websocket.send_text(content)
+        await websocket.send_text(cleaned_content)
+        log.success(f"📤 Insights envoyés au dashboard")
         
     except Exception as e:
         log.error(f"Erreur lors de la génération d'insights : {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Fallback avec valeurs par défaut
         error_json = {
-            "mood": "🤕",
-            "title": "Erreur Service",
-            "message": f"Erreur interne : {str(e)}",
-            "theme_color": "#9CA3AF",
+            "mood": "🤖",
+            "title": "Dashboard Ready",
+            "message": "Your productivity data is being analyzed. Check back soon!",
+            "theme_color": "#6366F1",
             "action_label": None
         }
-        await websocket.send_json(error_json)
+        await websocket.send_text(json.dumps(error_json))

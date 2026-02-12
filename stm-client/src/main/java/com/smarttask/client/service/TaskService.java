@@ -6,7 +6,7 @@ import com.smarttask.model.Priority;
 import com.smarttask.model.Status;
 import com.smarttask.model.Task;
 import com.smarttask.model.User;
-
+import com.smarttask.client.config.AppConfig;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -24,21 +24,27 @@ import java.util.List;
  */
 public class TaskService {
 
-    // URL par défaut
-    private String baseUrl = "http://localhost:8080/api/tasks";
+
+    private String baseUrl = AppConfig.API_URL + "/tasks";
 
     private final HttpClient client;
     private final Gson gson;
 
-    // Constructeur par défaut
+    // ⚡ OPTIMISÉ: Constructeur avec HTTP/2 et keep-alive
     public TaskService() {
-        this.client = HttpClient.newHttpClient();
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)  // ⚡ HTTP/2 pour multiplexage
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
         this.gson = GsonUtils.getGson();
     }
 
     // Constructeur avec URL personnalisée (si besoin)
     public TaskService(String url) {
-        this.client = HttpClient.newHttpClient();
+        this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)  // ⚡ HTTP/2 pour multiplexage
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
         this.gson = GsonUtils.getGson();
         // Logique pour s'assurer que l'URL est correcte
         this.baseUrl = url.contains("/api/tasks") ? url : url + "/api/tasks";
