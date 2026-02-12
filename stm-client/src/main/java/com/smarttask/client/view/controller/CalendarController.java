@@ -3213,8 +3213,18 @@ public class CalendarController implements Initializable {
     //
     // THE PROBLEM: sharedUsersBox was not being added to visibilitySection!
     //
-    // Replace your entire showEventDialog() method with this one.
-
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════════
+     * UPDATED showEventDialog METHOD
+     * ═══════════════════════════════════════════════════════════════════════════════
+     *
+     * Changes:
+     * - Removed Google Meet, Zoom, Teams platform buttons
+     * - Simple meeting link input only (auto-detects platform from URL)
+     * - KEEPS external email input for non-database users
+     * - Auto-sends emails to INTERNAL users selected from DB (fetches their email)
+     * - External emails still work as before
+     */
     public void showEventDialog(EventPlannerAdapter existingAdapter) {
         CalendarEvent existingEvent = existingAdapter != null ? existingAdapter.getEvent() : null;
 
@@ -3233,7 +3243,6 @@ public class CalendarController implements Initializable {
                 "Create New Event" : "Edit Event");
         headerTitle.setStyle("-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #111827;");
 
-        // Dynamic subtitle based on visibility selection
         Label headerSubtitle = new Label("Add a public event visible to everyone");
         headerSubtitle.setStyle("-fx-font-size: 13; -fx-text-fill: #6b7280;");
 
@@ -3253,410 +3262,6 @@ public class CalendarController implements Initializable {
         VBox mainContent = new VBox(20);
         mainContent.setPadding(new Insets(24));
         mainContent.setStyle("-fx-background-color: #f9fafb;");
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // 🔧 FIX: VISIBILITY & SHARING SECTION - NOW PROPERLY DISPLAYS
-        // ═══════════════════════════════════════════════════════════════════════
-
-        VBox visibilitySection = new VBox(12);
-        visibilitySection.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #e5e7eb; " +
-                        "-fx-border-radius: 12; " +
-                        "-fx-background-radius: 12; " +
-                        "-fx-padding: 16;"
-        );
-
-        Label visibilityLabel = new Label("Who can see this event? *");
-        visibilityLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
-
-        HBox visibilityButtons = new HBox(8);
-        visibilityButtons.setAlignment(Pos.CENTER_LEFT);
-        ToggleGroup visibilityGroup = new ToggleGroup();
-
-        ToggleButton publicBtn = new ToggleButton("🌍 Public");
-        ToggleButton privateBtn = new ToggleButton("🔒 Private");
-        ToggleButton sharedBtn = new ToggleButton("👥 Shared");
-
-        publicBtn.setToggleGroup(visibilityGroup);
-        privateBtn.setToggleGroup(visibilityGroup);
-        sharedBtn.setToggleGroup(visibilityGroup);
-
-        publicBtn.setUserData(CalendarEvent.EventVisibility.PUBLIC);
-        privateBtn.setUserData(CalendarEvent.EventVisibility.PRIVATE);
-        sharedBtn.setUserData(CalendarEvent.EventVisibility.SHARED);
-
-        // Style buttons
-        String visBtnStyle =
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #d1d5db; " +
-                        "-fx-border-width: 2; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8; " +
-                        "-fx-text-fill: #374151; " +
-                        "-fx-font-size: 12; " +
-                        "-fx-font-weight: 600; " +
-                        "-fx-cursor: hand; " +
-                        "-fx-padding: 10 20;";
-
-        String visBtnSelectedStyle =
-                "-fx-background-color: #3b82f6; " +
-                        "-fx-border-color: #3b82f6; " +
-                        "-fx-border-width: 2; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-font-size: 12; " +
-                        "-fx-font-weight: 600; " +
-                        "-fx-cursor: hand; " +
-                        "-fx-padding: 10 20;";
-
-        publicBtn.setStyle(visBtnStyle);
-        privateBtn.setStyle(visBtnStyle);
-        sharedBtn.setStyle(visBtnStyle);
-
-        publicBtn.selectedProperty().addListener((obs, old, sel) ->
-                publicBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
-        privateBtn.selectedProperty().addListener((obs, old, sel) ->
-                privateBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
-        sharedBtn.selectedProperty().addListener((obs, old, sel) ->
-                sharedBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
-
-        visibilityButtons.getChildren().addAll(publicBtn, privateBtn, sharedBtn);
-
-        // Set default selection to PUBLIC
-        publicBtn.setSelected(true);
-
-        // Description label for current selection
-        Label visibilityDesc = new Label("🌍 Everyone can see this event");
-        visibilityDesc.setStyle("-fx-font-size: 11; -fx-text-fill: #6b7280; -fx-font-style: italic;");
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // SHARED USERS SECTION (initially hidden)
-        // ═══════════════════════════════════════════════════════════════════════
-
-        VBox sharedUsersBox = new VBox(12);
-        sharedUsersBox.setVisible(false);
-        sharedUsersBox.setManaged(false);
-        sharedUsersBox.setStyle(
-                "-fx-background-color: #f0f9ff; " +
-                        "-fx-border-color: #bae6fd; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8; " +
-                        "-fx-padding: 16;"
-        );
-
-        Label sharedLabel = new Label("Select people to share with:");
-        sharedLabel.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #0369a1;");
-
-        // User selection (from database)
-        VBox userSelectionBox = new VBox(8);
-        Label userLabel = new Label("👥 Users from system:");
-        userLabel.setStyle("-fx-font-size: 11; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
-
-        ListView<User> userListView = new ListView<>();
-        userListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        userListView.setPrefHeight(120);
-        userListView.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #d1d5db; " +
-                        "-fx-border-radius: 6; " +
-                        "-fx-background-radius: 6;"
-        );
-
-        // Load users from database
-        try {
-            com.smarttask.server.dao.UserDAO userDAO = new com.smarttask.server.dao.UserDAO();
-            List<User> allUsers = userDAO.findAll();
-            allUsers.removeIf(u -> u.getId().equals(currentUser.getId()));
-            userListView.setItems(FXCollections.observableArrayList(allUsers));
-        } catch (Exception e) {
-            System.err.println("Error loading users: " + e.getMessage());
-        }
-
-        userListView.setCellFactory(lv -> new ListCell<User>() {
-            @Override
-            protected void updateItem(User user, boolean empty) {
-                super.updateItem(user, empty);
-                if (empty || user == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    HBox box = new HBox(8);
-                    box.setAlignment(Pos.CENTER_LEFT);
-                    Label icon = new Label("👤");
-                    Label name = new Label(user.getUsername());
-                    name.setStyle("-fx-font-size: 12;");
-                    Label email = new Label("(" + user.getEmail() + ")");
-                    email.setStyle("-fx-font-size: 10; -fx-text-fill: #6b7280;");
-                    box.getChildren().addAll(icon, name, email);
-                    setGraphic(box);
-                }
-            }
-        });
-
-        userSelectionBox.getChildren().addAll(userLabel, userListView);
-
-        // External email input
-        VBox emailBox = new VBox(8);
-        Label emailLabel = new Label("📧 External emails:");
-        emailLabel.setStyle("-fx-font-size: 11; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
-
-        Label emailNote = new Label("These users will receive an email invitation");
-        emailNote.setStyle("-fx-font-size: 10; -fx-text-fill: #059669; -fx-font-style: italic;");
-
-        HBox emailInputBox = new HBox(8);
-        emailInputBox.setAlignment(Pos.CENTER_LEFT);
-
-        TextField newEmailField = new TextField();
-        newEmailField.setPromptText("Enter email address");
-        newEmailField.setPrefHeight(36);
-        HBox.setHgrow(newEmailField, Priority.ALWAYS);
-        newEmailField.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #d1d5db; " +
-                        "-fx-border-radius: 6; " +
-                        "-fx-background-radius: 6; " +
-                        "-fx-padding: 8;"
-        );
-
-        Button addEmailBtn = new Button("+ Add");
-        addEmailBtn.setPrefHeight(36);
-        addEmailBtn.setStyle(
-                "-fx-background-color: #3b82f6; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-background-radius: 6; " +
-                        "-fx-padding: 8 16; " +
-                        "-fx-font-size: 11; " +
-                        "-fx-font-weight: 600; " +
-                        "-fx-cursor: hand;"
-        );
-
-        emailInputBox.getChildren().addAll(newEmailField, addEmailBtn);
-
-        FlowPane emailChipsPane = new FlowPane();
-        emailChipsPane.setHgap(6);
-        emailChipsPane.setVgap(6);
-        emailChipsPane.setPadding(new Insets(8));
-        emailChipsPane.setStyle(
-                "-fx-background-color: #f9fafb; " +
-                        "-fx-border-color: #e5e7eb; " +
-                        "-fx-border-radius: 6; " +
-                        "-fx-background-radius: 6;"
-        );
-        emailChipsPane.setPrefWrapLength(400);
-
-        List<String> externalEmailsList = new ArrayList<>();
-
-        java.util.function.Consumer<String> addEmailChip = email -> {
-            HBox chip = new HBox(6);
-            chip.setAlignment(Pos.CENTER);
-            chip.setPadding(new Insets(4, 8, 4, 8));
-            chip.setStyle(
-                    "-fx-background-color: #dbeafe; " +
-                            "-fx-background-radius: 12; " +
-                            "-fx-border-color: #93c5fd; " +
-                            "-fx-border-radius: 12; " +
-                            "-fx-border-width: 1;"
-            );
-
-            Label chipEmailLabel = new Label(email);
-            chipEmailLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #1e40af; -fx-font-weight: 600;");
-
-            Button removeBtn = new Button("×");
-            removeBtn.setStyle(
-                    "-fx-background-color: transparent; " +
-                            "-fx-text-fill: #1e40af; " +
-                            "-fx-font-size: 14; " +
-                            "-fx-font-weight: bold; " +
-                            "-fx-padding: 0 4; " +
-                            "-fx-cursor: hand;"
-            );
-
-            removeBtn.setOnAction(e -> {
-                externalEmailsList.remove(email);
-                emailChipsPane.getChildren().remove(chip);
-            });
-
-            chip.getChildren().addAll(chipEmailLabel, removeBtn);
-            emailChipsPane.getChildren().add(chip);
-        };
-
-        java.util.function.Predicate<String> isValidEmail = email -> {
-            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-            return email != null && email.matches(emailRegex);
-        };
-
-        addEmailBtn.setOnAction(e -> {
-            String email = newEmailField.getText().trim();
-            if (email.isEmpty()) return;
-            if (!isValidEmail.test(email)) {
-                showEmailError("Invalid email format: " + email);
-                return;
-            }
-            if (externalEmailsList.contains(email)) {
-                showEmailError("Email already added: " + email);
-                return;
-            }
-            externalEmailsList.add(email);
-            addEmailChip.accept(email);
-            newEmailField.clear();
-            newEmailField.requestFocus();
-        });
-
-        newEmailField.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                addEmailBtn.fire();
-            }
-        });
-
-        Label emailInstructions = new Label("💡 Press Enter or click 'Add' to add each email");
-        emailInstructions.setStyle("-fx-font-size: 10; -fx-text-fill: #6b7280; -fx-font-style: italic;");
-
-        emailBox.getChildren().addAll(emailLabel, emailNote, emailInputBox, emailChipsPane, emailInstructions);
-
-        // 🔧 FIX: Add everything to sharedUsersBox
-        sharedUsersBox.getChildren().addAll(sharedLabel, userSelectionBox, emailBox);
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // 🔧 FIX: VISIBILITY CHANGE LISTENER
-        // ═══════════════════════════════════════════════════════════════════════
-
-        visibilityGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
-            if (newToggle != null) {
-                CalendarEvent.EventVisibility vis = (CalendarEvent.EventVisibility) newToggle.getUserData();
-
-                switch (vis) {
-                    case PUBLIC:
-                        visibilityDesc.setText("🌍 Everyone can see this event");
-                        headerSubtitle.setText("Add a public event visible to everyone");
-                        sharedUsersBox.setVisible(false);
-                        sharedUsersBox.setManaged(false);
-                        break;
-                    case PRIVATE:
-                        visibilityDesc.setText("🔒 Only you can see this event");
-                        headerSubtitle.setText("Add a private event only you can see");
-                        sharedUsersBox.setVisible(false);
-                        sharedUsersBox.setManaged(false);
-                        break;
-                    case SHARED:
-                        visibilityDesc.setText("👥 Share with specific people");
-                        headerSubtitle.setText("Add a shared event for selected people");
-                        sharedUsersBox.setVisible(true);
-                        sharedUsersBox.setManaged(true);
-                        break;
-                }
-            }
-        });
-
-        // 🔧 FIX: ADD ALL COMPONENTS TO visibilitySection (THIS WAS THE BUG!)
-        visibilitySection.getChildren().addAll(
-                visibilityLabel,
-                visibilityButtons,
-                visibilityDesc,
-                sharedUsersBox  // ← THIS WAS MISSING!
-        );
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // MEETING LINK SECTION
-        // ═══════════════════════════════════════════════════════════════════════
-
-        VBox meetingSection = new VBox(12);
-        Label meetingLabel = new Label("Meeting Link (Optional)");
-        meetingLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
-
-        CheckBox hasMeetingCheck = new CheckBox("This event has an online meeting");
-        hasMeetingCheck.setStyle("-fx-font-size: 12;");
-
-        VBox meetingDetailsBox = new VBox(12);
-        meetingDetailsBox.setVisible(false);
-        meetingDetailsBox.setManaged(false);
-        meetingDetailsBox.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-border-color: #e5e7eb; " +
-                        "-fx-border-radius: 8; " +
-                        "-fx-background-radius: 8; " +
-                        "-fx-padding: 16;"
-        );
-
-        // Platform selection
-        HBox platformBox = new HBox(8);
-        Label platformLabel = new Label("Platform:");
-        platformLabel.setStyle("-fx-font-size: 11; -fx-font-weight: 600;");
-
-        ToggleGroup platformGroup = new ToggleGroup();
-
-        ToggleButton googleMeetBtn = new ToggleButton("📹 Google Meet");
-        ToggleButton zoomBtn = new ToggleButton("🎥 Zoom");
-        ToggleButton teamsBtn = new ToggleButton("💼 Teams");
-        ToggleButton customBtn = new ToggleButton("🔗 Custom");
-
-        googleMeetBtn.setToggleGroup(platformGroup);
-        zoomBtn.setToggleGroup(platformGroup);
-        teamsBtn.setToggleGroup(platformGroup);
-        customBtn.setToggleGroup(platformGroup);
-
-        googleMeetBtn.setUserData("google_meet");
-        zoomBtn.setUserData("zoom");
-        teamsBtn.setUserData("teams");
-        customBtn.setUserData("custom");
-
-        String platformBtnStyle =
-                "-fx-background-color: #f3f4f6; " +
-                        "-fx-border-color: #d1d5db; " +
-                        "-fx-border-radius: 6; " +
-                        "-fx-background-radius: 6; " +
-                        "-fx-padding: 6 12; " +
-                        "-fx-font-size: 11; " +
-                        "-fx-cursor: hand;";
-
-        googleMeetBtn.setStyle(platformBtnStyle);
-        zoomBtn.setStyle(platformBtnStyle);
-        teamsBtn.setStyle(platformBtnStyle);
-        customBtn.setStyle(platformBtnStyle);
-
-        platformBox.getChildren().addAll(platformLabel, googleMeetBtn, zoomBtn, teamsBtn, customBtn);
-
-        // Meeting link field
-        TextField meetingLinkField = new TextField();
-        meetingLinkField.setPromptText("Paste your meeting link here");
-        meetingLinkField.setPrefHeight(36);
-
-        // Instructions
-        VBox linkInstructionsBox = new VBox(4);
-        Label linkInstructionLabel = new Label("💡 How to get a meeting link:");
-        linkInstructionLabel.setStyle("-fx-font-size: 10; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
-
-        Label googleInstr = new Label("• Google Meet: Go to meet.google.com → Start a meeting → Copy link");
-        Label zoomInstr = new Label("• Zoom: Schedule meeting in Zoom app → Copy invitation link");
-        Label teamsInstr = new Label("• Teams: Create meeting in Teams → Copy join link");
-
-        googleInstr.setStyle("-fx-font-size: 9; -fx-text-fill: #9ca3af;");
-        zoomInstr.setStyle("-fx-font-size: 9; -fx-text-fill: #9ca3af;");
-        teamsInstr.setStyle("-fx-font-size: 9; -fx-text-fill: #9ca3af;");
-
-        linkInstructionsBox.getChildren().addAll(linkInstructionLabel, googleInstr, zoomInstr, teamsInstr);
-
-        // Password
-        HBox passwordBox = new HBox(8);
-        Label passwordLabel = new Label("Password:");
-        passwordLabel.setStyle("-fx-font-size: 11; -fx-min-width: 70;");
-
-        TextField passwordField = new TextField();
-        passwordField.setPromptText("Optional meeting password");
-        passwordField.setPrefHeight(36);
-        HBox.setHgrow(passwordField, Priority.ALWAYS);
-
-        passwordBox.getChildren().addAll(passwordLabel, passwordField);
-
-        meetingDetailsBox.getChildren().addAll(platformBox, meetingLinkField, linkInstructionsBox, passwordBox);
-
-        hasMeetingCheck.selectedProperty().addListener((obs, old, hasCheck) -> {
-            meetingDetailsBox.setVisible(hasCheck);
-            meetingDetailsBox.setManaged(hasCheck);
-        });
-
-        meetingSection.getChildren().addAll(meetingLabel, hasMeetingCheck, meetingDetailsBox);
 
         // ═══════════════════════════════════════════════════════════════════════
         // TITLE SECTION
@@ -3900,13 +3505,10 @@ public class CalendarController implements Initializable {
         oneTimeBtn.setStyle(toggleStyle);
         recurringBtn.setStyle(toggleStyle);
 
-        oneTimeBtn.selectedProperty().addListener((obs, old, isSelected) -> {
-            oneTimeBtn.setStyle(isSelected ? toggleSelectedStyle : toggleStyle);
-        });
-
-        recurringBtn.selectedProperty().addListener((obs, old, isSelected) -> {
-            recurringBtn.setStyle(isSelected ? toggleSelectedStyle : toggleStyle);
-        });
+        oneTimeBtn.selectedProperty().addListener((obs, old, isSelected) ->
+                oneTimeBtn.setStyle(isSelected ? toggleSelectedStyle : toggleStyle));
+        recurringBtn.selectedProperty().addListener((obs, old, isSelected) ->
+                recurringBtn.setStyle(isSelected ? toggleSelectedStyle : toggleStyle));
 
         eventTypeButtonsBox.getChildren().addAll(oneTimeBtn, recurringBtn);
         eventTypeSection.getChildren().addAll(eventTypeLabel, eventTypeButtonsBox);
@@ -3984,6 +3586,424 @@ public class CalendarController implements Initializable {
             recurringBox.setManaged(isRecurring);
         });
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // VISIBILITY & SHARING SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        VBox visibilitySection = new VBox(12);
+        visibilitySection.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #e5e7eb; " +
+                        "-fx-border-radius: 12; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-padding: 16;"
+        );
+
+        Label visibilityLabel = new Label("Who can see this event? *");
+        visibilityLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        HBox visibilityButtons = new HBox(8);
+        visibilityButtons.setAlignment(Pos.CENTER_LEFT);
+        ToggleGroup visibilityGroup = new ToggleGroup();
+
+        ToggleButton publicBtn = new ToggleButton("🌍 Public");
+        ToggleButton privateBtn = new ToggleButton("🔒 Private");
+        ToggleButton sharedBtn = new ToggleButton("👥 Shared");
+
+        publicBtn.setToggleGroup(visibilityGroup);
+        privateBtn.setToggleGroup(visibilityGroup);
+        sharedBtn.setToggleGroup(visibilityGroup);
+
+        publicBtn.setUserData(CalendarEvent.EventVisibility.PUBLIC);
+        privateBtn.setUserData(CalendarEvent.EventVisibility.PRIVATE);
+        sharedBtn.setUserData(CalendarEvent.EventVisibility.SHARED);
+
+        String visBtnStyle =
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-text-fill: #374151; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 10 20;";
+
+        String visBtnSelectedStyle =
+                "-fx-background-color: #3b82f6; " +
+                        "-fx-border-color: #3b82f6; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 10 20;";
+
+        publicBtn.setStyle(visBtnStyle);
+        privateBtn.setStyle(visBtnStyle);
+        sharedBtn.setStyle(visBtnStyle);
+
+        publicBtn.selectedProperty().addListener((obs, old, sel) ->
+                publicBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
+        privateBtn.selectedProperty().addListener((obs, old, sel) ->
+                privateBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
+        sharedBtn.selectedProperty().addListener((obs, old, sel) ->
+                sharedBtn.setStyle(sel ? visBtnSelectedStyle : visBtnStyle));
+
+        visibilityButtons.getChildren().addAll(publicBtn, privateBtn, sharedBtn);
+        publicBtn.setSelected(true);
+
+        Label visibilityDesc = new Label("🌍 Everyone can see this event");
+        visibilityDesc.setStyle("-fx-font-size: 11; -fx-text-fill: #6b7280; -fx-font-style: italic;");
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SHARED USERS SECTION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        VBox sharedUsersBox = new VBox(16);
+        sharedUsersBox.setVisible(false);
+        sharedUsersBox.setManaged(false);
+        sharedUsersBox.setStyle(
+                "-fx-background-color: #f0f9ff; " +
+                        "-fx-border-color: #bae6fd; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 16;"
+        );
+
+        // ─────────────────────────────────────────────────────────────────────
+        // SECTION 1: Internal Users from Database
+        // ─────────────────────────────────────────────────────────────────────
+
+        VBox dbUsersSection = new VBox(8);
+
+        Label dbUsersLabel = new Label("👥 Select users from system:");
+        dbUsersLabel.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #0369a1;");
+
+        ListView<User> userListView = new ListView<>();
+        userListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        userListView.setPrefHeight(120);
+        userListView.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6;"
+        );
+
+        // Load users from database
+        try {
+            com.smarttask.server.dao.UserDAO userDAO = new com.smarttask.server.dao.UserDAO();
+            List<User> allUsers = userDAO.findAll();
+            allUsers.removeIf(u -> u.getId().equals(currentUser.getId()));
+            userListView.setItems(FXCollections.observableArrayList(allUsers));
+        } catch (Exception e) {
+            System.err.println("Error loading users: " + e.getMessage());
+        }
+
+        // Cell factory showing username AND email
+        userListView.setCellFactory(lv -> new ListCell<User>() {
+            @Override
+            protected void updateItem(User user, boolean empty) {
+                super.updateItem(user, empty);
+                if (empty || user == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    HBox box = new HBox(10);
+                    box.setAlignment(Pos.CENTER_LEFT);
+                    box.setPadding(new Insets(4));
+
+                    Label icon = new Label("👤");
+                    icon.setStyle("-fx-font-size: 14;");
+
+                    VBox infoBox = new VBox(2);
+                    Label name = new Label(user.getUsername());
+                    name.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #1f2937;");
+                    Label email = new Label(user.getEmail() != null ? user.getEmail() : "No email");
+                    email.setStyle("-fx-font-size: 10; -fx-text-fill: #6b7280;");
+                    infoBox.getChildren().addAll(name, email);
+
+                    box.getChildren().addAll(icon, infoBox);
+                    setGraphic(box);
+                }
+            }
+        });
+
+        Label selectedCountLabel = new Label("0 users selected");
+        selectedCountLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #059669; -fx-font-weight: 600;");
+
+        userListView.getSelectionModel().getSelectedItems().addListener(
+                (javafx.collections.ListChangeListener<User>) change -> {
+                    int count = userListView.getSelectionModel().getSelectedItems().size();
+                    selectedCountLabel.setText(count + " user" + (count != 1 ? "s" : "") + " selected");
+                }
+        );
+
+        // Email notification note for internal users
+        HBox internalEmailNote = new HBox(8);
+        internalEmailNote.setAlignment(Pos.CENTER_LEFT);
+        internalEmailNote.setPadding(new Insets(8));
+        internalEmailNote.setStyle(
+                "-fx-background-color: #d1fae5; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-border-color: #6ee7b7; " +
+                        "-fx-border-radius: 6;"
+        );
+
+        Label internalNoteIcon = new Label("✉️");
+        internalNoteIcon.setStyle("-fx-font-size: 14;");
+        Label internalNoteText = new Label("Selected users will automatically receive an email invitation");
+        internalNoteText.setStyle("-fx-font-size: 11; -fx-text-fill: #047857; -fx-font-weight: 500;");
+        internalEmailNote.getChildren().addAll(internalNoteIcon, internalNoteText);
+
+        dbUsersSection.getChildren().addAll(dbUsersLabel, userListView, selectedCountLabel, internalEmailNote);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // SECTION 2: External Emails (NOT in database)
+        // ─────────────────────────────────────────────────────────────────────
+
+        VBox externalEmailsSection = new VBox(8);
+
+        Label externalLabel = new Label("📧 Add external emails (not in system):");
+        externalLabel.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #0369a1;");
+
+        HBox emailInputBox = new HBox(8);
+        emailInputBox.setAlignment(Pos.CENTER_LEFT);
+
+        TextField newEmailField = new TextField();
+        newEmailField.setPromptText("Enter email address");
+        newEmailField.setPrefHeight(36);
+        HBox.setHgrow(newEmailField, Priority.ALWAYS);
+        newEmailField.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-padding: 8;"
+        );
+
+        Button addEmailBtn = new Button("+ Add");
+        addEmailBtn.setPrefHeight(36);
+        addEmailBtn.setStyle(
+                "-fx-background-color: #3b82f6; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-padding: 8 16; " +
+                        "-fx-font-size: 11; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-cursor: hand;"
+        );
+
+        emailInputBox.getChildren().addAll(newEmailField, addEmailBtn);
+
+        // Email chips container
+        FlowPane emailChipsPane = new FlowPane();
+        emailChipsPane.setHgap(6);
+        emailChipsPane.setVgap(6);
+        emailChipsPane.setPadding(new Insets(8));
+        emailChipsPane.setStyle(
+                "-fx-background-color: #f9fafb; " +
+                        "-fx-border-color: #e5e7eb; " +
+                        "-fx-border-radius: 6; " +
+                        "-fx-background-radius: 6;"
+        );
+        emailChipsPane.setPrefWrapLength(400);
+        emailChipsPane.setMinHeight(40);
+
+        // Store external emails
+        List<String> externalEmailsList = new ArrayList<>();
+
+        // Function to add email chip
+        java.util.function.Consumer<String> addEmailChip = email -> {
+            HBox chip = new HBox(6);
+            chip.setAlignment(Pos.CENTER);
+            chip.setPadding(new Insets(4, 8, 4, 8));
+            chip.setStyle(
+                    "-fx-background-color: #dbeafe; " +
+                            "-fx-background-radius: 12; " +
+                            "-fx-border-color: #93c5fd; " +
+                            "-fx-border-radius: 12; " +
+                            "-fx-border-width: 1;"
+            );
+
+            Label chipEmailLabel = new Label(email);
+            chipEmailLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #1e40af; -fx-font-weight: 600;");
+
+            Button removeBtn = new Button("×");
+            removeBtn.setStyle(
+                    "-fx-background-color: transparent; " +
+                            "-fx-text-fill: #1e40af; " +
+                            "-fx-font-size: 14; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-padding: 0 4; " +
+                            "-fx-cursor: hand;"
+            );
+
+            removeBtn.setOnAction(e -> {
+                externalEmailsList.remove(email);
+                emailChipsPane.getChildren().remove(chip);
+            });
+
+            chip.getChildren().addAll(chipEmailLabel, removeBtn);
+            emailChipsPane.getChildren().add(chip);
+        };
+
+        // Email validation
+        java.util.function.Predicate<String> isValidEmail = email -> {
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+            return email != null && email.matches(emailRegex);
+        };
+
+        addEmailBtn.setOnAction(e -> {
+            String email = newEmailField.getText().trim();
+            if (email.isEmpty()) return;
+            if (!isValidEmail.test(email)) {
+                showEmailError("Invalid email format: " + email);
+                return;
+            }
+            if (externalEmailsList.contains(email)) {
+                showEmailError("Email already added: " + email);
+                return;
+            }
+            externalEmailsList.add(email);
+            addEmailChip.accept(email);
+            newEmailField.clear();
+            newEmailField.requestFocus();
+        });
+
+        newEmailField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                addEmailBtn.fire();
+            }
+        });
+
+        Label emailInstructions = new Label("💡 Press Enter or click 'Add' to add each email");
+        emailInstructions.setStyle("-fx-font-size: 10; -fx-text-fill: #6b7280; -fx-font-style: italic;");
+
+        externalEmailsSection.getChildren().addAll(externalLabel, emailInputBox, emailChipsPane, emailInstructions);
+
+        // Add all to sharedUsersBox
+        sharedUsersBox.getChildren().addAll(dbUsersSection, externalEmailsSection);
+
+        // Visibility change listener
+        visibilityGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle != null) {
+                CalendarEvent.EventVisibility vis = (CalendarEvent.EventVisibility) newToggle.getUserData();
+                switch (vis) {
+                    case PUBLIC:
+                        visibilityDesc.setText("🌍 Everyone can see this event");
+                        headerSubtitle.setText("Add a public event visible to everyone");
+                        sharedUsersBox.setVisible(false);
+                        sharedUsersBox.setManaged(false);
+                        break;
+                    case PRIVATE:
+                        visibilityDesc.setText("🔒 Only you can see this event");
+                        headerSubtitle.setText("Add a private event only you can see");
+                        sharedUsersBox.setVisible(false);
+                        sharedUsersBox.setManaged(false);
+                        break;
+                    case SHARED:
+                        visibilityDesc.setText("👥 Share with specific people");
+                        headerSubtitle.setText("Add a shared event for selected people");
+                        sharedUsersBox.setVisible(true);
+                        sharedUsersBox.setManaged(true);
+                        break;
+                }
+            }
+        });
+
+        visibilitySection.getChildren().addAll(visibilityLabel, visibilityButtons, visibilityDesc, sharedUsersBox);
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SIMPLIFIED MEETING LINK SECTION (NO PLATFORM BUTTONS)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        VBox meetingSection = new VBox(12);
+        meetingSection.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #e5e7eb; " +
+                        "-fx-border-radius: 12; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-padding: 16;"
+        );
+
+        Label meetingLabel = new Label("Online Meeting (Optional)");
+        meetingLabel.setStyle("-fx-font-size: 13; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        CheckBox hasMeetingCheck = new CheckBox("This event has an online meeting link");
+        hasMeetingCheck.setStyle("-fx-font-size: 12;");
+
+        VBox meetingDetailsBox = new VBox(12);
+        meetingDetailsBox.setVisible(false);
+        meetingDetailsBox.setManaged(false);
+
+        // Meeting link input (SIMPLE - no platform buttons)
+        VBox linkSection = new VBox(8);
+        Label linkLabel = new Label("Meeting Link:");
+        linkLabel.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        TextField meetingLinkField = new TextField();
+        meetingLinkField.setPromptText("Paste your meeting link here (Zoom, Google Meet, Teams, etc.)");
+        meetingLinkField.setPrefHeight(40);
+        meetingLinkField.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 10 12; " +
+                        "-fx-font-size: 13;"
+        );
+
+        // Link validation indicator
+        Label linkValidationLabel = new Label("");
+        linkValidationLabel.setStyle("-fx-font-size: 11;");
+
+        meetingLinkField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.trim().isEmpty()) {
+                linkValidationLabel.setText("");
+            } else if (isValidMeetingLink(newVal)) {
+                String platform = detectMeetingPlatform(newVal);
+                linkValidationLabel.setText("✅ " + platform + " link detected");
+                linkValidationLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #10b981;");
+            } else {
+                linkValidationLabel.setText("⚠️ Link format not recognized (you can still use it)");
+                linkValidationLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #f59e0b;");
+            }
+        });
+
+        linkSection.getChildren().addAll(linkLabel, meetingLinkField, linkValidationLabel);
+
+        // Meeting password
+        VBox passwordSection = new VBox(8);
+        Label passwordLabel = new Label("Meeting Password (optional):");
+        passwordLabel.setStyle("-fx-font-size: 12; -fx-font-weight: 600; -fx-text-fill: #374151;");
+
+        TextField passwordField = new TextField();
+        passwordField.setPromptText("Enter meeting password if required");
+        passwordField.setPrefHeight(36);
+        passwordField.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-border-color: #d1d5db; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 8 12; " +
+                        "-fx-font-size: 12;"
+        );
+
+        passwordSection.getChildren().addAll(passwordLabel, passwordField);
+
+        meetingDetailsBox.getChildren().addAll(linkSection, passwordSection);
+
+        hasMeetingCheck.selectedProperty().addListener((obs, old, hasCheck) -> {
+            meetingDetailsBox.setVisible(hasCheck);
+            meetingDetailsBox.setManaged(hasCheck);
+        });
+
+        meetingSection.getChildren().addAll(meetingLabel, hasMeetingCheck, meetingDetailsBox);
+
         // Completion checkbox
         CheckBox completedCheck = new CheckBox("Mark as completed");
         completedCheck.setStyle("-fx-font-size: 13; -fx-text-fill: #374151;");
@@ -4032,18 +4052,27 @@ public class CalendarController implements Initializable {
                         sharedUsersBox.setVisible(true);
                         sharedUsersBox.setManaged(true);
 
+                        // Select users from database
                         List<String> sharedIds = existingEvent.getSharedWithUserIds();
-                        for (User user : userListView.getItems()) {
-                            if (sharedIds.contains(user.getId())) {
-                                userListView.getSelectionModel().select(user);
+                        if (sharedIds != null) {
+                            for (User user : userListView.getItems()) {
+                                if (sharedIds.contains(user.getId())) {
+                                    userListView.getSelectionModel().select(user);
+                                }
                             }
                         }
 
-                        List<String> emails = existingEvent.getSharedWithEmails();
-                        if (emails != null && !emails.isEmpty()) {
-                            externalEmailsList.addAll(emails);
-                            for (String email : emails) {
-                                addEmailChip.accept(email);
+                        // Load external emails
+                        List<String> existingExternalEmails = existingEvent.getSharedWithEmails();
+                        if (existingExternalEmails != null) {
+                            for (String email : existingExternalEmails) {
+                                // Check if this email belongs to a DB user
+                                boolean isDbUserEmail = userListView.getItems().stream()
+                                        .anyMatch(u -> email.equalsIgnoreCase(u.getEmail()));
+                                if (!isDbUserEmail) {
+                                    externalEmailsList.add(email);
+                                    addEmailChip.accept(email);
+                                }
                             }
                         }
                         break;
@@ -4060,12 +4089,6 @@ public class CalendarController implements Initializable {
                 if (existingEvent.getMeetingPassword() != null) {
                     passwordField.setText(existingEvent.getMeetingPassword());
                 }
-
-                String platform = existingEvent.getMeetingPlatform();
-                if ("google_meet".equals(platform)) googleMeetBtn.setSelected(true);
-                else if ("zoom".equals(platform)) zoomBtn.setSelected(true);
-                else if ("teams".equals(platform)) teamsBtn.setSelected(true);
-                else if (platform != null) customBtn.setSelected(true);
             }
 
             // Event type
@@ -4108,8 +4131,6 @@ public class CalendarController implements Initializable {
         // ═══════════════════════════════════════════════════════════════════════
 
         mainContent.getChildren().addAll(
-                visibilitySection,  // ← NOW INCLUDES sharedUsersBox
-                meetingSection,
                 titleSection,
                 descSection,
                 dateSection,
@@ -4117,6 +4138,8 @@ public class CalendarController implements Initializable {
                 prioritySection,
                 eventTypeSection,
                 recurringBox,
+                visibilitySection,
+                meetingSection,
                 completedCheck
         );
 
@@ -4134,7 +4157,7 @@ public class CalendarController implements Initializable {
 
         dialog.getDialogPane().setContent(fullContent);
         dialog.getDialogPane().setStyle("-fx-background-color: #f9fafb;");
-        dialog.getDialogPane().setPrefWidth(600);
+        dialog.getDialogPane().setPrefWidth(550);
 
         // Style buttons
         Node saveButton = dialog.getDialogPane().lookupButton(saveButtonType);
@@ -4221,8 +4244,8 @@ public class CalendarController implements Initializable {
                 event.setEndTime(LocalTime.of(endHourSpinner.getValue(), endMinuteSpinner.getValue()));
                 event.setCompleted(completedCheck.isSelected());
 
-                ToggleButton selectedPriority = (ToggleButton) priorityGroup.getSelectedToggle();
-                event.setPriority((CalendarEvent.Priority) selectedPriority.getUserData());
+                ToggleButton selectedPriorityBtn = (ToggleButton) priorityGroup.getSelectedToggle();
+                event.setPriority((CalendarEvent.Priority) selectedPriorityBtn.getUserData());
 
                 ToggleButton selectedType = (ToggleButton) eventTypeGroup.getSelectedToggle();
                 event.setEventType((CalendarEvent.EventType) selectedType.getUserData());
@@ -4257,36 +4280,65 @@ public class CalendarController implements Initializable {
                         (CalendarEvent.EventVisibility) selectedVis.getUserData();
                 event.setVisibility(visibility);
 
-                System.out.println("📋 Saving event with visibility: " + visibility);
+                // ═══════════════════════════════════════════════════════════════
+                // COLLECT ALL EMAILS TO SEND NOTIFICATIONS
+                // ═══════════════════════════════════════════════════════════════
 
-                // Save shared users only if SHARED
+                List<User> selectedUsers = new ArrayList<>(userListView.getSelectionModel().getSelectedItems());
+                List<String> allEmailsToNotify = new ArrayList<>();
+                List<String> selectedUserIds = new ArrayList<>();
+
                 if (visibility == CalendarEvent.EventVisibility.SHARED) {
-                    List<String> selectedUserIds = new ArrayList<>();
-                    for (User user : userListView.getSelectionModel().getSelectedItems()) {
+                    // 1. Get emails from selected database users (INTERNAL)
+                    for (User user : selectedUsers) {
                         selectedUserIds.add(user.getId());
+                        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+                            allEmailsToNotify.add(user.getEmail());
+                            System.out.println("📧 Will notify internal user: " + user.getUsername() + " (" + user.getEmail() + ")");
+                        }
                     }
-                    event.setSharedWithUserIds(selectedUserIds);
-                    System.out.println("   Shared with " + selectedUserIds.size() + " users");
 
-                    event.setSharedWithEmails(new ArrayList<>(externalEmailsList));
-                    System.out.println("   Shared with " + externalEmailsList.size() + " external emails");
+                    // 2. Add external emails
+                    for (String extEmail : externalEmailsList) {
+                        if (!allEmailsToNotify.contains(extEmail)) {
+                            allEmailsToNotify.add(extEmail);
+                            System.out.println("📧 Will notify external email: " + extEmail);
+                        }
+                    }
+
+                    event.setSharedWithUserIds(selectedUserIds);
+                    event.setSharedWithEmails(allEmailsToNotify);
+
+                    System.out.println("📋 Event shared with " + selectedUserIds.size() + " DB users");
+                    System.out.println("📧 Total emails to notify: " + allEmailsToNotify.size());
                 } else {
                     event.setSharedWithUserIds(new ArrayList<>());
                     event.setSharedWithEmails(new ArrayList<>());
                 }
 
-                // Save meeting info
+                // Save meeting info (auto-detect platform from URL)
                 if (hasMeetingCheck.isSelected() && !meetingLinkField.getText().trim().isEmpty()) {
                     event.setMeetingLink(meetingLinkField.getText().trim());
                     event.setMeetingPassword(passwordField.getText().trim());
+                    event.setHasMeetingLink(true);
 
-                    Toggle selectedPlatform = platformGroup.getSelectedToggle();
-                    if (selectedPlatform != null) {
-                        event.setMeetingPlatform((String) selectedPlatform.getUserData());
+                    // Auto-detect platform from link
+                    String link = meetingLinkField.getText().toLowerCase();
+                    if (link.contains("meet.google.com")) {
+                        event.setMeetingPlatform("google_meet");
+                    } else if (link.contains("zoom.us") || link.contains("zoom.com")) {
+                        event.setMeetingPlatform("zoom");
+                    } else if (link.contains("teams.microsoft.com") || link.contains("teams.live.com")) {
+                        event.setMeetingPlatform("teams");
+                    } else if (link.contains("webex.com")) {
+                        event.setMeetingPlatform("webex");
+                    } else {
+                        event.setMeetingPlatform("other");
                     }
                 } else {
                     event.setMeetingLink(null);
                     event.setHasMeetingLink(false);
+                    event.setMeetingPlatform(null);
                 }
 
                 // Set creator
@@ -4309,15 +4361,169 @@ public class CalendarController implements Initializable {
                 plannerManager.updateEvent(event);
             }
 
-            // Send email notifications for shared events
+            // Send email notifications to ALL shared users (internal DB users + external emails)
             if (event.getVisibility() == CalendarEvent.EventVisibility.SHARED) {
-                sendEventInvitations(event, isNew);
+                sendEventEmailNotifications(event, isNew);
             }
 
             updateView();
         });
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // HELPER METHODS - ADD THESE TO YOUR CalendarController CLASS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Validate meeting link format
+     */
+    private boolean isValidMeetingLink(String link) {
+        if (link == null || link.trim().isEmpty()) {
+            return false;
+        }
+
+        String lowerLink = link.toLowerCase().trim();
+
+        // Check for known meeting platforms
+        if (lowerLink.contains("meet.google.com")) return true;
+        if (lowerLink.contains("zoom.us") || lowerLink.contains("zoom.com")) return true;
+        if (lowerLink.contains("teams.microsoft.com") || lowerLink.contains("teams.live.com")) return true;
+        if (lowerLink.contains("webex.com")) return true;
+        if (lowerLink.contains("gotomeeting.com")) return true;
+        if (lowerLink.contains("whereby.com")) return true;
+        if (lowerLink.contains("meet.jit.si")) return true;
+
+        // Check for general URL format
+        if (lowerLink.startsWith("http://") || lowerLink.startsWith("https://")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Detect meeting platform from URL
+     */
+    private String detectMeetingPlatform(String link) {
+        if (link == null) return "Unknown";
+        String lowerLink = link.toLowerCase();
+
+        if (lowerLink.contains("meet.google.com")) return "Google Meet";
+        if (lowerLink.contains("zoom.us") || lowerLink.contains("zoom.com")) return "Zoom";
+        if (lowerLink.contains("teams.microsoft.com") || lowerLink.contains("teams.live.com")) return "Microsoft Teams";
+        if (lowerLink.contains("webex.com")) return "Webex";
+        if (lowerLink.contains("gotomeeting.com")) return "GoToMeeting";
+        if (lowerLink.contains("whereby.com")) return "Whereby";
+        if (lowerLink.contains("meet.jit.si")) return "Jitsi Meet";
+
+        return "Meeting";
+    }
+
+    /**
+     * Send email notifications to all shared users (DB users + external emails)
+     */
+    private void sendEventEmailNotifications(CalendarEvent event, boolean isNewEvent) {
+        List<String> allEmails = event.getSharedWithEmails();
+
+        if (allEmails == null || allEmails.isEmpty()) {
+            System.out.println("📭 No emails to send - no shared users");
+            return;
+        }
+
+        System.out.println("📧 Sending event notifications to " + allEmails.size() + " recipients...");
+
+        // Run in background thread to not block UI
+        new Thread(() -> {
+            try {
+                EmailNotificationService emailService = new EmailNotificationService();
+                int successCount = 0;
+                int failCount = 0;
+
+                for (String email : allEmails) {
+                    try {
+                        String subject = isNewEvent ?
+                                "You've been invited to: " + event.getTitle() :
+                                "Event updated: " + event.getTitle();
+
+                        boolean sent = emailService.sendEventInvitation(
+                                email,
+                                event,
+                                currentUser,
+                                subject
+                        );
+
+                        if (sent) {
+                            successCount++;
+                            System.out.println("✅ Email sent to: " + email);
+                        } else {
+                            failCount++;
+                            System.err.println("❌ Failed to send email to: " + email);
+                        }
+                    } catch (Exception e) {
+                        failCount++;
+                        System.err.println("❌ Error sending email to " + email + ": " + e.getMessage());
+                    }
+                }
+
+                final int finalSuccess = successCount;
+                final int finalFail = failCount;
+
+                // Show notification on UI thread
+                Platform.runLater(() -> {
+                    if (finalFail == 0 && finalSuccess > 0) {
+                        showNotification("✅ Emails Sent",
+                                "Successfully sent " + finalSuccess + " email notification(s)",
+                                "#10b981");
+                    } else if (finalSuccess > 0) {
+                        showNotification("⚠️ Partial Success",
+                                "Sent " + finalSuccess + " email(s), " + finalFail + " failed",
+                                "#f59e0b");
+                    } else if (finalFail > 0) {
+                        showNotification("❌ Email Failed",
+                                "Failed to send email notifications",
+                                "#ef4444");
+                    }
+                });
+
+            } catch (Exception e) {
+                System.err.println("❌ Email service error: " + e.getMessage());
+                e.printStackTrace();
+
+                Platform.runLater(() -> {
+                    showNotification("❌ Email Error",
+                            "Could not send email notifications: " + e.getMessage(),
+                            "#ef4444");
+                });
+            }
+        }).start();
+    }
+
+    /**
+     * Show temporary notification
+     */
+    private void showNotification(String title, String message, String color) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: white;");
+
+        alert.show();
+
+        // Auto-close after 3 seconds
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+                Platform.runLater(() -> {
+                    if (alert.isShowing()) {
+                        alert.close();
+                    }
+                });
+            } catch (InterruptedException ignored) {}
+        }).start();
+    }
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🔧 NEW: EMAIL NOTIFICATION METHOD
 // ═══════════════════════════════════════════════════════════════════════════════
