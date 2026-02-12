@@ -37,43 +37,43 @@ public class ProjectsHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
+        String[] parts = path.split("/");
 
         try {
             if ("GET".equals(method)) {
                 if (path.equals("/api/projects")) {
                     handleGetAll(exchange);
-                } else if (path.startsWith("/api/projects/")) {
-                    String[] parts = path.split("/");
-                    if (parts.length == 4) {
-                        String id = parts[3];
-                        handleGetById(exchange, id);
-                    } else if (parts.length == 5 && parts[4].equals("user")) {
-                        String userId = parts[3];
-                        handleGetByUser(exchange, userId);
-                    } else {
-                        sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
-                    }
+                } else if (parts.length == 4) {
+                    handleGetById(exchange, parts[3]);
+                } else if (parts.length == 5) {
+                    if (parts[4].equals("user")) handleGetByUser(exchange, parts[3]);
+                    if (parts[4].equals("teams")) handleGetTeams(exchange, parts[3]);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
                 }
-            } else if ("POST".equals(method)) {
+            } 
+            else if ("POST".equals(method)) {
                 if (path.equals("/api/projects")) {
                     handleCreate(exchange);
-                } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
+                } else if (parts.length == 6 && parts[4].equals("teams")) {
+                    handleAddTeam(exchange, parts[3], parts[5]);
+                } else {
+                    sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
+                }
+            } 
+            else if ("DELETE".equals(method)) {
+                if (parts.length == 4) {
+                    handleDelete(exchange, parts[3]);
+                } else if (parts.length == 6 && parts[4].equals("teams")) {
+                    handleRemoveTeam(exchange, parts[3], parts[5]);
+                } else {
+                    sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
+                }
             } else if ("PUT".equals(method)) {
                 if (path.startsWith("/api/projects/")) {
-                    String[] parts = path.split("/");
                     if (parts.length == 4) {
                         String id = parts[3];
                         handleUpdate(exchange, id);
-                    } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
-                } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
-            } else if ("DELETE".equals(method)) {
-                if (path.startsWith("/api/projects/")) {
-                    String[] parts = path.split("/");
-                    if (parts.length == 4) {
-                        String id = parts[3];
-                        handleDelete(exchange, id);
                     } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
                 } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
             } else {
@@ -139,6 +139,21 @@ public class ProjectsHandler implements HttpHandler {
     private String readRequestBody(HttpExchange exchange) throws IOException {
         InputStream is = exchange.getRequestBody();
         return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    private void handleGetTeams(HttpExchange exchange, String projectId) throws IOException {
+        List<com.smarttask.model.Team> teams = projectDAO.findTeamsByProjectId(projectId);
+        sendResponse(exchange, 200, gson.toJson(teams));
+    }
+
+    private void handleAddTeam(HttpExchange exchange, String projectId, String teamId) throws IOException {
+        projectDAO.addTeamToProject(projectId, teamId);
+        sendResponse(exchange, 200, "{\"message\":\"Team added to project\"}");
+    }
+
+    private void handleRemoveTeam(HttpExchange exchange, String projectId, String teamId) throws IOException {
+        projectDAO.removeTeamFromProject(projectId, teamId);
+        sendResponse(exchange, 200, "{\"message\":\"Team removed from project\"}");
     }
 
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {

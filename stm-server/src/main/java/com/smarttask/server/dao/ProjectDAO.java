@@ -49,12 +49,23 @@ public class ProjectDAO {
     }
 
     public List<Project> findByUserId(String userId) {
-        String sql = "SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC";
+        String sql = "SELECT DISTINCT p.* FROM projects p " +
+                    "LEFT JOIN team_projects tp ON p.id = tp.project_id " +
+                    "LEFT JOIN team_members tm ON tp.team_id = tm.team_id " +
+                    "WHERE p.user_id = ? OR tm.user_id = ? " +
+                    "ORDER BY p.created_at DESC";
+        
         List<Project> list = new ArrayList<>();
-        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection(); 
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setString(1, userId);
+            pstmt.setString(2, userId);
+            
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) list.add(map(rs));
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -99,6 +110,59 @@ public class ProjectDAO {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    public void addTeamToProject(String projectId, String teamId) {
+        String sql = "INSERT IGNORE INTO team_projects (project_id, team_id) VALUES (?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection(); 
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, projectId);
+            pstmt.setString(2, teamId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error linking team to project", e);
+        }
+    }
+
+    public void removeTeamFromProject(String projectId, String teamId) {
+        String sql = "DELETE FROM team_projects WHERE project_id = ? AND team_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection(); 
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, projectId);
+            pstmt.setString(2, teamId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error removing team from project", e);
+        }
+    }
+
+    public List<com.smarttask.model.Team> findTeamsByProjectId(String projectId) {
+        String sql = "SELECT t.* FROM teams t " +
+                    "JOIN team_projects tp ON t.id = tp.team_id " +
+                    "WHERE tp.project_id = ?";
+        List<com.smarttask.model.Team> teams = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection(); 
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, projectId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    com.smarttask.model.Team team = new com.smarttask.model.Team();
+                    team.setId(rs.getString("id"));
+                    team.setName(rs.getString("name"));
+                    team.setDescription(rs.getString("description"));
+                    team.setColor(rs.getString("color"));
+                    team.setOwnerId(rs.getString("owner_id"));
+                    team.setActive(rs.getBoolean("is_active"));
+                    // map the rest
+                    teams.add(team);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return teams;
     }
 
     private Project map(ResultSet rs) throws SQLException {

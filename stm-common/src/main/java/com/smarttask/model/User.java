@@ -92,6 +92,17 @@ public class User {
         this.tasks = tasks;
     }
 
+	public String getFullName() {
+    
+		if (firstName != null && lastName != null) {
+			return firstName + " " + lastName;
+		} else if (firstName != null) {
+			return firstName;
+		} else {
+			return username;
+		}
+	}
+
     @Override
     public String toString() {
         return "User{" +
