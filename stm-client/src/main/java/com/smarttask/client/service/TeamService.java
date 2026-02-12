@@ -162,4 +162,25 @@ public class TeamService {
             return false;
         }
     }
+
+        public List<Team> getMyTeams(String userId) {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(baseUrl + "?userId=" + userId);
+
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    return List.of();
+                }
+
+                Type listType = new TypeToken<List<Team>>() {}.getType();
+                return gson.fromJson(
+                        new String(response.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8),
+                        listType
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
+    }
 }

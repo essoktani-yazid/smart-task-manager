@@ -159,7 +159,6 @@ public class TeamsController {
 		if (currentUser == null)
 			return;
 
-		// Charger les teams en arrière-plan
 		new Thread(() -> {
 			List<Team> teams = teamService.getTeamsByUser(currentUser.getId());
 			List<User> allUsers = teamService.getAllUsers();
@@ -268,8 +267,6 @@ public class TeamsController {
 			dialogStage.initModality(Modality.APPLICATION_MODAL);
 			dialogStage.setTitle(team == null ? "Create team" : "Edit team");
 
-            Parent root = loader.load();
-
 			CreateTeamDialogController controller = loader.getController();
 			if (controller != null) {
 				controller.setDialogStage(dialogStage);
@@ -282,6 +279,7 @@ public class TeamsController {
             Scene scene = new Scene(root);
             dialogStage.setScene(scene);
 
+			dialogStage.showAndWait();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
