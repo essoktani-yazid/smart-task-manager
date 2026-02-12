@@ -36,9 +36,11 @@
                     <ToggleButton text="Cards"
                                   toggleGroup="$viewToggleGroup"
                                   selected="true"
+                                  onAction="#handleViewChange"
                                   styleClass="view-toggle, view-toggle-left"/>
                     <ToggleButton text="List"
                                   toggleGroup="$viewToggleGroup"
+                                  onAction="#handleViewChange"
                                   styleClass="view-toggle, view-toggle-right"/>
                 </HBox>
 
@@ -60,11 +62,27 @@
             </padding>
 
             <!-- Cards container -->
-            <FlowPane fx:id="teamsFlow"
-                      hgap="20"
-                      vgap="20"
-                      prefWrapLength="900"
-                      alignment="TOP_CENTER"/>
+            <ScrollPane fx:id="cardsScroll" fitToWidth="true" styleClass="view-scroll" hbarPolicy="NEVER">
+                <FlowPane fx:id="teamsFlow"
+                          hgap="20"
+                          vgap="20"
+                          prefWrapLength="900"
+                          alignment="TOP_CENTER"/>
+            </ScrollPane>
+
+            <!-- List container -->
+            <TableView fx:id="teamsTable" visible="false" styleClass="teams-table">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+                <columns>
+                    <TableColumn fx:id="nameColumn" text="Team Name" prefWidth="140"/>
+                    <TableColumn fx:id="descColumn" text="Description" prefWidth="350"/>
+                    <TableColumn fx:id="membersColumn" text="Members" prefWidth="200"/>
+                    <TableColumn fx:id="dateColumn" text="Created At" prefWidth="150"/>
+                    <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="140"/>
+                </columns>
+            </TableView>
         </StackPane>
     </center>
 
