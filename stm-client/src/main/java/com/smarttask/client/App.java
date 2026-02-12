@@ -21,6 +21,8 @@ public class App extends Application {
         // FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
         Parent root = loader.load();
 
+        Image icon = new Image(getClass().getResourceAsStream("/images/icon.png"));
+        primaryStage.getIcons().add(icon);
         primaryStage.setTitle("SmartTaskManager ");
         Scene scene = new Scene(root, 800, 600);
         

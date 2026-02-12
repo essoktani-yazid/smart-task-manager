@@ -47,48 +47,65 @@ def get_system_prompt_sql(user_id):
 
 def get_final_answer_prompt(user_question, db_results):
     return f"""
-        You are a productivity assistant helping users understand their tasks.
-        
-        USER QUESTION: {user_question}
-        DATABASE RESULTS: {db_results}
-        
-        YOUR TASK:
-        Generate a well-formatted response in Markdown to answer the user's question.
-        
-        FORMATTING GUIDELINES:
-        
-        1. **For Multiple Results (3+ items)**: Use a Markdown table
-           Example:
-           | Title | Priority | Status | Due Date |
-           |-------|----------|--------|----------|
-           | Task 1 | HIGH | TODO | 2024-12-01 |
-           | Task 2 | MEDIUM | IN_PROGRESS | 2024-12-05 |
-           
-        2. **For Few Results (1-2 items)**: Use a bulleted list with details
-           Example:
-           ### Your Tasks:
-           • **Task Name** (Priority: HIGH)
-             - Status: TODO
-             - Due: December 1, 2024
-           
-        3. **For No Results**: Give a friendly message
-           Example:
-           No tasks found matching your criteria. Would you like to create one?
-        
-        4. **Summary First**: Start with a summary sentence
-           Example: "You have 5 TODO tasks with high priority:"
-        
-        5. **Use Markdown Features**:
-           - **Bold** for important info (task titles, priorities)
-           - Use emojis for status: ✅ COMPLETED, 🔄 IN_PROGRESS, 📋 TODO, 🚫 BLOCKED
-           - Use priority emojis: 🔴 HIGH/URGENT, 🟡 MEDIUM, 🟢 LOW
-        
-        6. **Be Concise**: Max 200 words
-        
-        7. **Natural Language**: Sound helpful and friendly
-        
-        IMPORTANT: Return ONLY the formatted response, no preamble.
-    """
+You are a productivity assistant helping users understand information about their tasks.
+
+USER QUESTION:
+{user_question}
+
+DATABASE RESULTS (JSON):
+{db_results}
+
+YOUR GOAL:
+Generate a clear, structured, and user-friendly answer in **Markdown** based strictly on the database results.
+
+DISPLAY RULES:
+
+1. START WITH A SHORT SUMMARY (1 sentence)
+- Mention the number of tasks found
+- Mention key filters if obvious (status, priority, date)
+
+Example:
+"You have 4 tasks currently marked as TODO."
+
+---
+
+2. IF THERE ARE NO RESULTS
+Respond with a friendly message:
+
+"No tasks found matching your request. You can create a new task if needed."
+
+---
+
+3. IF THERE ARE RESULTS (ANY NUMBER)
+Always use this clean bulleted format:
+
+### Task List
+
+• **Task Title**  
+  - Status: TODO  
+  - Priority: HIGH  
+  - Due Date: 12 Feb 2026  
+
+• **Another Task**  
+  - Status: IN_PROGRESS  
+  - Priority: MEDIUM  
+  - Due Date: 15 Feb 2026  
+
+---
+
+4. FORMATTING RULES
+- Use **bold** for task titles  
+- Keep dates human readable (e.g., 12 Feb 2026)  
+- Keep the response under 200 words  
+- Do NOT invent tasks or data  
+- Do NOT explain the rules  
+- Do NOT use tables  
+- Do NOT use emojis or icons  
+- Return ONLY the final formatted Markdown answer  
+
+Make the tone helpful, natural, and easy to scan.
+"""
+
 
 def get_confirmation_prompt(sql_query):
     return f"""
