@@ -23,7 +23,7 @@ jobs:
 
     # Compilation
     - name: Build with Maven
-      run: mvn clean package -DskipTests -f stm-client/pom.xml
+      run: mvn clean package -DskipTests
 
     # Création de l'EXE
     - name: Create Windows Installer
@@ -68,7 +68,7 @@ jobs:
 
     # Compilation (sur Linux aussi)
     - name: Build with Maven
-      run: mvn clean package -DskipTests -f stm-client/pom.xml
+      run: mvn clean package -DskipTests
 
     # Création du DEB
     - name: Create Linux Installer
