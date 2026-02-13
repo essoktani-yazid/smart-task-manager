@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.LocalTime;
 
 public final class GsonUtils {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -45,6 +46,19 @@ public final class GsonUtils {
             @Override
             public LocalDate deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
                 return LocalDate.parse(json.getAsString(), DATE_FORMATTER);
+            }
+        });
+
+        builder.registerTypeAdapter(LocalTime.class, new JsonSerializer<LocalTime>() {
+            @Override
+            public JsonElement serialize(LocalTime src, Type typeOfSrc, JsonSerializationContext context) {
+                return new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_TIME));
+            }
+        });
+        builder.registerTypeAdapter(LocalTime.class, new JsonDeserializer<LocalTime>() {
+            @Override
+            public LocalTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                return LocalTime.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_TIME);
             }
         });
 

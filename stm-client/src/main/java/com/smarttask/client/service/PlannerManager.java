@@ -2,22 +2,22 @@ package com.smarttask.client.service;
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * PLANNER MANAGER - VISIBILITY FIX
+ * PLANNER MANAGER - API VERSION
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * This file contains the key fixes for the PlannerManager to properly filter
- * events based on visibility settings.
+ * UPDATED: Now uses ApiClient to communicate with REST API instead of direct DAO
  *
- * KEY CHANGES:
- * 1. loadFromDatabase() now uses getEventsForUser() instead of getAllEvents()
- * 2. Events are filtered based on visibility (PUBLIC/PRIVATE/SHARED)
- * 3. Only authorized users see events they should see
+ * Architecture:
+ * CalendarController → PlannerManager → ApiClient → HTTP → EventHandler/TaskHandler → DAO
+ *
+ * Changes from old version:
+ * - Removed direct DAO imports
+ * - Added ApiClient for all database operations
+ * - All CRUD operations now go through HTTP requests
  */
 
 import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
-import com.smarttask.server.dao.CalendarEventDAO;
-import com.smarttask.server.dao.TaskDAO;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -29,101 +29,103 @@ import java.util.stream.Collectors;
 
 /**
  * Unified manager for both Tasks and Events in the planner
- * Handles database integration for both types
- *
- * 🔧 FIXED: Now properly filters events based on visibility
+ * Handles API communication for both types
  */
 public class PlannerManager {
 
-    private final CalendarEventDAO eventDAO;
-    private final TaskDAO taskDAO;
+    private final ApiClient apiClient;  // ✅ NEW: API client instead of DAOs
 
     private final ObservableList<CalendarEvent> events;
     private final ObservableList<Task> tasks;
 
     private final User currentUser;
-    private final boolean useDatabaseMode;
+    private final boolean useApiMode;
 
     private final GoogleCalendarService googleCalendarService;
     private boolean googleSyncEnabled = true;
 
+    /**
+     * Constructor with API mode enabled
+     */
     public PlannerManager(User currentUser) {
         this(currentUser, true);
     }
 
-    public PlannerManager(User currentUser, boolean useDatabaseMode) {
+    /**
+     * Constructor with configurable API mode
+     */
+    public PlannerManager(User currentUser, boolean useApiMode) {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
-        this.useDatabaseMode = useDatabaseMode;
+        this.useApiMode = useApiMode;
 
-        this.eventDAO = new CalendarEventDAO();
-        this.taskDAO = new TaskDAO();
+        // ✅ NEW: Initialize API client instead of DAOs
+        this.apiClient = new ApiClient("http://localhost:8080");
         this.googleCalendarService = GoogleCalendarService.getInstance();
 
         this.events = FXCollections.observableArrayList();
         this.tasks = FXCollections.observableArrayList();
 
-        if (useDatabaseMode) {
-            loadFromDatabase();
+        if (useApiMode) {
+            loadFromApi();
         }
     }
 
     /**
-     * 🔧 FIXED: Load events with visibility filtering
-     *
-     * Now only loads:
-     * - PUBLIC events (everyone can see)
-     * - PRIVATE events created by current user
-     * - SHARED events where current user is in the shared list
+     * ✅ NEW: Load data via API instead of direct database access
      */
-    private void loadFromDatabase() {
+    private void loadFromApi() {
         try {
             if (currentUser == null) {
-                System.err.println("⚠️ Cannot load events: No user logged in");
+                System.err.println("⚠️ Cannot load data: No user logged in");
                 return;
             }
 
-            // 🔧 FIX: Use getEventsForUser instead of getAllEvents
-            // This respects visibility settings
-            List<CalendarEvent> dbEvents = eventDAO.getEventsForUser(currentUser.getId());
+            // Test API connection first
+            if (!apiClient.testConnection()) {
+                System.err.println("❌ Cannot connect to API server");
+                return;
+            }
+
+            // ✅ Load events via API
+            List<CalendarEvent> apiEvents = apiClient.getEventsForUser(currentUser.getId());
             events.clear();
-            events.addAll(dbEvents);
+            events.addAll(apiEvents);
 
-            System.out.println("✅ Loaded " + dbEvents.size() + " events for user " + currentUser.getUsername());
+            System.out.println("✅ Loaded " + apiEvents.size() + " events via API for user " + currentUser.getUsername());
 
-            // Debug: Show breakdown by visibility
-            long publicCount = dbEvents.stream()
+            // Debug visibility breakdown
+            long publicCount = apiEvents.stream()
                     .filter(e -> e.getVisibility() == CalendarEvent.EventVisibility.PUBLIC)
                     .count();
-            long privateCount = dbEvents.stream()
+            long privateCount = apiEvents.stream()
                     .filter(e -> e.getVisibility() == CalendarEvent.EventVisibility.PRIVATE)
                     .count();
-            long sharedCount = dbEvents.stream()
+            long sharedCount = apiEvents.stream()
                     .filter(e -> e.getVisibility() == CalendarEvent.EventVisibility.SHARED)
                     .count();
 
             System.out.println("   📊 Breakdown: " + publicCount + " public, " +
                     privateCount + " private, " + sharedCount + " shared");
 
-            // Load tasks for current user only (private)
-            List<Task> dbTasks = taskDAO.findByUserId(currentUser.getId());
+            // ✅ Load tasks via API
+            List<Task> apiTasks = apiClient.getTasksForUser(currentUser.getId());
             tasks.clear();
-            tasks.addAll(dbTasks);
-            System.out.println("✅ Loaded " + dbTasks.size() + " tasks for user " + currentUser.getUsername());
+            tasks.addAll(apiTasks);
+            System.out.println("✅ Loaded " + apiTasks.size() + " tasks via API for user " + currentUser.getUsername());
 
         } catch (Exception e) {
-            System.err.println("❌ Error loading planner items from database: " + e.getMessage());
+            System.err.println("❌ Error loading planner items from API: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     /**
      * Get ALL planner items (tasks + events) for a specific date
-     * Events are already filtered by visibility during load
      */
     public List<PlannerItem> getItemsForDate(LocalDate date) {
         List<PlannerItem> items = new ArrayList<>();
 
-        // Add events (already filtered by visibility)
+        // Add events (already filtered by visibility via API)
         events.stream()
                 .filter(e -> e.occursOn(date))
                 .map(EventPlannerAdapter::new)
@@ -230,40 +232,35 @@ public class PlannerManager {
     }
 
     // ════════════════════════════════════════════════════════════════════════════
-    // EVENT OPERATIONS
+    // EVENT OPERATIONS - API VERSION
     // ════════════════════════════════════════════════════════════════════════════
 
     /**
-     * Add a new event
-     * 🔧 FIXED: Properly sets creator and respects visibility
+     * ✅ UPDATED: Add event via API
      */
     public void addEvent(CalendarEvent event) {
         if (event == null || events.contains(event)) return;
 
-        // 🔧 FIX: Ensure creator is set
+        // Ensure creator is set
         if (event.getCreatorUserId() == null && currentUser != null) {
             event.setCreatorUserId(currentUser.getId());
         }
 
-        // 🔧 FIX: Log visibility for debugging
-        System.out.println("📅 Adding event: " + event.getTitle());
+        System.out.println("📅 Adding event via API: " + event.getTitle());
         System.out.println("   Visibility: " + event.getVisibility());
         System.out.println("   Creator: " + event.getCreatorUserId());
-        if (event.getVisibility() == CalendarEvent.EventVisibility.SHARED) {
-            System.out.println("   Shared with users: " + event.getSharedWithUserIds());
-            System.out.println("   Shared with emails: " + event.getSharedWithEmails());
-        }
 
-        events.add(event);
-
-        if (useDatabaseMode) {
-            boolean success = eventDAO.createEvent(event);
-            if (success) {
-                System.out.println("✅ Event saved to database");
+        if (useApiMode) {
+            // ✅ Use API instead of DAO
+            CalendarEvent createdEvent = apiClient.createEvent(event);
+            if (createdEvent != null) {
+                events.add(createdEvent);
+                System.out.println("✅ Event saved via API");
             } else {
-                System.err.println("❌ Failed to save event to database");
-                events.remove(event);
+                System.err.println("❌ Failed to save event via API");
             }
+        } else {
+            events.add(event);
         }
 
         // Sync to Google Calendar
@@ -278,14 +275,12 @@ public class PlannerManager {
     }
 
     /**
-     * Update an event
-     * 🔧 FIXED: Properly updates visibility settings
+     * ✅ UPDATED: Update event via API
      */
     public void updateEvent(CalendarEvent event) {
         if (event == null) return;
 
-        // 🔧 FIX: Log visibility for debugging
-        System.out.println("📝 Updating event: " + event.getTitle());
+        System.out.println("📝 Updating event via API: " + event.getTitle());
         System.out.println("   Visibility: " + event.getVisibility());
 
         // Update in memory
@@ -296,12 +291,11 @@ public class PlannerManager {
             }
         }
 
-        if (useDatabaseMode) {
-            boolean success = eventDAO.updateEvent(event);
-            if (success) {
-                System.out.println("✅ Event updated in database");
-            } else {
-                System.err.println("❌ Failed to update event in database");
+        if (useApiMode) {
+            // ✅ Use API instead of DAO
+            boolean success = apiClient.updateEvent(event);
+            if (!success) {
+                System.err.println("❌ Failed to update event via API");
             }
         }
 
@@ -317,15 +311,16 @@ public class PlannerManager {
     }
 
     /**
-     * Remove an event
+     * ✅ UPDATED: Remove event via API
      */
     public void removeEvent(CalendarEvent event) {
         if (event == null) return;
 
         events.remove(event);
 
-        if (useDatabaseMode) {
-            eventDAO.deleteEvent(event.getId());
+        if (useApiMode) {
+            // ✅ Use API instead of DAO
+            apiClient.deleteEvent(event.getId());
         }
 
         if (isGoogleSyncEnabled()) {
@@ -350,9 +345,12 @@ public class PlannerManager {
     }
 
     // ════════════════════════════════════════════════════════════════════════════
-    // TASK OPERATIONS
+    // TASK OPERATIONS - API VERSION
     // ════════════════════════════════════════════════════════════════════════════
 
+    /**
+     * ✅ UPDATED: Add task via API
+     */
     public void addTask(Task task) {
         if (task == null || tasks.contains(task)) return;
 
@@ -360,17 +358,17 @@ public class PlannerManager {
             task.setUser(currentUser);
         }
 
-        tasks.add(task);
-
-        if (useDatabaseMode) {
-            try {
-                taskDAO.save(task);
-                System.out.println("✅ Task added: " + task.getTitle() + " (ID: " + task.getId() + ")");
-            } catch (Exception e) {
-                System.err.println("❌ Failed to add task to database: " + e.getMessage());
-                tasks.remove(task);
-                e.printStackTrace();
+        if (useApiMode) {
+            // ✅ Use API instead of DAO
+            Task createdTask = apiClient.createTask(task);
+            if (createdTask != null) {
+                tasks.add(createdTask);
+                System.out.println("✅ Task added via API: " + task.getTitle());
+            } else {
+                System.err.println("❌ Failed to add task via API");
             }
+        } else {
+            tasks.add(task);
         }
 
         if (isGoogleSyncEnabled()) {
@@ -383,6 +381,9 @@ public class PlannerManager {
         }
     }
 
+    /**
+     * ✅ UPDATED: Update task via API
+     */
     public void updateTask(Task task) {
         if (task == null) return;
 
@@ -393,13 +394,11 @@ public class PlannerManager {
             }
         }
 
-        if (useDatabaseMode) {
-            try {
-                taskDAO.update(task);
-                System.out.println("✅ Task updated: " + task.getTitle());
-            } catch (Exception e) {
-                System.err.println("❌ Failed to update task: " + e.getMessage());
-                e.printStackTrace();
+        if (useApiMode) {
+            // ✅ Use API instead of DAO
+            boolean success = apiClient.updateTask(task);
+            if (!success) {
+                System.err.println("❌ Failed to update task via API");
             }
         }
 
@@ -413,13 +412,17 @@ public class PlannerManager {
         }
     }
 
+    /**
+     * ✅ UPDATED: Remove task via API
+     */
     public void removeTask(Task task) {
         if (task == null) return;
 
         tasks.remove(task);
 
-        if (useDatabaseMode) {
-            taskDAO.deleteById(task.getId());
+        if (useApiMode) {
+            // ✅ Use API instead of DAO
+            apiClient.deleteTask(task.getId());
         }
 
         if (isGoogleSyncEnabled()) {
@@ -446,9 +449,12 @@ public class PlannerManager {
     // UTILITY METHODS
     // ════════════════════════════════════════════════════════════════════════════
 
+    /**
+     * ✅ UPDATED: Reload via API
+     */
     public void reloadFromDatabase() {
-        if (useDatabaseMode) {
-            loadFromDatabase();
+        if (useApiMode) {
+            loadFromApi();
         }
     }
 
@@ -456,8 +462,15 @@ public class PlannerManager {
         return currentUser;
     }
 
-    public boolean isDatabaseMode() {
-        return useDatabaseMode;
+    public boolean isApiMode() {
+        return useApiMode;
+    }
+
+    /**
+     * ✅ NEW: Get API client for advanced usage
+     */
+    public ApiClient getApiClient() {
+        return apiClient;
     }
 
     public void clearAll() {

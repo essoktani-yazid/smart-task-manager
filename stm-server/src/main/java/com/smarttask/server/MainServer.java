@@ -1,6 +1,7 @@
 package com.smarttask.server;
 
 import com.smarttask.server.config.DatabaseConnection;
+import com.smarttask.server.handler.EventHandler;
 import com.smarttask.server.socket.NotificationWebSocketServer;
 import com.smarttask.server.handler.AuthHandler;
 import com.smarttask.server.handler.TaskHandler;
@@ -51,6 +52,7 @@ public class MainServer {
             server.createContext("/api/attachments", new com.smarttask.server.handler.AttachmentHandler());
             server.createContext("/api/timetracking", new com.smarttask.server.handler.TimeTrackingHandler());
             server.createContext("/api/teams", new TeamHandler());
+            server.createContext("/api/events", new EventHandler());
 
             // Start server
             server.setExecutor(null); // Uses default thread pool

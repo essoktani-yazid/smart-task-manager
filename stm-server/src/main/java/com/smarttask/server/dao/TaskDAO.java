@@ -96,9 +96,8 @@ public class TaskDAO {
         // Pas de SELECT * - uniquement les colonnes nécessaires
         String sql = "SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, " +
                      "t.created_at, t.user_id, t.project_id, t.parent_task_id, " +
-                     "t.recurrence_type, t.recurrence_interval, u.username, u.email " +
-                     "FROM tasks t " +
-                     "FORCE INDEX (idx_user_id) " +  // Force utilisation index
+                     "u.username, u.email " +
+                     "FROM tasks t " + // Force utilisation index
                      "LEFT JOIN users u ON t.user_id = u.id " +
                      "WHERE t.user_id = ? " +
                      "ORDER BY t.created_at DESC " +
