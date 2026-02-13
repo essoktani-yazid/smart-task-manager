@@ -22,7 +22,7 @@
             <Label text="SMART TASK.AI" styleClass="brand-text-main">
                <font><Font name="System Bold" size="30" /></font>
             </Label>
-            <Label text="Intelligence au service de vos tâches" styleClass="brand-subtitle" />
+            <Label text="Intelligence at your service" styleClass="brand-subtitle" />
          </VBox>
       </VBox>
       
@@ -30,9 +30,9 @@
          <padding><Insets top="40" bottom="40" left="60" right="60"/></padding>
          
          <HBox styleClass="tab-container" alignment="CENTER">
-            <Button fx:id="loginTab" text="Se connecter" styleClass="tab-button, tab-active" 
+            <Button fx:id="loginTab" text="Login" styleClass="tab-button, tab-active" 
                     onAction="#switchToLogin" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
-            <Button fx:id="registerTab" text="S'inscrire" styleClass="tab-button" 
+            <Button fx:id="registerTab" text="Sign Up" styleClass="tab-button" 
                     onAction="#switchToRegister" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
          </HBox>
          
@@ -40,38 +40,38 @@
             
             <VBox fx:id="loginForm" spacing="20" styleClass="auth-form">
                <VBox spacing="5">
-                  <Label text="Bienvenue !" styleClass="form-title">
+                  <Label text="Welcome Back!" styleClass="form-title">
                      <font><Font size="26" /></font>
                   </Label>
-                  <Label text="Connectez-vous pour continuer" styleClass="form-subtitle"/>
+                  <Label text="Log in to continue" styleClass="form-subtitle"/>
                </VBox>
                
                <VBox spacing="8">
-                  <Label text="Nom d'utilisateur" styleClass="field-label"/>
-                  <TextField fx:id="loginUsernameField" promptText="Nom d'utilisateur" styleClass="form-field" text="yazid"/>
+                  <Label text="Username" styleClass="field-label"/>
+                  <TextField fx:id="loginUsernameField" promptText="Username" styleClass="form-field" text="yazid"/>
                </VBox>
                
                <VBox spacing="8">
-                  <Label text="Mot de passe" styleClass="field-label"/>
+                  <Label text="Password" styleClass="field-label"/>
                   <PasswordField fx:id="loginPasswordField" promptText="••••••••" styleClass="form-field" text="yazid"/>
                </VBox>
                
                <Label fx:id="loginErrorLabel" styleClass="error-label" visible="false" wrapText="true"/>
-               <Button fx:id="loginButton" text="Se connecter" styleClass="primary-btn" 
+               <Button fx:id="loginButton" text="Login" styleClass="primary-btn" 
                        onAction="#handleLogin" maxWidth="Infinity"/>
             </VBox>
             
             <VBox fx:id="registerForm" spacing="20" styleClass="auth-form" visible="false" managed="false">
                <VBox spacing="5">
-                  <Label text="Créer un compte" styleClass="form-title">
+                  <Label text="Create Account" styleClass="form-title">
                      <font><Font size="26" /></font>
                   </Label>
-                  <Label text="Rejoignez la révolution SmartTask" styleClass="form-subtitle"/>
+                  <Label text="Join the SmartTask revolution" styleClass="form-subtitle"/>
                </VBox>
                
                <VBox spacing="8">
-                  <Label text="Nom d'utilisateur" styleClass="field-label"/>
-                  <TextField fx:id="registerUsernameField" promptText="Utilisateur" styleClass="form-field"/>
+                  <Label text="Username" styleClass="field-label"/>
+                  <TextField fx:id="registerUsernameField" promptText="Username" styleClass="form-field"/>
                </VBox>
                
                <VBox spacing="8">
@@ -80,12 +80,12 @@
                </VBox>
                
                <VBox spacing="8">
-                  <Label text="Mot de passe" styleClass="field-label"/>
+                  <Label text="Password" styleClass="field-label"/>
                   <PasswordField fx:id="registerPasswordField" promptText="••••••••" styleClass="form-field"/>
                </VBox>
                
                <Label fx:id="registerErrorLabel" styleClass="error-label" visible="false" wrapText="true"/>
-               <Button fx:id="registerButton" text="S'inscrire" styleClass="primary-btn" 
+               <Button fx:id="registerButton" text="Sign Up" styleClass="primary-btn" 
                        onAction="#handleRegister" maxWidth="Infinity"/>
             </VBox>
             
