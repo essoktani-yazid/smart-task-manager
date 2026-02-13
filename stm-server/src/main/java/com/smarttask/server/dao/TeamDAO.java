@@ -155,6 +155,7 @@ public class TeamDAO {
 
             stmt.setString(1, teamId);
             stmt.setString(2, userId);
+            stmt.setString(3, "MEMBER");
 
             stmt.executeUpdate();
 
