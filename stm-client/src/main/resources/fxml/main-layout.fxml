@@ -47,8 +47,8 @@
                   <Button fx:id="projectsButton" maxWidth="Infinity" onAction="#showProjects" 
                           styleClass="nav-button-creative" text="Projects" />
 
-                  <Button fx:id="analyticsButton" maxWidth="Infinity" onAction="#showAnalytics" 
-                          styleClass="nav-button-creative" text="Reports" />
+                  <!-- <Button fx:id="analyticsButton" maxWidth="Infinity" onAction="#showAnalytics" 
+                          styleClass="nav-button-creative" text="Reports" /> -->
 
                   <StackPane alignment="TOP_RIGHT" maxWidth="Infinity">
                      <Button fx:id="notificationButton" maxWidth="Infinity" onAction="#showNotifications" 
