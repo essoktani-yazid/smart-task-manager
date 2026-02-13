@@ -247,9 +247,8 @@ public class TaskDetailController {
                         alert.showAndWait().ifPresent(bt -> {
                             if (bt == ButtonType.YES) {
                                 try {
-                                    if (tagService.delete(currentTask.getId(), tagName)) {
-                                        loadTaskDetails(currentTask.getId());
-                                    }
+                                    tagService.delete(currentTask.getId(), tagName);
+                                    refreshAll();
                                 } catch (Exception ex) {
                                     ex.printStackTrace();
                                 }
