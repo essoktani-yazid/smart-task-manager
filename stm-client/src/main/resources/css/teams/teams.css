@@ -1,6 +1,6 @@
 /* ROOT */
 .teams-root {
-    -fx-background-color: linear-gradient(to bottom right, #fdfdff, #f4f6ff);
+    -fx-background-color: #f3f4f6;
 }
 
 /* HEADER */
@@ -123,11 +123,6 @@
 
 /* LIST VIEW (TABLE) */
 .teams-table {
-    -fx-background-color: rgba(255, 255, 255, 0.5);
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(0, 0, 0, 0.05);
-    -fx-border-width: 1;
-    -fx-border-radius: 12;
     -fx-background-radius: 12;
 }
 
@@ -204,4 +199,30 @@
 
 .teams-table .placeholder .label {
     -fx-text-fill: #999999;
+}
+
+/* Boutons d'action génériques */
+.action-button-edit, .action-button-delete {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 5;
+    -fx-background-radius: 5;
+}
+
+/* Effets au survol */
+.action-button-edit:hover {
+    -fx-background-color: rgba(74, 144, 226, 0.1);
+}
+
+.action-button-delete:hover {
+    -fx-background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Optionnel : changer la couleur de l'icône au survol */
+.action-button-edit:hover SVGPath {
+    -fx-fill: #357abd;
+}
+
+.action-button-delete:hover SVGPath {
+    -fx-fill: #c0392b;
 }
