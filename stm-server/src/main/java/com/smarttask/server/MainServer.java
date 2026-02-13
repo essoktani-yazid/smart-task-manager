@@ -99,6 +99,23 @@ public class MainServer {
             System.out.println("  PUT  /api/notifications/read-all - Mark all as read");
             System.out.println("  DELETE /api/notifications/{id} - Delete notification");
 
+            /*
+
+             * Calender event Endpoints:
+             * - GET    /api/events                    → Get all events
+             * - GET    /api/events/{id}               → Get event by ID
+             * - GET    /api/events/user/{userId}      → Get events for user (respects visibility)
+             * - GET    /api/events/creator/{userId}   → Get events created by user
+             * - GET    /api/events/shared/{userId}    → Get events shared with user
+             * - GET    /api/events/date/{date}        → Get events on specific date
+             * - GET    /api/events/range?start={}&end={}  → Get events in date range
+             * - POST   /api/events                    → Create new event
+             * - PUT    /api/events/{id}               → Update event
+             * - DELETE /api/events/{id}               → Delete event
+             */
+
+
+
             // Add shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 System.out.println("\nShutting down server...");
