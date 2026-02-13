@@ -226,3 +226,26 @@
 .action-button-delete:hover SVGPath {
     -fx-fill: #c0392b;
 }
+
+.view-scroll {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent; 
+}
+
+.view-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+#teamsFlow {
+    -fx-background-color: transparent;
+    -fx-padding: 10; 
+}
+
+.view-scroll:focused, 
+.teams-container:focused,
+.teams-table:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
