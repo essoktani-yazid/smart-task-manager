@@ -105,7 +105,7 @@ public class TeamDAO {
     public void update(Team team) {
         String sql = """
                     UPDATE teams
-                    SET name = ?, description = ?, color = ?, is_active = ?
+                    SET name = ?, description = ?, color = ?
                     WHERE id = ?
                 """;
 

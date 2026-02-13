@@ -99,3 +99,21 @@
 .chip-remove-btn:hover {
     -fx-text-fill: #ff4d4d;
 }
+
+.team-badge {
+    -fx-min-width: 45;
+    -fx-min-height: 45;
+    -fx-max-width: 45;
+    -fx-max-height: 45;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+
+.team-card:hover {
+    -fx-cursor: hand;
+    -fx-border-color: #6a7cff;
+}
+
+.table-row-cell:hover {
+    -fx-cursor: hand;
+}

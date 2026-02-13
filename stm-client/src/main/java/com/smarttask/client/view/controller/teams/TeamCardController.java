@@ -11,24 +11,23 @@ public class TeamCardController {
     private StackPane colorBadge;
 
     @FXML
-    private Label teamName;
-
-    @FXML
-    private Label teamDescription;
-
-    @FXML
-    private Label memberCountLabel;
+    private Label teamName, teamDescription, memberCountLabel;
 
     private Team team;
+    private java.util.function.Consumer<Team> onEditRequested;
 
     @FXML
     public void initialize() {
         setupHoverEffects();
     }
 
+    @FXML
+    private void handleCardClick() {
+        if (onEditRequested != null) onEditRequested.accept(team);
+    }
+
     private void setupHoverEffects() {
-        // We'll use scaling for a "pop" effect on hover
-        javafx.scene.Node parent = teamName.getParent().getParent().getParent(); // The card itself
+        javafx.scene.Node parent = teamName.getParent().getParent().getParent();
 
         parent.setOnMouseEntered(e -> {
             javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(200),
@@ -47,20 +46,16 @@ public class TeamCardController {
         });
     }
 
-    public void setTeamData(Team team, int memberCount) {
+    public void setTeamData(Team team, int memberCount, java.util.function.Consumer<Team> onEditRequested) {
         this.team = team;
+        this.onEditRequested = onEditRequested;
         teamName.setText(team.getName());
         teamDescription.setText(team.getDescription());
-        memberCountLabel.setText(memberCount + (memberCount > 1 ? " members" : " member"));
+        memberCountLabel.setText(memberCount + (memberCount > 1 ? " membres" : " membre"));
 
-        // Appliquer la couleur de fond au badge
-        if (team.getColor() != null && !team.getColor().isEmpty()) {
-            String color = team.getColor();
-            // Convertir de format hex optionnel 0x... en format CSS #...
-            if (color.startsWith("0x")) {
-                color = "#" + color.substring(2, 8);
-            }
-            colorBadge.setStyle("-fx-background-color: " + color + ";");
+        if (team.getColor() != null) {
+            String color = team.getColor().replace("0x", "#");
+            colorBadge.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 8;");
         }
     }
 
