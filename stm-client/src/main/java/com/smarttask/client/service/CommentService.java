@@ -1,9 +1,10 @@
 package com.smarttask.client.service;
 
 import com.google.gson.Gson;
+import com.smarttask.client.config.AppConfig;
 import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.Comment;
-import com.smarttask.client.config.AppConfig;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;

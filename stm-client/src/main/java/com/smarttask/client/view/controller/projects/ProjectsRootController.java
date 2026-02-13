@@ -1,18 +1,14 @@
 package com.smarttask.client.view.controller.projects;
 
 import com.smarttask.client.service.ProjectService;
-import com.smarttask.client.service.TaskService;
 import com.smarttask.client.util.SessionManager;
 import com.smarttask.client.view.controller.MainLayoutController;
 import com.smarttask.model.Project;
-import com.smarttask.model.Task;
 import com.smarttask.model.User;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -26,7 +22,8 @@ import java.io.IOException;
 import java.util.List;
 
 public class ProjectsRootController {
-	@FXML private VBox projectsContainer;
+	@FXML
+	private VBox projectsContainer;
 
 	private final ProjectService projectService = new ProjectService();
 
@@ -37,11 +34,13 @@ public class ProjectsRootController {
 
 	private void loadProjects() {
 		User current = SessionManager.getInstance().getCurrentUser();
-		if (current == null) return;
+		if (current == null)
+			return;
 
 		List<Project> projects = projectService.getProjectsByUser(current.getId());
 		projectsContainer.getChildren().clear();
-		if (projects == null) return;
+		if (projects == null)
+			return;
 
 		projectsContainer.setSpacing(15);
 
@@ -56,15 +55,15 @@ public class ProjectsRootController {
 			String pColor = (p.getColor() != null && !p.getColor().isEmpty()) ? p.getColor() : "#4f46e5";
 
 			iconContainer.setStyle(
-				"-fx-background-color: " + pColor + "26;" + 
-				"-fx-border-color: " + pColor + ";" +
-				"-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-width: 1.5;"
-			);
+					"-fx-background-color: " + pColor + "26;" +
+							"-fx-border-color: " + pColor + ";" +
+							"-fx-background-radius: 10; -fx-border-radius: 10; -fx-border-width: 1.5;");
 			iconContainer.setPrefSize(54, 54);
 			iconContainer.setMinSize(54, 54);
 
 			javafx.scene.shape.SVGPath svgIcon = new javafx.scene.shape.SVGPath();
-			svgIcon.setContent("M71.6784 84.1883H15.0422C10.0597 84.1883 6.02056 79.4034 6.02056 73.5008L6.02056 22.6875C6.02056 16.785 10.0597 12 15.0422 12H39.8706C42.5572 12 45.104 13.4185 46.818 15.8694L49.559 19.7891C51.2182 22.1618 53.9176 23.5952 56.8127 23.616C57.6296 23.6219 58.4436 23.6258 59.149 23.6258H82.3148M15.0273 84.1883H73.604C77.8306 84.1883 81.4906 80.7123 82.4098 75.8251L89.7804 36.6375C91.036 29.9615 86.7483 23.6257 80.9746 23.6257H25.3316C21.6506 23.6257 18.3387 26.275 16.9633 30.3199L14.2906 38.1801L6.36349 70.5206C4.68758 77.3578 9.01734 84.1883 15.0273 84.1883Z");
+			svgIcon.setContent(
+					"M71.6784 84.1883H15.0422C10.0597 84.1883 6.02056 79.4034 6.02056 73.5008L6.02056 22.6875C6.02056 16.785 10.0597 12 15.0422 12H39.8706C42.5572 12 45.104 13.4185 46.818 15.8694L49.559 19.7891C51.2182 22.1618 53.9176 23.5952 56.8127 23.616C57.6296 23.6219 58.4436 23.6258 59.149 23.6258H82.3148M15.0273 84.1883H73.604C77.8306 84.1883 81.4906 80.7123 82.4098 75.8251L89.7804 36.6375C91.036 29.9615 86.7483 23.6257 80.9746 23.6257H25.3316C21.6506 23.6257 18.3387 26.275 16.9633 30.3199L14.2906 38.1801L6.36349 70.5206C4.68758 77.3578 9.01734 84.1883 15.0273 84.1883Z");
 
 			svgIcon.setStyle("-fx-fill: transparent; -fx-stroke: " + pColor + "; -fx-stroke-width: 3;");
 
@@ -77,13 +76,12 @@ public class ProjectsRootController {
 			Label lblName = new Label(p.getName());
 			lblName.getStyleClass().add("project-title-label");
 
-			Label lblDesc = new Label(p.getDescription() != null ? p.getDescription() : "Aucune description");
+			Label lblDesc = new Label(p.getDescription() != null ? p.getDescription() : "No description");
 			lblDesc.getStyleClass().add("project-desc-label");
 			lblDesc.setWrapText(true);
 			lblDesc.setMaxWidth(400);
 
 			vInfo.getChildren().addAll(lblName, lblDesc);
-
 
 			Region spacer = new Region();
 			HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -91,19 +89,23 @@ public class ProjectsRootController {
 			HBox actions = new HBox(10);
 			actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
 
-			Button btnEdit = new Button("Modifier");
+			Button btnEdit = new Button("Edit");
 			btnEdit.getStyleClass().add("action-btn-secondary");
-			btnEdit.setOnAction(e -> { e.consume(); showEditDialog(p); });
-
-			Button btnDelete = new Button("Supprimer");
-			btnDelete.getStyleClass().add("danger-button");
-			btnDelete.setOnAction(e -> { 
-				e.consume(); 
-				boolean ok = projectService.deleteProject(p.getId());
-				if (ok) loadProjects();
+			btnEdit.setOnAction(e -> {
+				e.consume();
+				showEditDialog(p);
 			});
 
-			Button btnOpen = new Button("Voir");
+			Button btnDelete = new Button("Delete");
+			btnDelete.getStyleClass().add("danger-button");
+			btnDelete.setOnAction(e -> {
+				e.consume();
+				boolean ok = projectService.deleteProject(p.getId());
+				if (ok)
+					loadProjects();
+			});
+
+			Button btnOpen = new Button("View");
 			btnOpen.getStyleClass().add("primary-action-button");
 			btnOpen.setOnAction(e -> showTasksForProject(p));
 
@@ -120,7 +122,8 @@ public class ProjectsRootController {
 	@FXML
 	private void handleCreateProject() {
 		User current = SessionManager.getInstance().getCurrentUser();
-		if (current == null) return;
+		if (current == null)
+			return;
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/projects/project-form.fxml"));
 			Parent root = loader.load();
@@ -130,7 +133,7 @@ public class ProjectsRootController {
 
 			Stage stage = new Stage();
 			stage.initModality(Modality.APPLICATION_MODAL);
-			stage.setTitle("Nouveau Projet");
+			stage.setTitle("New Project");
 			stage.setScene(new javafx.scene.Scene(root));
 			controller.setStage(stage);
 			stage.showAndWait();
@@ -139,7 +142,15 @@ public class ProjectsRootController {
 			if (result != null) {
 				result.setUserId(current.getId());
 				Project created = projectService.createProject(result);
-				if (created != null) loadProjects();
+				if (created != null) {
+					loadProjects();
+				} else {
+					Alert alert = new Alert(Alert.AlertType.ERROR);
+					alert.setTitle("Error");
+					alert.setHeaderText("Creation failed");
+					alert.setContentText("The project could not be saved. Check server connection.");
+					alert.showAndWait();
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -151,13 +162,13 @@ public class ProjectsRootController {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/projects/project-form.fxml"));
 			Parent root = loader.load();
 			ProjectFormController controller = loader.getController();
-			
+
 			controller.setMode(ProjectFormController.Mode.EDIT);
 			controller.setProject(p);
 
 			Stage stage = new Stage();
 			stage.initModality(Modality.APPLICATION_MODAL);
-			stage.setTitle("Modifier Projet");
+			stage.setTitle("Edit Project");
 			stage.setScene(new javafx.scene.Scene(root));
 			controller.setStage(stage);
 			stage.showAndWait();
@@ -177,5 +188,3 @@ public class ProjectsRootController {
 		MainLayoutController.getInstance().navigateTo("/fxml/projects/project-view.fxml", project);
 	}
 }
-
-

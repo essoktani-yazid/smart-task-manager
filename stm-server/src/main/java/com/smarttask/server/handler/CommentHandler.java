@@ -104,9 +104,9 @@ public class CommentHandler implements HttpHandler {
             }
 
             Comment c = new Comment();
-            com.smarttask.model.Task t = new com.smarttask.model.Task();
+            Task t = new Task();
             t.setId(taskId);
-            com.smarttask.model.User u = new com.smarttask.model.User();
+            User u = new User();
             u.setId(userId);
             c.setTask(t);
             c.setUser(u);

@@ -18,23 +18,23 @@
         <VBox spacing="15" style="-fx-padding: 0 0 20 0; -fx-border-color: transparent transparent #f3f4f6 transparent; -fx-border-width: 0 0 2 0;">
 
             <HBox alignment="CENTER_LEFT" spacing="15">
-                <Label fx:id="titleLabel" text="Titre de la tâche" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                <Label fx:id="titleLabel" text="Task Title" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"
                        style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #111827;"/>
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <Button text="Modifier" onAction="#handleEditTask"
+                <Button text="Edit" onAction="#handleEditTask"
                         style="-fx-background-color: white; -fx-text-fill: #374151; -fx-border-color: #d1d5db; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;"/>
 
-                <Button text="Supprimer" onAction="#handleDeleteTask"
+                <Button text="Delete" onAction="#handleDeleteTask"
                         style="-fx-background-color: #fef2f2; -fx-text-fill: #dc2626; -fx-border-color: #fecaca; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 12; -fx-cursor: hand; -fx-font-weight: bold;"/>
             </HBox>
 
             <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label fx:id="statusLabel" text="EN COURS"
+                <Label fx:id="statusLabel" text="IN PROGRESS"
                        style="-fx-background-color: #e5e7eb; -fx-text-fill: #374151; -fx-background-radius: 12; -fx-padding: 4 10; -fx-font-size: 11px; -fx-font-weight: bold;"/>
 
-                <Label fx:id="priorityLabel" text="HAUTE"
+                <Label fx:id="priorityLabel" text="HIGH"
                        style="-fx-background-color: #fee2e2; -fx-text-fill: #991b1b; -fx-background-radius: 12; -fx-padding: 4 10; -fx-font-size: 11px; -fx-font-weight: bold;"/>
             </HBox>
 
@@ -47,39 +47,39 @@
         <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE"
                  style="-fx-background-color: transparent; -fx-padding: 10 0 0 0;">
             <tabs>
-                <Tab text="Sous-tâches">
+                <Tab text="Subtasks">
                     <VBox spacing="15" style="-fx-padding: 15 0 0 0;">
                         <TableView fx:id="subtasksTable" prefHeight="200" style="-fx-border-color: #e5e7eb; -fx-border-radius: 8;" VBox.vgrow="ALWAYS">
                             <columns>
-                                <TableColumn text="Titre" prefWidth="200" fx:id="titleColumn"/>
-                                <TableColumn text="Statut" prefWidth="90" fx:id="statusColumn"/>
-                                <TableColumn text="Priorité" prefWidth="80" fx:id="priorityColumn"/>
-                                <TableColumn text="Échéance" prefWidth="110" fx:id="dueDateColumn"/>
+                                <TableColumn text="Title" prefWidth="200" fx:id="titleColumn"/>
+                                <TableColumn text="Status" prefWidth="90" fx:id="statusColumn"/>
+                                <TableColumn text="Priority" prefWidth="80" fx:id="priorityColumn"/>
+                                <TableColumn text="Due Date" prefWidth="110" fx:id="dueDateColumn"/>
                                 <TableColumn text="Actions" prefWidth="120" fx:id="actionsColumn"/>
                             </columns>
                         </TableView>
 
-                        <Button text="+ Ajouter une sous-tâche" onAction="#handleAddSubtask" maxWidth="Infinity"
+                        <Button text="+ Add a subtask" onAction="#handleAddSubtask" maxWidth="Infinity"
                                 style="-fx-background-color: white; -fx-text-fill: #4f46e5; -fx-border-color: #e0e7ff; -fx-border-style: dashed; -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;"/>
                     </VBox>
                 </Tab>
 
-                <Tab text="Commentaires">
+                <Tab text="Comments">
                     <VBox spacing="10" style="-fx-padding: 15 0 0 0;">
                         <ListView fx:id="commentsList" VBox.vgrow="ALWAYS"
                                   style="-fx-background-color: transparent; -fx-padding: 5;"/>
 
                         <HBox spacing="10" alignment="CENTER">
-                            <TextArea fx:id="newCommentArea" prefRowCount="2" HBox.hgrow="ALWAYS" promptText="Écrire un commentaire..." wrapText="true"
+                            <TextArea fx:id="newCommentArea" prefRowCount="2" HBox.hgrow="ALWAYS" promptText="Write a comment..." wrapText="true"
                                       style="-fx-background-color: white; -fx-border-color: #d1d5db; -fx-border-radius: 6; -fx-background-radius: 6;"/>
 
                             <VBox spacing="5" alignment="CENTER">
-                                <Button text="📎 Joindre" fx:id="attachFileBtn" onAction="#handleAttachFile"
+                                <Button text="📎 Attach" fx:id="attachFileBtn" onAction="#handleAttachFile"
                                         style="-fx-background-color: white; -fx-text-fill: #6366f1; -fx-border-color: #e0e7ff; -fx-border-radius: 6; -fx-padding: 8; -fx-cursor: hand; -fx-font-weight: bold;"/>
                                 <Label fx:id="attachmentInfoLabel" text="" style="-fx-font-size: 10px; -fx-text-fill: #6b7280;"/>
                             </VBox>
 
-                            <Button text="Envoyer" onAction="#handlePostComment"
+                            <Button text="Send" onAction="#handlePostComment"
                                     style="-fx-background-color: #4f46e5; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 8 16; -fx-font-weight: bold; -fx-cursor: hand;"/>
                         </HBox>
 
@@ -92,18 +92,18 @@
                         <ListView fx:id="tagsList" orientation="HORIZONTAL" prefHeight="60"
                                   style="-fx-background-color: transparent; -fx-border-color: transparent;"/>
 
-                        <Button text="+ Ajouter un Tag" onAction="#handleAddTag"
+                        <Button text="+ Add a Tag" onAction="#handleAddTag"
                                 style="-fx-background-color: #f3f4f6; -fx-text-fill: #374151; -fx-background-radius: 6; -fx-cursor: hand;"/>
                     </VBox>
                 </Tab>
 
-                <Tab text="Chronomètre">
+                <Tab text="Timer">
                     <VBox spacing="15" style="-fx-padding: 15 0 0 0;">
                         <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: #f9fafb; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e5e7eb; -fx-border-radius: 8;">
-                            <Button text="▶ Démarrer" fx:id="startTimerBtn" onAction="#handleStartTimer"
+                            <Button text="▶ Start" fx:id="startTimerBtn" onAction="#handleStartTimer"
                                     style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16; -fx-cursor: hand;"/>
 
-                            <Button text="⏹ Arrêter" fx:id="stopTimerBtn" onAction="#handleStopTimer" disable="true"
+                            <Button text="⏹ Stop" fx:id="stopTimerBtn" onAction="#handleStopTimer" disable="true"
                                     style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 16; -fx-cursor: hand;"/>
 
                             <Region HBox.hgrow="ALWAYS" />
@@ -112,7 +112,7 @@
                                    style="-fx-font-family: 'Consolas', 'Monospaced'; -fx-font-size: 24px; -fx-text-fill: #111827;"/>
                         </HBox>
 
-                        <Label text="Historique :" style="-fx-font-weight: bold; -fx-text-fill: #6b7280;"/>
+                        <Label text="History:" style="-fx-font-weight: bold; -fx-text-fill: #6b7280;"/>
                         <ListView fx:id="timeLogsList" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #e5e7eb; -fx-border-radius: 6;"/>
                     </VBox>
                 </Tab>

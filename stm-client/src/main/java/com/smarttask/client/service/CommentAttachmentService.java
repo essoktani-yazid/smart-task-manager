@@ -1,15 +1,16 @@
 package com.smarttask.client.service;
 
-import com.smarttask.model.CommentAttachment;
-import com.smarttask.client.util.GsonUtils;
 import com.smarttask.client.config.AppConfig;
+import com.smarttask.client.util.GsonUtils;
+import com.smarttask.model.CommentAttachment;
+
 import java.io.IOException;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.URI;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 public class CommentAttachmentService {
 

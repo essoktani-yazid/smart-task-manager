@@ -2,7 +2,12 @@ package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
 import com.smarttask.model.SharedTask;
+import com.smarttask.model.Task;
+import com.smarttask.model.User;
+import com.smarttask.server.dao.NotificationDAO;
 import com.smarttask.server.dao.SharedTaskDAO;
+import com.smarttask.server.dao.TaskDAO;
+import com.smarttask.server.dao.UserDAO;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -12,9 +17,13 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class SharedTaskHandler implements HttpHandler {
     private final SharedTaskDAO sharedDAO = new SharedTaskDAO();
+    private final UserDAO userDAO = new UserDAO();
+    private final TaskDAO taskDAO = new TaskDAO();
+    private final NotificationDAO notificationDAO = new NotificationDAO();
     private final Gson gson = new Gson();
 
     @Override
@@ -85,10 +94,27 @@ public class SharedTaskHandler implements HttpHandler {
         Map<String, String> req = gson.fromJson(body, Map.class);
         String taskId = req.get("taskId");
         String userId = req.get("userId");
+        String username = req.get("username");
+        String senderUsername = req.getOrDefault("senderUsername", "Un utilisateur");
         String permission = req.getOrDefault("permissionLevel", "READ");
 
-        if (taskId == null || userId == null) {
-            sendResponse(exchange, 400, "{\"error\":\"taskId and userId required\"}");
+        if (taskId == null) {
+            sendResponse(exchange, 400, "{\"error\":\"taskId required\"}");
+            return;
+        }
+
+        if (userId == null && username != null) {
+            Optional<User> userOpt = userDAO.findByUsername(username);
+            if (userOpt.isPresent()) {
+                userId = userOpt.get().getId();
+            } else {
+                sendResponse(exchange, 404, "{\"error\":\"User not found with username: " + username + "\"}");
+                return;
+            }
+        }
+
+        if (userId == null) {
+            sendResponse(exchange, 400, "{\"error\":\"userId or username required\"}");
             return;
         }
 
@@ -101,6 +127,17 @@ public class SharedTaskHandler implements HttpHandler {
             st.setPermissionLevel(SharedTask.PermissionLevel.READ);
         }
         sharedDAO.save(st);
+
+        // Notification personnalisée
+        try {
+            Optional<Task> taskOpt = taskDAO.findById(taskId);
+            String taskTitle = taskOpt.isPresent() ? taskOpt.get().getTitle() : "une tâche";
+            notificationDAO.createAndSend(userId, "TASK_SHARED", "Tâche Partagée",
+                    senderUsername + " a partagé la tâche '" + taskTitle + "' avec vous.");
+        } catch (Exception e) {
+            System.err.println("[ERROR] Echec envoi notification partage: " + e.getMessage());
+        }
+
         sendResponse(exchange, 201, "{\"message\":\"Task shared\"}");
     }
 
@@ -118,8 +155,10 @@ public class SharedTaskHandler implements HttpHandler {
 
     private void handleUnshare(HttpExchange exchange, String taskId, String userId) throws IOException {
         boolean ok = sharedDAO.delete(taskId, userId);
-        if (ok) sendResponse(exchange, 200, "{\"message\":\"Sharing revoked\"}");
-        else sendResponse(exchange, 404, "{\"error\":\"Sharing not found\"}");
+        if (ok)
+            sendResponse(exchange, 200, "{\"message\":\"Sharing revoked\"}");
+        else
+            sendResponse(exchange, 404, "{\"error\":\"Sharing not found\"}");
     }
 
     private String readRequestBody(HttpExchange exchange) throws IOException {

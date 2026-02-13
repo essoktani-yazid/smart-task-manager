@@ -1,16 +1,16 @@
 package com.smarttask.client.service;
 
 import com.google.gson.Gson;
-import com.smarttask.client.util.GsonUtils;
 import com.google.gson.reflect.TypeToken;
+import com.smarttask.client.config.AppConfig;
+import com.smarttask.client.util.GsonUtils;
 import com.smarttask.model.Notification;
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import com.smarttask.client.config.AppConfig;
+
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.List;

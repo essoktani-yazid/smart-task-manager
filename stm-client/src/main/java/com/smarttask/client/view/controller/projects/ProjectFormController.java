@@ -17,47 +17,59 @@ public class ProjectFormController {
         EDIT
     }
 
-    @FXML private TextField nameField;
-    @FXML private TextArea descriptionField;
-    @FXML private ColorPicker colorPicker;
-    @FXML private Region colorPreview;
-    @FXML private Label colorCodeLabel;
-    @FXML private Button saveBtn;
-    @FXML private Button cancelBtn;
-    @FXML private Label titleLabel;
+    @FXML
+    private TextField nameField;
+    @FXML
+    private TextArea descriptionField;
+    @FXML
+    private ColorPicker colorPicker;
+    @FXML
+    private Region colorPreview;
+    @FXML
+    private Label colorCodeLabel;
+    @FXML
+    private Button saveBtn;
+    @FXML
+    private Button cancelBtn;
+    @FXML
+    private Label titleLabel;
 
     private Mode mode = Mode.CREATE;
 
     private Project project;
     private Stage stage;
 
-    public void setStage(Stage stage) { this.stage = stage; }
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
 
     @FXML
     private void initialize() {
         // Écouter les changements de couleur et mettre à jour l'aperçu
         colorPicker.setOnAction(event -> updateColorPreview());
     }
-    
+
     public void setMode(Mode mode) {
         this.mode = mode;
         updateFormMode();
     }
+
     private void updateFormMode() {
 
         if (mode == Mode.CREATE) {
-            titleLabel.setText("Créer un nouveau projet");
-            saveBtn.setText("Créer le projet");
+            titleLabel.setText("Create New Project");
+            saveBtn.setText("Create Project");
         } else {
-            titleLabel.setText("Modifier le projet");
-            saveBtn.setText("Enregistrer les modifications");
+            titleLabel.setText("Edit Project");
+            saveBtn.setText("Save Changes");
         }
     }
-    
+
     private void updateColorPreview() {
         Color selectedColor = colorPicker.getValue();
         if (selectedColor != null) {
-            colorPreview.setStyle("-fx-background-color: " + toHex(selectedColor) + "; -fx-border-radius: 6; -fx-background-radius: 6; -fx-border-color: #d1d5db; -fx-border-width: 1;");
+            colorPreview.setStyle("-fx-background-color: " + toHex(selectedColor)
+                    + "; -fx-border-radius: 6; -fx-background-radius: 6; -fx-border-color: #d1d5db; -fx-border-width: 1;");
             colorCodeLabel.setText(toHex(selectedColor));
         }
     }
@@ -72,10 +84,10 @@ public class ProjectFormController {
             setMode(Mode.EDIT);
         }
 
-        nameField.setText(project.getName() != null ? project.getName() : "");
-        descriptionField.setText(project.getDescription() != null ? project.getDescription() : "");
+        nameField.setText(this.project.getName() != null ? this.project.getName() : "");
+        descriptionField.setText(this.project.getDescription() != null ? this.project.getDescription() : "");
         try {
-            Color c = Color.web(project.getColor() != null ? project.getColor() : "#3788d8");
+            Color c = Color.web(this.project.getColor() != null ? this.project.getColor() : "#3788d8");
             colorPicker.setValue(c);
         } catch (Exception e) {
             colorPicker.setValue(Color.web("#3788d8"));
@@ -84,14 +96,15 @@ public class ProjectFormController {
     }
 
     public Project getProject() {
-        if (project == null) project = new Project();
-        
+        if (project == null)
+            project = new Project();
+
         String name = nameField.getText();
         if (name == null || name.trim().isEmpty()) {
-            showAlert("Erreur", "Le nom du projet est obligatoire.");
+            showAlert("Error", "The project name is required.");
             return null;
         }
-        
+
         project.setName(name);
         project.setDescription(descriptionField.getText());
         project.setColor(toHex(colorPicker.getValue()));
@@ -108,20 +121,23 @@ public class ProjectFormController {
     @FXML
     private void onSave() {
         if (getProject() != null) {
-            if (stage != null) stage.close();
+            if (stage != null)
+                stage.close();
         }
     }
 
     @FXML
     private void onCancel() {
         project = null;
-        if (stage != null) stage.close();
+        if (stage != null)
+            stage.close();
     }
-    
+
     private void showAlert(String title, String content) {
         javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
-        alert.showAndWait();    }
+        alert.showAndWait();
+    }
 }
