@@ -1,7 +1,6 @@
 package com.smarttask.server.dao;
 
 import com.smarttask.model.Comment;
-import com.smarttask.model.Task;
 import com.smarttask.model.User;
 import com.smarttask.server.config.DatabaseConnection;
 

@@ -20,13 +20,14 @@ public class Task {
     private User user;
     private String projectId;
     private Task parentTask;
+    private String parentTaskId; // ID of the parent task (for subtasks)
     private List<Task> subTasks = new ArrayList<>();
-    
+
     // Recurrence properties
     private String recurrenceType = "NONE"; // DAILY, WEEKLY, MONTHLY, YEARLY, NONE
     private Integer recurrenceInterval = 0;
     private LocalDateTime recurrenceEndDate;
-    
+
     // Dependency properties
     private String dependentTaskId; // ID of the task this depends on (predecessor)
     private Task dependentTask; // The actual task object this depends on
@@ -125,6 +126,14 @@ public class Task {
         this.parentTask = parentTask;
     }
 
+    public String getParentTaskId() {
+        return parentTaskId;
+    }
+
+    public void setParentTaskId(String parentTaskId) {
+        this.parentTaskId = parentTaskId;
+    }
+
     public List<Task> getSubTasks() {
         return subTasks;
     }
@@ -184,4 +193,3 @@ public class Task {
                 '}';
     }
 }
-

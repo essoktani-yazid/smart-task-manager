@@ -260,3 +260,7 @@ CREATE TABLE team_projects (
 
     INDEX idx_project_id (project_id)
 );
+
+ALTER TABLE comment_attachments
+ADD COLUMN file_type VARCHAR(50) AFTER file_name,
+ADD COLUMN file_size BIGINT AFTER file_type;

@@ -3,6 +3,7 @@ package com.smarttask.server.handler;
 import com.google.gson.Gson;
 import com.smarttask.model.Task;
 import com.smarttask.model.User;
+import com.smarttask.server.dao.NotificationDAO;
 import com.smarttask.server.dao.TaskDAO;
 import com.smarttask.server.dao.UserDAO;
 import com.smarttask.server.util.GsonUtils;
@@ -16,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Handler HTTP pour gérer les opérations sur les tâches (CRUD).
@@ -24,6 +24,7 @@ import java.util.Optional;
 public class TaskHandler implements HttpHandler {
     private final TaskDAO taskDAO = new TaskDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final NotificationDAO notificationDAO = new NotificationDAO();
     private final Gson gson;
 
     public TaskHandler() {
@@ -54,12 +55,10 @@ public class TaskHandler implements HttpHandler {
                 else if (path.startsWith("/api/tasks/sub/")) {
                     String parentId = path.substring("/api/tasks/sub/".length());
                     handleGetSubTasks(exchange, parentId);
-                }
-                else if (path.startsWith("/api/tasks/project/")) {
+                } else if (path.startsWith("/api/tasks/project/")) {
                     String projectId = path.substring("/api/tasks/project/".length());
                     handleGetTasksByProject(exchange, projectId);
-                }
-                else if (path.startsWith("/api/tasks/")) {
+                } else if (path.startsWith("/api/tasks/")) {
                     String[] parts = path.split("/");
                     // /api/tasks/{id}
                     if (parts.length == 4) {
@@ -116,12 +115,15 @@ public class TaskHandler implements HttpHandler {
     }
 
     private void handleGetTask(HttpExchange exchange, String taskId) throws IOException, SQLException {
-        // Adaptation DAO : Si findById n'existe pas ou renvoie un objet différent, on filtre findAll temporairement
+        // Adaptation DAO : Si findById n'existe pas ou renvoie un objet différent, on
+        // filtre findAll temporairement
         Task task = null;
         try {
             List<Task> all = taskDAO.findAll();
             task = all.stream().filter(t -> t.getId().equals(taskId)).findFirst().orElse(null);
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         if (task == null) {
             sendResponse(exchange, 404, "{\"error\":\"Task not found\"}");
@@ -143,8 +145,8 @@ public class TaskHandler implements HttpHandler {
     }
 
     private void handleGetSubTasks(HttpExchange exchange, String parentId) throws IOException, SQLException {
-        // Appelle la méthode findSubTasks que nous avons ajoutée au DAO plus tôt
-        List<Task> subTasks = taskDAO.findSubTasks(parentId);
+        // Use the new findSubTasksByParentId method
+        List<Task> subTasks = taskDAO.findSubTasksByParentId(parentId);
         sendResponse(exchange, 200, gson.toJson(subTasks));
     }
 
@@ -172,6 +174,15 @@ public class TaskHandler implements HttpHandler {
         }
 
         taskDAO.save(task);
+
+        // Notification personnalisée
+        try {
+            notificationDAO.createAndSend(user.getId(), "TASK_CREATED", "Nouvelle Tâche",
+                    "La tâche '" + task.getTitle() + "' a été créée avec succès.");
+        } catch (Exception e) {
+            System.err.println("[ERROR] Echec envoi notification tâche: " + e.getMessage());
+        }
+
         sendResponse(exchange, 201, gson.toJson(task));
     }
 
@@ -181,6 +192,20 @@ public class TaskHandler implements HttpHandler {
         updatedTask.setId(taskId);
 
         taskDAO.update(updatedTask);
+
+        // Notification personnalisée
+        try {
+            // Updated task might not have everything, ideally we fetch the owner but here
+            // we notify the user who edited
+            // assuming it's the current user (the simple implementation)
+            if (updatedTask.getUser() != null) {
+                notificationDAO.createAndSend(updatedTask.getUser().getId(), "TASK_UPDATED", "Tâche Modifiée",
+                        "La tâche '" + updatedTask.getTitle() + "' a été mise à jour.");
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] Echec envoi notification modification: " + e.getMessage());
+        }
+
         sendResponse(exchange, 200, gson.toJson(updatedTask));
     }
 

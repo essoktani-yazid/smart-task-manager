@@ -1,19 +1,20 @@
 package com.smarttask.client.service;
 
-import com.smarttask.model.TaskDependency;
-import com.smarttask.client.util.GsonUtils;
 import com.smarttask.client.config.AppConfig;
+import com.smarttask.client.util.GsonUtils;
+import com.smarttask.model.TaskDependency;
+
 import java.io.IOException;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.URI;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 public class TaskDependencyService {
 
-    private String baseUrl = AppConfig.API_URL + "/task-dependencies";
+    private String baseUrl = AppConfig.API_URL + "/dependencies";
 
     private final HttpClient client;
 
@@ -27,7 +28,8 @@ public class TaskDependencyService {
     }
 
     /**
-     * Récupère toutes les dépendances précédentes (tâches qui dépendent de celle-ci)
+     * Récupère toutes les dépendances précédentes (tâches qui dépendent de
+     * celle-ci)
      */
     public List<TaskDependency> getPredecessors(String taskId) {
         try {
@@ -107,5 +109,24 @@ public class TaskDependencyService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public List<TaskDependency> getProjectDependencies(String projectId) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/project/" + projectId))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                TaskDependency[] deps = GsonUtils.getGson().fromJson(response.body(), TaskDependency[].class);
+                return Arrays.asList(deps);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Arrays.asList();
     }
 }

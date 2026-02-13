@@ -11,59 +11,59 @@
     <VBox spacing="15" prefWidth="450"
           styleClass="form-root" style="-fx-padding: 15;">
 
-        <Label text="Détails de la tâche" styleClass="form-title"/>
+        <Label text="Task Details" styleClass="form-title"/>
 
         <VBox spacing="5">
-            <Label text="Titre"/>
-            <TextField fx:id="titleField" promptText="Titre de la tâche"/>
+            <Label text="Title"/>
+            <TextField fx:id="titleField" promptText="Task Title"/>
         </VBox>
 
         <VBox spacing="5" VBox.vgrow="ALWAYS">
             <Label text="Description"/>
-            <TextArea fx:id="descriptionField" wrapText="true" prefRowCount="4" promptText="Ajouter une description détaillée..."/>
+            <TextArea fx:id="descriptionField" wrapText="true" prefRowCount="4" promptText="Add a detailed description..."/>
         </VBox>
 
-        <Label text="Paramètres généraux" style="-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #6b7280; -fx-padding: 10 0 5 0;"/>
+        <Label text="General Settings" style="-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #6b7280; -fx-padding: 10 0 5 0;"/>
         <GridPane hgap="15" vgap="15">
             <columnConstraints>
                 <ColumnConstraints minWidth="100"/>
                 <ColumnConstraints hgrow="ALWAYS"/>
             </columnConstraints>
 
-            <Label text="Priorité" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <Label text="Priority" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
             <ChoiceBox fx:id="priorityChoice" maxWidth="Infinity" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-            <Label text="Échéance" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Label text="Due Date" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
             <DatePicker fx:id="dueDatePicker" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-            <Label text="Statut" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <Label text="Status" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
             <ComboBox fx:id="statusCombo" maxWidth="Infinity" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-            <Label text="Assigné à" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <Label text="Assignee" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
             <ComboBox fx:id="assigneeCombo" maxWidth="Infinity" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
         </GridPane>
 
         <Separator style="-fx-padding: 5 0;"/>
 
-        <Label text="Récurrence et Dépendances" style="-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #6b7280;"/>
+        <Label text="Recurrence &amp; Dependencies" style="-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: #6b7280;"/>
         <GridPane hgap="15" vgap="15">
             <columnConstraints>
                 <ColumnConstraints minWidth="100"/>
                 <ColumnConstraints hgrow="ALWAYS"/>
             </columnConstraints>
 
-            <Label text="Récurrence" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <ComboBox fx:id="recurrenceCombo" maxWidth="Infinity" GridPane.rowIndex="0" GridPane.columnIndex="1" promptText="Aucune"/>
+            <Label text="Recurrence" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="recurrenceCombo" maxWidth="Infinity" GridPane.rowIndex="0" GridPane.columnIndex="1" promptText="None"/>
 
-            <Label text="Tâche dépend de" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <ComboBox fx:id="dependencyCombo" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1" promptText="Sélectionner une tâche"/>
+            <Label text="Task depends on" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="dependencyCombo" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1" promptText="Select a task"/>
         </GridPane>
 
         <Region VBox.vgrow="ALWAYS"/>
 
         <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
-            <Button fx:id="cancelBtn" text="Annuler" onAction="#onCancel"/>
-            <Button fx:id="saveBtn" text="Enregistrer" onAction="#onSave" styleClass="primary-action-button" defaultButton="true"/>
+            <Button fx:id="cancelBtn" text="Cancel" onAction="#onCancel"/>
+            <Button fx:id="saveBtn" text="Save" onAction="#onSave" styleClass="primary-action-button" defaultButton="true"/>
         </HBox>
 
     </VBox>

@@ -1,8 +1,5 @@
 package com.smarttask.model;
 
-import com.smarttask.model.Task;
-import com.smarttask.model.Priority;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 

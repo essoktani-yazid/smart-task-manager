@@ -7,7 +7,6 @@ import com.smarttask.server.config.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class TaskTagDAO {
 

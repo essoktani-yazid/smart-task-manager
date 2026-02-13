@@ -27,13 +27,14 @@ public class TaskDAO {
      */
     public void save(Task task) throws SQLException {
         String sql = "INSERT INTO tasks (id, title, description, priority, status, due_date, " +
-                "user_id, project_id, created_at, recurrence_type) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "user_id, project_id, parent_task_id, created_at, recurrence_type) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        if (task.getId() == null) task.setId(UUID.randomUUID().toString());
+        if (task.getId() == null)
+            task.setId(UUID.randomUUID().toString());
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, task.getId());
             stmt.setString(2, task.getTitle());
@@ -49,8 +50,16 @@ public class TaskDAO {
             }
 
             stmt.setString(8, task.getProjectId());
-            stmt.setTimestamp(9, Timestamp.valueOf(LocalDateTime.now()));
-            stmt.setString(10, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
+
+            // Handle parent_task_id
+            String parentId = task.getParentTaskId();
+            if (parentId == null && task.getParentTask() != null) {
+                parentId = task.getParentTask().getId();
+            }
+            stmt.setString(9, parentId);
+
+            stmt.setTimestamp(10, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setString(11, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
 
             stmt.executeUpdate();
         }
@@ -63,7 +72,7 @@ public class TaskDAO {
         String sql = "SELECT t.*, u.username FROM tasks t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, id);
 
@@ -80,7 +89,6 @@ public class TaskDAO {
         return Optional.empty();
     }
 
-
     /**
      * Retrieves all tasks for a user object.
      */
@@ -95,22 +103,22 @@ public class TaskDAO {
         // ⚡ OPTIMISÉ: Utilise l'index idx_user_created (user_id, created_at)
         // Pas de SELECT * - uniquement les colonnes nécessaires
         String sql = "SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, " +
-                     "t.created_at, t.user_id, t.project_id, t.parent_task_id, " +
-                     "u.username, u.email " +
-                     "FROM tasks t " + // Force utilisation index
-                     "LEFT JOIN users u ON t.user_id = u.id " +
-                     "WHERE t.user_id = ? " +
-                     "ORDER BY t.created_at DESC " +
-                     "LIMIT 1000";  // Limite de sécurité
+                "t.created_at, t.user_id, t.project_id, t.parent_task_id, " +
+                "t.recurrence_type, t.recurrence_interval, u.username, u.email " +
+                "FROM tasks t " +
+                "LEFT JOIN users u ON t.user_id = u.id " +
+                "WHERE t.user_id = ? " +
+                "ORDER BY t.created_at DESC " +
+                "LIMIT 1000"; // Limite de sécurité
 
         List<Task> tasks = new ArrayList<>();
         long startTime = System.currentTimeMillis();
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, userId);
-            pstmt.setFetchSize(100);  // ⚡ Fetch par batch de 100
+            pstmt.setFetchSize(100); // ⚡ Fetch par batch de 100
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -139,8 +147,8 @@ public class TaskDAO {
         String sql = "SELECT t.*, u.username FROM tasks t LEFT JOIN users u ON t.user_id = u.id";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 tasks.add(mapResultSetToTask(rs));
@@ -156,10 +164,10 @@ public class TaskDAO {
      */
     public void update(Task task) throws SQLException {
         String sql = "UPDATE tasks SET title=?, description=?, priority=?, status=?, " +
-                "due_date=?, user_id=?, project_id=?, recurrence_type=? WHERE id=?";
+                "due_date=?, user_id=?, project_id=?, parent_task_id=?, recurrence_type=? WHERE id=?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, task.getTitle());
             stmt.setString(2, task.getDescription());
@@ -171,11 +179,18 @@ public class TaskDAO {
             if (task.getProjectId() != null) {
                 stmt.setString(7, task.getProjectId());
             } else {
-                stmt.setNull(7, java.sql.Types.VARCHAR);
+                stmt.setNull(7, Types.VARCHAR);
             }
 
-            stmt.setString(8, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
-            stmt.setString(9, task.getId());
+            // Handle parent_task_id
+            String parentId = task.getParentTaskId();
+            if (parentId == null && task.getParentTask() != null) {
+                parentId = task.getParentTask().getId();
+            }
+            stmt.setString(8, parentId);
+
+            stmt.setString(9, task.getRecurrenceType() != null ? task.getRecurrenceType() : "NONE");
+            stmt.setString(10, task.getId());
 
             stmt.executeUpdate();
         }
@@ -195,7 +210,7 @@ public class TaskDAO {
         String sql = "DELETE FROM tasks WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, id);
             int affectedRows = pstmt.executeUpdate();
@@ -211,12 +226,14 @@ public class TaskDAO {
      */
     public List<Task> findByProjectId(String projectId) {
         List<Task> tasks = new ArrayList<>();
+        // Only return main tasks (exclude subtasks with parent_task_id)
         String sql = "SELECT t.*, u.username FROM tasks t " +
                 "LEFT JOIN users u ON t.user_id = u.id " +
-                "WHERE t.project_id = ? ORDER BY t.created_at DESC";
+                "WHERE t.project_id = ? " +
+                "ORDER BY t.created_at DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, projectId);
 
@@ -232,9 +249,36 @@ public class TaskDAO {
     }
 
     /**
+     * Récupère les sous-tâches d'une tâche parente.
+     */
+    public List<Task> findSubTasksByParentId(String parentId) {
+        List<Task> tasks = new ArrayList<>();
+        String sql = "SELECT t.*, u.username FROM tasks t " +
+                "LEFT JOIN users u ON t.user_id = u.id " +
+                "WHERE t.parent_task_id = ? ORDER BY t.created_at ASC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, parentId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    tasks.add(mapResultSetToTask(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tasks;
+    }
+
+    /**
      * Finds sub-tasks for a given parent task ID.
+     * 
      * @deprecated Parent task functionality removed from database schema
      */
+    @Deprecated
     public List<Task> findSubTasks(String parentId) {
         // Return empty list - parent_task_id column no longer exists
         return new ArrayList<>();
@@ -279,19 +323,27 @@ public class TaskDAO {
 
         // Due Date
         Timestamp ts = rs.getTimestamp("due_date");
-        if (ts != null) t.setDueDate(ts.toLocalDateTime());
+        if (ts != null)
+            t.setDueDate(ts.toLocalDateTime());
 
         // Created At
         Timestamp created = rs.getTimestamp("created_at");
-        if (created != null) t.setCreatedAt(created.toLocalDateTime());
+        if (created != null)
+            t.setCreatedAt(created.toLocalDateTime());
 
         // User Mapping
         String userId = rs.getString("user_id");
         if (userId != null) {
             User u = new User();
             u.setId(userId);
-            try { u.setUsername(rs.getString("username")); } catch (SQLException e) {}
-            try { u.setEmail(rs.getString("email")); } catch (SQLException e) {}
+            try {
+                u.setUsername(rs.getString("username"));
+            } catch (SQLException e) {
+            }
+            try {
+                u.setEmail(rs.getString("email"));
+            } catch (SQLException e) {
+            }
             t.setUser(u);
         }
 
@@ -301,6 +353,14 @@ public class TaskDAO {
             t.setRecurrenceType(recurrenceType != null ? recurrenceType : "NONE");
         } catch (SQLException e) {
             t.setRecurrenceType("NONE");
+        }
+
+        // Parent Task ID
+        try {
+            String parentTaskId = rs.getString("parent_task_id");
+            t.setParentTaskId(parentTaskId);
+        } catch (SQLException e) {
+            // Column might not be selected in some queries
         }
 
         return t;

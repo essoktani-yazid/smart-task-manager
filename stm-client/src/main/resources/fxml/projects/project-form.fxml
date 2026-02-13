@@ -8,30 +8,30 @@
       spacing="15" stylesheets="@../../css/projects/projects.css" 
       style="-fx-padding: 20; -fx-font-family: 'Segoe UI', 'Roboto', sans-serif;">
 
-    <Label fx:id="titleLabel" text="Créer un nouveau projet" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #111827;"/>
+    <Label fx:id="titleLabel" text="Create New Project" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #111827;"/>
     
-    <Label text="Informations générales" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #6b7280; -fx-padding: 10 0 5 0;"/>
+    <Label text="General Information" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #6b7280; -fx-padding: 10 0 5 0;"/>
     
     <VBox spacing="8">
-        <Label text="Nom du projet *" style="-fx-font-weight: bold; -fx-text-fill: #374151; -fx-font-size: 12px;"/>
-        <TextField fx:id="nameField" promptText="Ex: Refonte Site Web" 
+        <Label text="Project Name *" style="-fx-font-weight: bold; -fx-text-fill: #374151; -fx-font-size: 12px;"/>
+        <TextField fx:id="nameField" promptText="e.g: Website Redesign" 
                   style="-fx-padding: 10 12; -fx-border-radius: 6; -fx-background-radius: 6; -fx-font-size: 13px;"/>
     </VBox>
 
     <VBox spacing="8" VBox.vgrow="ALWAYS">
         <Label text="Description" style="-fx-font-weight: bold; -fx-text-fill: #374151; -fx-font-size: 12px;"/>
-        <TextArea fx:id="descriptionField" promptText="Décrivez les objectifs du projet..." 
+        <TextArea fx:id="descriptionField" promptText="Describe the project objectives..." 
                   wrapText="true" prefRowCount="5"
                   style="-fx-padding: 10 12; -fx-border-radius: 6; -fx-background-radius: 6; -fx-font-size: 13px; -fx-control-inner-background: white;"/>
     </VBox>
 
     <Separator style="-fx-padding: 5 0;"/>
 
-    <Label text="Personnalisation" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #6b7280; -fx-padding: 10 0 5 0;"/>
+    <Label text="Customization" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #6b7280; -fx-padding: 10 0 5 0;"/>
 
     <VBox spacing="10">
         <VBox spacing="8">
-            <Label text="Couleur du projet" style="-fx-font-weight: bold; -fx-text-fill: #374151; -fx-font-size: 12px;"/>
+            <Label text="Project Color" style="-fx-font-weight: bold; -fx-text-fill: #374151; -fx-font-size: 12px;"/>
             <HBox spacing="15" alignment="CENTER_LEFT">
                 <ColorPicker fx:id="colorPicker" prefWidth="60" style="-fx-padding: 5;"/>
                 <Region fx:id="colorPreview" prefWidth="80" prefHeight="40" 
@@ -47,9 +47,9 @@
     <Separator style="-fx-padding: 10 0;"/>
 
     <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
-        <Button text="Annuler" fx:id="cancelBtn" onAction="#onCancel"
+        <Button text="Cancel" fx:id="cancelBtn" onAction="#onCancel"
                style="-fx-padding: 10 20; -fx-font-weight: bold; -fx-border-radius: 6; -fx-background-radius: 6;"/>
-        <Button text="Créer le projet" fx:id="saveBtn" onAction="#onSave"
+        <Button text="Create Project" fx:id="saveBtn" onAction="#onSave"
                style="-fx-background-color: #4f46e5; -fx-text-fill: white; -fx-padding: 10 20; -fx-font-weight: bold; -fx-border-radius: 6; -fx-background-radius: 6; -fx-cursor: hand;" 
                defaultButton="true"/>
     </HBox>

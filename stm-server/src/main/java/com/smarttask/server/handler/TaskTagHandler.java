@@ -1,11 +1,9 @@
 package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
-
-import com.smarttask.server.util.GsonUtils;
-import com.smarttask.model.Task;
 import com.smarttask.model.TaskTag;
 import com.smarttask.server.dao.TaskTagDAO;
+import com.smarttask.server.util.GsonUtils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 

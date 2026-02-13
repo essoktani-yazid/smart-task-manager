@@ -2,9 +2,9 @@ package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
 import com.smarttask.model.TaskDependency;
-import com.smarttask.model.Task;
-import com.smarttask.server.dao.TaskDependencyDAO;
 import com.smarttask.server.dao.TaskDAO;
+import com.smarttask.server.dao.TaskDependencyDAO;
+import com.smarttask.server.util.GsonUtils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class DependencyHandler implements HttpHandler {
     private final TaskDependencyDAO depDAO = new TaskDependencyDAO();
     private final TaskDAO taskDAO = new TaskDAO();
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtils.getGson();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -32,6 +32,9 @@ public class DependencyHandler implements HttpHandler {
                 } else if (path.startsWith("/api/dependencies/predecessor/")) {
                     String taskId = path.substring("/api/dependencies/predecessor/".length());
                     handleGetByPredecessor(exchange, taskId);
+                } else if (path.startsWith("/api/dependencies/project/")) {
+                    String projectId = path.substring("/api/dependencies/project/".length());
+                    handleGetByProject(exchange, projectId);
                 } else if (path.startsWith("/api/dependencies/")) {
                     String id = path.substring("/api/dependencies/".length());
                     handleGetById(exchange, id);
@@ -70,10 +73,17 @@ public class DependencyHandler implements HttpHandler {
         sendResponse(exchange, 200, gson.toJson(deps));
     }
 
+    private void handleGetByProject(HttpExchange exchange, String projectId) throws IOException {
+        List<TaskDependency> deps = depDAO.findByProjectId(projectId);
+        sendResponse(exchange, 200, gson.toJson(deps));
+    }
+
     private void handleGetById(HttpExchange exchange, String id) throws IOException {
         TaskDependency d = depDAO.findById(id).orElse(null);
-        if (d == null) sendResponse(exchange, 404, "{\"error\":\"Dependency not found\"}");
-        else sendResponse(exchange, 200, gson.toJson(d));
+        if (d == null)
+            sendResponse(exchange, 404, "{\"error\":\"Dependency not found\"}");
+        else
+            sendResponse(exchange, 200, gson.toJson(d));
     }
 
     private void handleCreate(HttpExchange exchange) throws IOException {
@@ -90,8 +100,10 @@ public class DependencyHandler implements HttpHandler {
 
     private void handleDelete(HttpExchange exchange, String id) throws IOException {
         boolean ok = depDAO.deleteById(id);
-        if (ok) sendResponse(exchange, 200, "{\"message\":\"Dependency deleted\"}");
-        else sendResponse(exchange, 404, "{\"error\":\"Dependency not found\"}");
+        if (ok)
+            sendResponse(exchange, 200, "{\"message\":\"Dependency deleted\"}");
+        else
+            sendResponse(exchange, 404, "{\"error\":\"Dependency not found\"}");
     }
 
     private String readRequestBody(HttpExchange exchange) throws IOException {

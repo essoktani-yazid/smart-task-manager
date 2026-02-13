@@ -10,6 +10,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Insets;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import com.smarttask.client.config.AppConfig;
@@ -21,32 +24,55 @@ import java.util.Optional;
 
 public class TaskDetailController {
 
-    @FXML private BorderPane mainPane;
-    @FXML private Label titleLabel;
-    @FXML private Label statusLabel;
-    @FXML private Label priorityLabel;
-    @FXML private Label descriptionLabel;
+    @FXML
+    private BorderPane mainPane;
+    @FXML
+    private Label titleLabel;
+    @FXML
+    private Label statusLabel;
+    @FXML
+    private Label priorityLabel;
+    @FXML
+    private Label descriptionLabel;
 
     // TableView pour sous-tâches
-    @FXML private TableView<Task> subtasksTable;
-    @FXML private TableColumn<Task, String> titleColumn;
-    @FXML private TableColumn<Task, String> statusColumn;
-    @FXML private TableColumn<Task, String> priorityColumn;
-    @FXML private TableColumn<Task, LocalDate> dueDateColumn;
-    @FXML private TableColumn<Task, Void> actionsColumn;
-    
-    @FXML private ListView<TaskTag> tagsList;
-    @FXML private ListView<TaskDependency> dependenciesList;
-    @FXML private ListView<Comment> commentsList;
-    @FXML private TextArea newCommentArea;
-    @FXML private Button attachFileBtn;
-    @FXML private Label attachmentInfoLabel;
-    @FXML private Label attachmentStatusLabel;
-    @FXML private ListView<Attachment> attachmentsList;
-    @FXML private ListView<TimeTracking> timeLogsList;
-    @FXML private Button startTimerBtn;
-    @FXML private Button stopTimerBtn;
-    @FXML private Label timerLabel;
+    @FXML
+    private TableView<Task> subtasksTable;
+    @FXML
+    private TableColumn<Task, String> titleColumn;
+    @FXML
+    private TableColumn<Task, String> statusColumn;
+    @FXML
+    private TableColumn<Task, String> priorityColumn;
+    @FXML
+    private TableColumn<Task, LocalDate> dueDateColumn;
+    @FXML
+    private TableColumn<Task, Void> actionsColumn;
+
+    @FXML
+    private ListView<TaskTag> tagsList;
+    @FXML
+    private ListView<TaskDependency> dependenciesList;
+    @FXML
+    private ListView<Comment> commentsList;
+    @FXML
+    private TextArea newCommentArea;
+    @FXML
+    private Button attachFileBtn;
+    @FXML
+    private Label attachmentInfoLabel;
+    @FXML
+    private Label attachmentStatusLabel;
+    @FXML
+    private ListView<Attachment> attachmentsList;
+    @FXML
+    private ListView<TimeTracking> timeLogsList;
+    @FXML
+    private Button startTimerBtn;
+    @FXML
+    private Button stopTimerBtn;
+    @FXML
+    private Label timerLabel;
 
     // Services
     private final String BASE_URL = AppConfig.API_URL;
@@ -55,7 +81,7 @@ public class TaskDetailController {
     private final CommentService commentService = new CommentService();
     private final AttachmentService attachmentService = new AttachmentService(BASE_URL);
     private final TimeTrackingService timeTrackingService = new TimeTrackingService(BASE_URL);
-    private final DependencyService dependencyService = new DependencyService();
+    private final TaskDependencyService dependencyService = new TaskDependencyService();
 
     private Task currentTask;
     private TimeTracking activeTimeLog;
@@ -66,19 +92,13 @@ public class TaskDetailController {
         setupSubtasksTable();
         setupListViews();
     }
-    
+
     private void setupSubtasksTable() {
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-        statusColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getStatus() != null ? cellData.getValue().getStatus().name() : ""
-            )
-        );
-        priorityColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getPriority() != null ? cellData.getValue().getPriority().name() : ""
-            )
-        );
+        statusColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
+                cellData.getValue().getStatus() != null ? cellData.getValue().getStatus().name() : ""));
+        priorityColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
+                cellData.getValue().getPriority() != null ? cellData.getValue().getPriority().name() : ""));
         dueDateColumn.setCellValueFactory(cellData -> {
             Task task = cellData.getValue();
             if (task.getDueDate() != null) {
@@ -86,7 +106,7 @@ public class TaskDetailController {
             }
             return new javafx.beans.property.SimpleObjectProperty<>(null);
         });
-        
+
         // Format des dates
         dueDateColumn.setCellFactory(column -> new TableCell<Task, LocalDate>() {
             @Override
@@ -99,31 +119,33 @@ public class TaskDetailController {
                 }
             }
         });
-        
+
         // Actions Column with Edit and Delete buttons
         actionsColumn.setCellFactory(col -> new TableCell<Task, Void>() {
-            private final Button editBtn = new Button("✏️ Modifier");
-            private final Button deleteBtn = new Button("🗑️ Supprimer");
+            private final Button editBtn = new Button("✏️ Edit");
+            private final Button deleteBtn = new Button("🗑️ Delete");
             private final javafx.scene.layout.HBox hbox = new javafx.scene.layout.HBox(5);
-            
+
             {
-                editBtn.setStyle("-fx-padding: 5 10; -fx-font-size: 11; -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-cursor: hand;");
-                deleteBtn.setStyle("-fx-padding: 5 10; -fx-font-size: 11; -fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand;");
-                
+                editBtn.setStyle(
+                        "-fx-padding: 5 10; -fx-font-size: 11; -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-cursor: hand;");
+                deleteBtn.setStyle(
+                        "-fx-padding: 5 10; -fx-font-size: 11; -fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand;");
+
                 editBtn.setOnAction(e -> {
                     Task task = getTableView().getItems().get(getIndex());
                     handleEditSubtask(task);
                 });
-                
+
                 deleteBtn.setOnAction(e -> {
                     Task task = getTableView().getItems().get(getIndex());
                     handleDeleteSubtask(task);
                 });
-                
+
                 hbox.setAlignment(javafx.geometry.Pos.CENTER);
                 hbox.getChildren().addAll(editBtn, deleteBtn);
             }
-            
+
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
@@ -136,8 +158,6 @@ public class TaskDetailController {
 
         // --- 1. COMMENTAIRES (Style "Chat" Pro) ---
         commentsList.setCellFactory(lv -> new ListCell<>() {
-            private final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM à HH:mm");
-
             @Override
             protected void updateItem(Comment item, boolean empty) {
                 super.updateItem(item, empty);
@@ -146,40 +166,54 @@ public class TaskDetailController {
                     setText(null);
                     setStyle("-fx-background-color: transparent;");
                 } else {
-                    // Structure globale
-                    javafx.scene.layout.VBox container = new javafx.scene.layout.VBox(4);
+                    VBox container = new VBox(2);
+                    container.setMaxWidth(Double.MAX_VALUE);
+                    container.setPadding(new javafx.geometry.Insets(5, 5, 5, 5));
 
-                    // En-tête : Avatar + Nom + Date
-                    javafx.scene.layout.HBox header = new javafx.scene.layout.HBox(10);
+                    HBox header = new HBox(10);
                     header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-                    // Avatar (Cercle avec initiale)
-                    String username = (item.getUser() != null) ? item.getUser().getUsername() : "?";
-                    String initial = (username != null && !username.isEmpty()) ? username.substring(0, 1).toUpperCase() : "?";
+                    String authorName = item.getUser() != null ? item.getUser().getUsername() : "Anonymous";
+                    String initial = authorName.length() > 0 ? authorName.substring(0, 1).toUpperCase() : "?";
+
                     Label avatar = new Label(initial);
-                    avatar.getStyleClass().add("comment-avatar");
+                    String avatarColor = getTagColor(authorName);
+                    avatar.setStyle("-fx-background-color: " + avatarColor + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 18; -fx-min-width: 36; -fx-min-height: 36; -fx-alignment: center; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);");
 
-                    // Nom de l'auteur
-                    Label authorLabel = new Label(username);
-                    authorLabel.getStyleClass().add("comment-author");
+                    VBox meta = new VBox(0);
+                    Label nameLabel = new Label(authorName);
+                    nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #1e293b; -fx-font-size: 13px;");
 
-                    // Date
-                    String dateStr = (item.getCreatedAt() != null) ? sdf.format(item.getCreatedAt()) : "";
-                    Label dateLabel = new Label(dateStr);
-                    dateLabel.getStyleClass().add("comment-date");
+                    Label dateLabel = new Label("");
+                    if (item.getCreatedAt() != null) {
+                        try {
+                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMM, HH:mm",
+                                    java.util.Locale.getDefault());
+                            dateLabel.setText(sdf.format(item.getCreatedAt()));
+                        } catch (Exception e) {
+                            dateLabel.setText(item.getCreatedAt().toString());
+                        }
+                    }
+                    dateLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
 
-                    header.getChildren().addAll(avatar, authorLabel, dateLabel);
+                    meta.getChildren().addAll(nameLabel, dateLabel);
+                    header.getChildren().addAll(avatar, meta);
 
-                    // Corps du commentaire
                     Label contentLabel = new Label(item.getContent());
                     contentLabel.setWrapText(true);
-                    contentLabel.getStyleClass().add("comment-content");
+                    contentLabel.setMaxWidth(300);
+                    contentLabel.setStyle("-fx-text-fill: #334155; -fx-font-size: 13px;");
 
-                    container.getChildren().addAll(header, contentLabel);
-                    container.getStyleClass().add("comment-cell-container");
+                    VBox bubble = new VBox(5, contentLabel);
+                    bubble.setStyle("-fx-background-color: #f1f5f9; -fx-background-radius: 0 12 12 12; -fx-padding: 10 14; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 0 12 12 12;");
+                    
+                    HBox bubblePaddingLayout = new HBox(bubble);
+                    bubblePaddingLayout.setPadding(new javafx.geometry.Insets(0, 0, 0, 46));
 
+                    container.getChildren().addAll(header, bubblePaddingLayout);
                     setGraphic(container);
                     setText(null);
+                    setStyle("-fx-background-color: transparent;");
                 }
             }
         });
@@ -194,59 +228,89 @@ public class TaskDetailController {
                     setText(null);
                     setStyle("-fx-background-color: transparent;");
                 } else {
-                    Label tagLabel = new Label(item.getTagName());
-                    tagLabel.getStyleClass().add("tag-badge");
+                    HBox chip = new HBox(8);
+                    chip.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    chip.getStyleClass().add("tag-chip");
+                    
+                    String tagName = item.getTagName();
+                    String color = getTagColor(tagName);
+                    chip.setStyle("-fx-background-color: " + color + "22; -fx-border-color: " + color + "55; -fx-background-radius: 16; -fx-border-radius: 16; -fx-border-width: 1; -fx-padding: 4 4 4 10;");
 
-                    // Centrer le badge dans la cellule
-                    javafx.scene.layout.StackPane pane = new javafx.scene.layout.StackPane(tagLabel);
-                    pane.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    Label titleLbl = new Label(tagName);
+                    titleLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold; -fx-font-size: 11px;");
 
-                    setGraphic(pane);
+                    Button removeBtn = new Button("×");
+                    removeBtn.getStyleClass().add("tag-remove-button");
+                    removeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + color + "; -fx-font-size: 14px; -fx-padding: 0 6; -fx-cursor: hand;");
+                    removeBtn.setOnAction(e -> {
+                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Remove tag '" + tagName + "'?", ButtonType.YES, ButtonType.NO);
+                        alert.showAndWait().ifPresent(bt -> {
+                            if (bt == ButtonType.YES) {
+                                try {
+                                    if (tagService.delete(currentTask.getId(), tagName)) {
+                                        loadTaskDetails(currentTask.getId());
+                                    }
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        });
+                    });
+
+                    chip.getChildren().addAll(titleLbl, removeBtn);
+                    setGraphic(chip);
                     setText(null);
+                    setStyle("-fx-background-color: transparent; -fx-padding: 4;");
                 }
             }
         });
+
+
 
         // --- 3. SOUS-TÂCHES (Style Checklist) ---
         // Note: ListView remplacée par TableView dans la vue FXML
         // La configuration sera mise à jour après que le FXML soit synchronisé
         /*
-        subtasksList.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Task item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    setText(null);
-                    setStyle("-fx-background-color: transparent;");
-                } else {
-                    javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10);
-                    row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-
-                    // CORRECTION: Utilisation de Status.COMPLETED (selon votre modèle)
-                    boolean isCompleted = (item.getStatus() == Status.COMPLETED);
-
-                    Label statusIcon = new Label(isCompleted ? "☑" : "☐");
-                    statusIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (isCompleted ? "#10b981" : "#6b7280") + ";");
-
-                    Label titleLabel = new Label(item.getTitle());
-                    titleLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #374151;");
-                    if (isCompleted) {
-                        titleLabel.setStyle("-fx-strikethrough: true; -fx-text-fill: #9ca3af;");
-                    }
-
-                    // Gestion sécurité priorité null
-                    String priorityName = (item.getPriority() != null) ? item.getPriority().name() : "LOW";
-                    Label priorityBadge = new Label(priorityName.substring(0, 1));
-                    priorityBadge.getStyleClass().add("mini-badge-" + priorityName.toLowerCase());
-
-                    row.getChildren().addAll(statusIcon, titleLabel, priorityBadge);
-                    setGraphic(row);
-                    setText(null);
-                }
-            }
-        });
-        */
+         * subtasksList.setCellFactory(lv -> new ListCell<>() {
+         * 
+         * @Override
+         * protected void updateItem(Task item, boolean empty) {
+         * super.updateItem(item, empty);
+         * if (empty || item == null) {
+         * setGraphic(null);
+         * setText(null);
+         * setStyle("-fx-background-color: transparent;");
+         * } else {
+         * javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10);
+         * row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+         * 
+         * // CORRECTION: Utilisation de Status.COMPLETED (selon votre modèle)
+         * boolean isCompleted = (item.getStatus() == Status.COMPLETED);
+         * 
+         * Label statusIcon = new Label(isCompleted ? "☑" : "☐");
+         * statusIcon.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (isCompleted ?
+         * "#10b981" : "#6b7280") + ";");
+         * 
+         * Label titleLabel = new Label(item.getTitle());
+         * titleLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #374151;");
+         * if (isCompleted) {
+         * titleLabel.setStyle("-fx-strikethrough: true; -fx-text-fill: #9ca3af;");
+         * }
+         * 
+         * // Gestion sécurité priorité null
+         * String priorityName = (item.getPriority() != null) ?
+         * item.getPriority().name() : "LOW";
+         * Label priorityBadge = new Label(priorityName.substring(0, 1));
+         * priorityBadge.getStyleClass().add("mini-badge-" +
+         * priorityName.toLowerCase());
+         * 
+         * row.getChildren().addAll(statusIcon, titleLabel, priorityBadge);
+         * setGraphic(row);
+         * setText(null);
+         * }
+         * }
+         * });
+         */
 
         // --- 4. PIÈCES JOINTES (Style Fichier) ---
         attachmentsList.setCellFactory(lv -> new ListCell<>() {
@@ -301,7 +365,7 @@ public class TaskDetailController {
                     Label icon = new Label("⏱");
 
                     String startStr = item.getStartTime() != null ? timeFormat.format(item.getStartTime()) : "--:--";
-                    String endStr = item.getEndTime() != null ? timeFormat.format(item.getEndTime()) : "En cours...";
+                    String endStr = item.getEndTime() != null ? timeFormat.format(item.getEndTime()) : "In progress...";
 
                     Label rangeLabel = new Label(startStr + " ➜ " + endStr);
                     rangeLabel.setStyle("-fx-text-fill: #374151;");
@@ -338,7 +402,8 @@ public class TaskDetailController {
                     Label icon = new Label("🔗"); // Link icon
 
                     // CORRECTION: Utilisation de getPredecessor() au lieu de getPredecessorTask()
-                    String text = "Dépend de: " + (item.getPredecessor() != null ? item.getPredecessor().getTitle() : "?");
+                    String text = "Depends on: "
+                            + (item.getPredecessor() != null ? item.getPredecessor().getTitle() : "?");
                     Label lbl = new Label(text);
                     lbl.setStyle("-fx-text-fill: #4b5563; -fx-font-style: italic;");
 
@@ -352,7 +417,8 @@ public class TaskDetailController {
 
     public void setTask(Task task) {
         this.currentTask = task;
-        if (task == null) return;
+        if (task == null)
+            return;
 
         titleLabel.setText(task.getTitle());
         statusLabel.setText(task.getStatus().name());
@@ -361,30 +427,30 @@ public class TaskDetailController {
 
         refreshAll();
     }
+
     private void refreshAll() {
-        if (currentTask == null) return;
+        if (currentTask == null)
+            return;
         String tId = currentTask.getId(); // currentTask.getId() returns String
 
-        // Load Subtasks (Note: TreeView ou ListView à utiliser temporairement)
-        // TableView sera implémentée après synchronisation du FXML
-        /*
+        // Load Subtasks
         new Thread(() -> {
             try {
-                List<Task> all = taskService.getTasksByUser(currentTask.getUser().getId());
-                List<Task> subs = all.stream()
-                    .filter(t -> t.getParentTask() != null && tId.equals(t.getParentTask().getId()))
-                    .toList();
+                List<Task> subs = taskService.getSubTasks(tId);
                 Platform.runLater(() -> subtasksTable.setItems(FXCollections.observableArrayList(subs)));
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }).start();
-        */
 
         // Load Tags
         new Thread(() -> {
             try {
                 List<TaskTag> list = tagService.listByTaskId(tId);
                 Platform.runLater(() -> tagsList.setItems(FXCollections.observableArrayList(list)));
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }).start();
 
         // Load Comments
@@ -392,7 +458,9 @@ public class TaskDetailController {
             try {
                 List<Comment> list = commentService.getTaskComments(tId);
                 Platform.runLater(() -> commentsList.setItems(FXCollections.observableArrayList(list)));
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }).start();
 
         // Load Attachments
@@ -400,7 +468,9 @@ public class TaskDetailController {
             try {
                 List<Attachment> list = attachmentService.getAttachments(tId);
                 Platform.runLater(() -> attachmentsList.setItems(FXCollections.observableArrayList(list)));
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }).start();
 
         // Load Time Logs
@@ -423,10 +493,22 @@ public class TaskDetailController {
                         timerLabel.setText("00:00:00");
                     }
                 });
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }).start();
-        
-        // TODO: Load Dependencies
+
+        // Load Dependencies
+        new Thread(() -> {
+            try {
+                // Get tasks that this task depends on (successors in terms of the service
+                // naming)
+                List<TaskDependency> list = dependencyService.getSuccessors(tId);
+                Platform.runLater(() -> dependenciesList.setItems(FXCollections.observableArrayList(list)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     @FXML
@@ -441,20 +523,23 @@ public class TaskDetailController {
             sub.setDescription("");
             sub.setUser(currentTask.getUser()); // Inherit user
             sub.setParentTask(currentTask);
+            sub.setParentTaskId(currentTask.getId()); // Explicitly set parent ID for JSON serialization
             sub.setProjectId(currentTask.getProjectId());
-            
+
             try {
                 taskService.createTask(sub);
                 refreshAll();
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
-    
+
     private void handleEditSubtask(Task subtask) {
         TextInputDialog dialog = new TextInputDialog(subtask.getTitle());
-        dialog.setTitle("Modifier la sous-tâche");
-        dialog.setHeaderText("Modification du titre");
-        dialog.setContentText("Titre:");
+        dialog.setTitle("Edit subtask");
+        dialog.setHeaderText("Changing title");
+        dialog.setContentText("Title:");
         dialog.showAndWait().ifPresent(newTitle -> {
             subtask.setTitle(newTitle);
             try {
@@ -465,13 +550,14 @@ public class TaskDetailController {
             }
         });
     }
-    
+
     private void handleDeleteSubtask(Task subtask) {
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirmer la suppression");
-        alert.setHeaderText("Êtes-vous sûr?");
-        alert.setContentText("Voulez-vous supprimer la sous-tâche \"" + subtask.getTitle() + "\" ?");
-        
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Deletion");
+        alert.setHeaderText("Are you sure?");
+        alert.setContentText("Do you want to delete the subtask \"" + subtask.getTitle() + "\"?");
+
         Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
             try {
@@ -482,7 +568,7 @@ public class TaskDetailController {
             }
         }
     }
-    
+
     @FXML
     private void handleAddTag() {
         TextInputDialog dialog = new TextInputDialog();
@@ -493,20 +579,21 @@ public class TaskDetailController {
             try {
                 tagService.add(t);
                 refreshAll();
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
     @FXML
     private void handleAttachFile() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Sélectionner un fichier à joindre");
+        fileChooser.setTitle("Select file to attach");
         File file = fileChooser.showOpenDialog(attachFileBtn.getScene().getWindow());
         if (file != null) {
             selectedAttachmentFile = file;
-            String sizeStr = file.length() > 1024 * 1024 ? 
-                (file.length() / (1024 * 1024)) + " MB" : 
-                (file.length() / 1024) + " KB";
+            String sizeStr = file.length() > 1024 * 1024 ? (file.length() / (1024 * 1024)) + " MB"
+                    : (file.length() / 1024) + " KB";
             attachmentInfoLabel.setText("📎 " + file.getName() + " (" + sizeStr + ")");
         }
     }
@@ -515,20 +602,21 @@ public class TaskDetailController {
     private void handlePostComment() {
         String text = newCommentArea.getText();
         if ((text == null || text.trim().isEmpty()) && selectedAttachmentFile == null) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Veuillez ajouter du texte ou un fichier", ButtonType.OK);
-            alert.setTitle("Commentaire vide");
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Please add text or a file", ButtonType.OK);
+            alert.setTitle("Empty comment");
             alert.showAndWait();
             return;
         }
-        if (currentTask == null) return;
-        
+        if (currentTask == null)
+            return;
+
         // Créer le commentaire texte s'il y a du texte
         if (text != null && !text.trim().isEmpty()) {
             Comment c = new Comment();
             c.setContent(text);
             c.setTask(currentTask);
             if (currentTask.getUser() == null || currentTask.getUser().getId() == null) {
-                Alert a = new Alert(Alert.AlertType.INFORMATION, "Utilisateur non défini pour la tâche", ButtonType.OK);
+                Alert a = new Alert(Alert.AlertType.INFORMATION, "User not defined for the task", ButtonType.OK);
                 a.setTitle("Info");
                 a.showAndWait();
                 return;
@@ -538,13 +626,14 @@ public class TaskDetailController {
                 commentService.addComment(c);
                 newCommentArea.clear();
             } catch (Exception e) {
-                Alert a = new Alert(Alert.AlertType.ERROR, e.getMessage() == null ? "Impossible d'ajouter le commentaire" : e.getMessage(), ButtonType.OK);
-                a.setTitle("Erreur");
+                Alert a = new Alert(Alert.AlertType.ERROR,
+                        e.getMessage() == null ? "Cannot add comment" : e.getMessage(), ButtonType.OK);
+                a.setTitle("Error");
                 a.showAndWait();
                 return;
             }
         }
-        
+
         // Créer un attachement s'il y a un fichier sélectionné
         if (selectedAttachmentFile != null) {
             try {
@@ -553,24 +642,25 @@ public class TaskDetailController {
                 att.setFileName(selectedAttachmentFile.getName());
                 att.setFilePath(selectedAttachmentFile.getAbsolutePath());
                 att.setFileSize(selectedAttachmentFile.length());
-                
+
                 attachmentService.addAttachment(att);
                 selectedAttachmentFile = null;
                 attachmentInfoLabel.setText("");
-                attachmentStatusLabel.setText("✓ Fichier attaché avec succès");
-                
+                attachmentStatusLabel.setText("✓ File attached successfully");
+
                 // Masquer le message après 3 secondes
                 new Thread(() -> {
                     try {
                         Thread.sleep(3000);
                         Platform.runLater(() -> attachmentStatusLabel.setText(""));
-                    } catch (InterruptedException e) { /* Ignorer */ }
+                    } catch (InterruptedException e) {
+                        /* Ignorer */ }
                 }).start();
-                
+
                 refreshAll();
             } catch (Exception e) {
-                Alert a = new Alert(Alert.AlertType.ERROR, "Erreur lors de l'upload: " + e.getMessage(), ButtonType.OK);
-                a.setTitle("Erreur");
+                Alert a = new Alert(Alert.AlertType.ERROR, "Upload error: " + e.getMessage(), ButtonType.OK);
+                a.setTitle("Error");
                 a.showAndWait();
             }
         } else {
@@ -589,11 +679,13 @@ public class TaskDetailController {
             a.setFileName(file.getName());
             a.setFilePath(file.getAbsolutePath()); // In real app, upload file content
             a.setFileSize(file.length());
-            
+
             try {
                 attachmentService.addAttachment(a);
                 refreshAll();
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -605,7 +697,9 @@ public class TaskDetailController {
             startTimerBtn.setDisable(true);
             stopTimerBtn.setDisable(false);
             refreshAll();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -618,26 +712,46 @@ public class TaskDetailController {
                 startTimerBtn.setDisable(false);
                 stopTimerBtn.setDisable(true);
                 refreshAll();
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
-    
-    @FXML private void handleEditTask() {
+
+    @FXML
+    private void handleEditTask() {
         // Implementation for editing task could open a dialog similar to TaskForm
     }
 
-    @FXML private void handleDeleteTask() {
-        if (currentTask == null) return;
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete this task and all its subtasks?", ButtonType.YES, ButtonType.NO);
+    @FXML
+    private void handleDeleteTask() {
+        if (currentTask == null)
+            return;
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Delete this task and all its subtasks?", ButtonType.YES,
+                ButtonType.NO);
         alert.showAndWait().ifPresent(bt -> {
             if (bt == ButtonType.YES) {
                 try {
                     if (taskService.deleteTask(currentTask.getId())) {
-                        titleLabel.getScene().getWindow().hide(); 
+                        titleLabel.getScene().getWindow().hide();
                     }
-                } catch (Exception e) { e.printStackTrace(); }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
-    @FXML private void handleAddDependency() {}
+
+    @FXML
+    private void handleAddDependency() {
+    }
+
+    private String getTagColor(String name) {
+        if (name == null || name.isEmpty()) return "#64748b";
+        int hash = name.hashCode();
+        String[] colors = {
+            "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#06b6d4"
+        };
+        return colors[Math.abs(hash) % colors.length];
+    }
 }

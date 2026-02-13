@@ -13,11 +13,11 @@
             <padding><Insets top="25" right="40" bottom="25" left="40"/></padding>
             <HBox alignment="CENTER_LEFT" spacing="20">
                 <VBox spacing="5">
-                    <Label text="Mes Projets" styleClass="app-title" />
-                    <Label text="Sélectionnez un projet pour voir les tâches" style="-fx-text-fill: -app-text-muted;" />
+                    <Label text="My Projects" styleClass="app-title" />
+                    <Label text="Select a project to view tasks" style="-fx-text-fill: -app-text-muted;" />
                 </VBox>
                 <Region HBox.hgrow="ALWAYS" />
-                <Button text="+ Nouveau Projet" onAction="#handleCreateProject" 
+                <Button text="+ New Project" onAction="#handleCreateProject" 
                         styleClass="primary-action-button" />
             </HBox>
         </VBox>

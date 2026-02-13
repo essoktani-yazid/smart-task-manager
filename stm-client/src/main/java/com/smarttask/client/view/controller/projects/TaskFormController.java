@@ -5,8 +5,8 @@ import com.smarttask.client.service.TaskService;
 import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.Priority;
 import com.smarttask.model.Status;
-import com.smarttask.model.Task;
 import com.smarttask.model.User;
+import com.smarttask.model.Task;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -18,46 +18,60 @@ import java.util.List;
 
 public class TaskFormController {
 
-    @FXML private TextField titleField;
-    @FXML private TextArea descriptionField;
-    @FXML private DatePicker dueDatePicker;
-    @FXML private ChoiceBox<Priority> priorityChoice;
-    @FXML private ComboBox<Status> statusCombo;
-    @FXML private ComboBox<User> assigneeCombo; // Le combo pour choisir l'user
-    @FXML private ComboBox<String> recurrenceCombo;
-    @FXML private ComboBox<Task> dependencyCombo;
+    @FXML
+    private TextField titleField;
+    @FXML
+    private TextArea descriptionField;
+    @FXML
+    private DatePicker dueDatePicker;
+    @FXML
+    private ChoiceBox<Priority> priorityChoice;
+    @FXML
+    private ComboBox<Status> statusCombo;
+    @FXML
+    private ComboBox<User> assigneeCombo; // Le combo pour choisir l'user
+    @FXML
+    private ComboBox<String> recurrenceCombo;
+    @FXML
+    private ComboBox<Task> dependencyCombo;
 
-    @FXML private Button saveBtn;
-    @FXML private Button cancelBtn;
+    @FXML
+    private Button saveBtn;
+    @FXML
+    private Button cancelBtn;
 
     private Task task;
     private Stage stage;
-    private final String[] projectId = {null}; // Utiliser un tableau pour pouvoir le modifier
+    private final String[] projectId = { null }; // Utiliser un tableau pour pouvoir le modifier
     private final UserService userService = new UserService();
     private final TaskService taskService = new TaskService();
 
-    public void setStage(Stage stage) { this.stage = stage; }
-    public void setProjectId(String projId) { this.projectId[0] = projId; }
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+
+    public void setProjectId(String projId) {
+        this.projectId[0] = projId;
+    }
 
     @FXML
     private void initialize() {
         // Initialisation des listes
         priorityChoice.setItems(FXCollections.observableArrayList(Priority.values()));
         statusCombo.setItems(FXCollections.observableArrayList(Status.values()));
-        
-        // Récurrence options
+
+        // Recurrence options
         recurrenceCombo.setItems(FXCollections.observableArrayList(
-            "Aucune", "Quotidienne", "Hebdomadaire", "Bimensuelle", "Mensuelle", "Annuelle"
-        ));
-        recurrenceCombo.setValue("Aucune");
+                "None", "Daily", "Weekly", "Monthly", "Yearly"));
+        recurrenceCombo.setValue("None");
 
         // Initialisation du combo Utilisateurs
         setupUserComboBox();
-        
+
         // Charger les tâches pour dépendances
         setupDependencyCombo();
     }
-    
+
     private void setupDependencyCombo() {
         // Convertisseur pour afficher le titre de la tâche
         dependencyCombo.setConverter(new StringConverter<Task>() {
@@ -65,8 +79,11 @@ public class TaskFormController {
             public String toString(Task task) {
                 return task != null ? task.getTitle() : "";
             }
+
             @Override
-            public Task fromString(String string) { return null; }
+            public Task fromString(String string) {
+                return null;
+            }
         });
 
         // Charger les tâches existantes du projet
@@ -78,13 +95,12 @@ public class TaskFormController {
                     // Exclure la tâche actuelle des dépendances
                     if (task != null && task.getId() != null) {
                         tasks = tasks.stream()
-                            .filter(t -> !t.getId().equals(task.getId()))
-                            .collect(java.util.stream.Collectors.toList());
+                                .filter(t -> !t.getId().equals(task.getId()))
+                                .collect(java.util.stream.Collectors.toList());
                     }
                     final List<Task> finalTasks = tasks; // Créer une copie finale pour la deuxième lambda
-                    javafx.application.Platform.runLater(() ->
-                        dependencyCombo.setItems(FXCollections.observableArrayList(finalTasks))
-                    );
+                    javafx.application.Platform
+                            .runLater(() -> dependencyCombo.setItems(FXCollections.observableArrayList(finalTasks)));
                 } catch (Exception e) {
                     System.err.println("Erreur chargement dépendances: " + e.getMessage());
                 }
@@ -99,8 +115,11 @@ public class TaskFormController {
             public String toString(User user) {
                 return user != null ? user.getUsername() : "";
             }
+
             @Override
-            public User fromString(String string) { return null; }
+            public User fromString(String string) {
+                return null;
+            }
         });
 
         // Chargement des utilisateurs
@@ -111,13 +130,15 @@ public class TaskFormController {
             System.err.println("Erreur chargement users: " + e.getMessage());
             // Fallback: ajout de l'utilisateur courant si erreur
             User current = SessionManager.getInstance().getCurrentUser();
-            if(current != null) assigneeCombo.getItems().add(current);
+            if (current != null)
+                assigneeCombo.getItems().add(current);
         }
     }
 
     public void setTask(Task task) {
         this.task = task;
-        if (this.task == null) this.task = new Task();
+        if (this.task == null)
+            this.task = new Task();
 
         titleField.setText(this.task.getTitle() != null ? this.task.getTitle() : "");
         descriptionField.setText(this.task.getDescription() != null ? this.task.getDescription() : "");
@@ -142,10 +163,11 @@ public class TaskFormController {
     }
 
     public Task getTask() {
-        if (task == null) task = new Task();
+        if (task == null)
+            task = new Task();
 
         if (titleField.getText() == null || titleField.getText().trim().isEmpty()) {
-            showAlert("Erreur", "Le titre est obligatoire.");
+            showAlert("Error", "The title is required.");
             return null;
         }
 
@@ -153,7 +175,8 @@ public class TaskFormController {
         task.setDescription(descriptionField.getText());
 
         LocalDate d = dueDatePicker.getValue();
-        if (d != null) task.setDueDate(d.atStartOfDay());
+        if (d != null)
+            task.setDueDate(d.atStartOfDay());
 
         task.setPriority(priorityChoice.getValue());
         task.setStatus(statusCombo.getValue());
@@ -166,19 +189,37 @@ public class TaskFormController {
             // Si aucun user sélectionné, on met celui connecté par défaut
             try {
                 task.setUser(SessionManager.getInstance().getCurrentUser());
-            } catch (Exception e) { /* Ignorer */ }
+            } catch (Exception e) {
+                /* Ignorer */ }
         }
-        
+
         // Recurrence configuration
-        String recurrence = recurrenceCombo.getValue();
-        if (recurrence != null && !recurrence.equals("Aucune")) {
-            task.setRecurrenceType(recurrence.toUpperCase());
-            task.setRecurrenceInterval(1); // Default interval of 1
-        } else {
-            task.setRecurrenceType("NONE");
-            task.setRecurrenceInterval(0);
+        String recurrenceUI = recurrenceCombo.getValue();
+        String dbValue = "NONE";
+
+        if (recurrenceUI != null) {
+            switch (recurrenceUI) {
+                case "Daily":
+                    dbValue = "DAILY";
+                    break;
+                case "Weekly":
+                    dbValue = "WEEKLY";
+                    break;
+                case "Monthly":
+                    dbValue = "MONTHLY";
+                    break;
+                case "Yearly":
+                    dbValue = "YEARLY";
+                    break;
+                default:
+                    dbValue = "NONE";
+                    break;
+            }
         }
-        
+
+        task.setRecurrenceType(dbValue);
+        task.setRecurrenceInterval(dbValue.equals("NONE") ? 0 : 1);
+
         // Dependency configuration
         Task selectedDependency = dependencyCombo.getValue();
         if (selectedDependency != null) {
@@ -193,14 +234,16 @@ public class TaskFormController {
     @FXML
     private void onSave() {
         if (getTask() != null) {
-            if (stage != null) stage.close();
+            if (stage != null)
+                stage.close();
         }
     }
 
     @FXML
     private void onCancel() {
         task = null;
-        if (stage != null) stage.close();
+        if (stage != null)
+            stage.close();
     }
 
     private void showAlert(String title, String content) {

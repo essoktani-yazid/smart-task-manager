@@ -1,19 +1,8 @@
 package com.smarttask.server.handler;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonDeserializationContext;
-import java.lang.reflect.Type;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import com.smarttask.model.Project;
+import com.smarttask.server.dao.NotificationDAO;
 import com.smarttask.server.dao.ProjectDAO;
 import com.smarttask.server.util.GsonUtils;
 import com.sun.net.httpserver.HttpExchange;
@@ -27,6 +16,7 @@ import java.util.List;
 
 public class ProjectsHandler implements HttpHandler {
     private final ProjectDAO projectDAO = new ProjectDAO();
+    private final NotificationDAO notificationDAO = new NotificationDAO();
     private final Gson gson;
 
     public ProjectsHandler() {
@@ -46,13 +36,14 @@ public class ProjectsHandler implements HttpHandler {
                 } else if (parts.length == 4) {
                     handleGetById(exchange, parts[3]);
                 } else if (parts.length == 5) {
-                    if (parts[4].equals("user")) handleGetByUser(exchange, parts[3]);
-                    if (parts[4].equals("teams")) handleGetTeams(exchange, parts[3]);
+                    if (parts[4].equals("user"))
+                        handleGetByUser(exchange, parts[3]);
+                    if (parts[4].equals("teams"))
+                        handleGetTeams(exchange, parts[3]);
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
                 }
-            } 
-            else if ("POST".equals(method)) {
+            } else if ("POST".equals(method)) {
                 if (path.equals("/api/projects")) {
                     handleCreate(exchange);
                 } else if (parts.length == 6 && parts[4].equals("teams")) {
@@ -60,8 +51,7 @@ public class ProjectsHandler implements HttpHandler {
                 } else {
                     sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
                 }
-            } 
-            else if ("DELETE".equals(method)) {
+            } else if ("DELETE".equals(method)) {
                 if (parts.length == 4) {
                     handleDelete(exchange, parts[3]);
                 } else if (parts.length == 6 && parts[4].equals("teams")) {
@@ -74,8 +64,10 @@ public class ProjectsHandler implements HttpHandler {
                     if (parts.length == 4) {
                         String id = parts[3];
                         handleUpdate(exchange, id);
-                    } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
-                } else sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
+                    } else
+                        sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
+                } else
+                    sendResponse(exchange, 404, "{\"error\":\"Not Found\"}");
             } else {
                 sendResponse(exchange, 405, "{\"error\":\"Method Not Allowed\"}");
             }
@@ -92,8 +84,10 @@ public class ProjectsHandler implements HttpHandler {
 
     private void handleGetById(HttpExchange exchange, String id) throws IOException {
         Project p = projectDAO.findById(id).orElse(null);
-        if (p == null) sendResponse(exchange, 404, "{\"error\":\"Project not found\"}");
-        else sendResponse(exchange, 200, gson.toJson(p));
+        if (p == null)
+            sendResponse(exchange, 404, "{\"error\":\"Project not found\"}");
+        else
+            sendResponse(exchange, 200, gson.toJson(p));
     }
 
     private void handleGetByUser(HttpExchange exchange, String userId) throws IOException {
@@ -110,6 +104,15 @@ public class ProjectsHandler implements HttpHandler {
         }
         String id = projectDAO.save(p);
         p.setId(id);
+
+        // Notification personnalisée
+        try {
+            notificationDAO.createAndSend(p.getUserId(), "PROJECT_CREATED", "Projet Créé",
+                    "Le projet '" + p.getName() + "' a été créé avec succès.");
+        } catch (Exception e) {
+            System.err.println("[ERROR] Echec envoi notification projet: " + e.getMessage());
+        }
+
         sendResponse(exchange, 201, gson.toJson(p));
     }
 
@@ -132,8 +135,10 @@ public class ProjectsHandler implements HttpHandler {
 
     private void handleDelete(HttpExchange exchange, String id) throws IOException {
         boolean ok = projectDAO.deleteById(id);
-        if (ok) sendResponse(exchange, 200, "{\"message\":\"Project deleted\"}");
-        else sendResponse(exchange, 404, "{\"error\":\"Project not found\"}");
+        if (ok)
+            sendResponse(exchange, 200, "{\"message\":\"Project deleted\"}");
+        else
+            sendResponse(exchange, 404, "{\"error\":\"Project not found\"}");
     }
 
     private String readRequestBody(HttpExchange exchange) throws IOException {
