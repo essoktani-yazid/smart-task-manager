@@ -5,7 +5,7 @@ import com.smarttask.model.Project;
 import com.smarttask.model.User;
 import com.google.gson.JsonObject;
 import com.smarttask.client.view.controller.projects.ProjectViewController;
-
+import com.smarttask.client.config.AppConfig;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -295,7 +295,7 @@ public class MainLayoutController {
         java.net.http.HttpClient.newHttpClient()
         .newWebSocketBuilder()
         .buildAsync(
-            java.net.URI.create("ws://localhost:8887"),
+            java.net.URI.create(AppConfig.WS_URL),
             new WebSocket.Listener() {
 
                 @Override

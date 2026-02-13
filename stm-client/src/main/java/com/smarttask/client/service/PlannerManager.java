@@ -20,6 +20,7 @@ import com.smarttask.client.util.SessionManager;
 import com.smarttask.model.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import com.smarttask.client.config.AppConfig;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class PlannerManager {
         this.useApiMode = useApiMode;
 
         // ✅ NEW: Initialize API client instead of DAOs
-        this.apiClient = new ApiClient("http://localhost:8080");
+        this.apiClient = new ApiClient(AppConfig.BASE_URL);
         this.googleCalendarService = GoogleCalendarService.getInstance();
 
         this.events = FXCollections.observableArrayList();

@@ -16,6 +16,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import com.smarttask.client.config.AppConfig;
+
 
 /**
  * API CLIENT with proper LocalTime support and debugging
@@ -36,7 +38,7 @@ public class ApiClient {
     }
 
     public ApiClient() {
-        this("http://localhost:8080");
+        this(AppConfig.BASE_URL);
     }
 
     // ════════════════════════════════════════════════════════════════════════════
