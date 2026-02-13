@@ -369,18 +369,31 @@ async def generate_dashboard_insights(websocket, user_stats):
         
         log.ai(f"JSON nettoyé: {cleaned_content[:100]}...")
         
-        # 2.6 Valider que c'est du JSON valide avant d'envoyer
+        # Tentative de parsing
         try:
+            # On vérifie si le contenu est vide avant de parser
+            if not cleaned_content:
+                raise ValueError("Le contenu nettoyé est vide")
+                
             json.loads(cleaned_content)  # Test de validation
             log.success(f"✅ JSON d'insights valide généré")
-        except json.JSONDecodeError as json_err:
-            log.error(f"❌ JSON invalide après nettoyage: {json_err}")
-            log.error(f"Contenu: {cleaned_content}")
-            raise
-        
-        # 3. Envoi au client Java
-        await websocket.send_text(cleaned_content)
-        log.success(f"📤 Insights envoyés au dashboard")
+            
+            # Si c'est bon, on envoie la réponse de l'IA
+            await websocket.send_text(cleaned_content)
+
+        except (json.JSONDecodeError, ValueError) as json_err:
+            log.warning(f"⚠️ IA muette ou invalide ({json_err}). Utilisation des valeurs par défaut.")
+            
+            # FALLBACK : Valeurs par défaut pour ne pas bloquer le client
+            default_insights = {
+                "mood": "😐",
+                "title": "Ready to work",
+                "message": "Start adding tasks to see AI insights here!",
+                "theme_color": "#6366F1",
+                "action_label": "Create Task"
+            }
+            # On envoie le JSON par défaut au lieu de planter
+            await websocket.send_text(json.dumps(default_insights))
         
     except Exception as e:
         log.error(f"Erreur lors de la génération d'insights : {e}")

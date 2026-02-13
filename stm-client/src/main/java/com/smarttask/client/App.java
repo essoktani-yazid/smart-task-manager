@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 
 /**
  * JavaFX application entry point.
@@ -21,6 +22,8 @@ public class App extends Application {
         // FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-layout.fxml"));
         Parent root = loader.load();
 
+        Image icon = new Image(getClass().getResourceAsStream("/images/icon.png"));
+        primaryStage.getIcons().add(icon);
         primaryStage.setTitle("SmartTaskManager ");
         Scene scene = new Scene(root, 800, 600);
         

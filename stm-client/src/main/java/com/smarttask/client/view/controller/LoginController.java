@@ -52,7 +52,7 @@ public class LoginController {
         String password = loginPasswordField.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showError(loginErrorLabel, "Veuillez remplir tous les champs");
+            showError(loginErrorLabel, "Please fill in all fields");
             return;
         }
 
@@ -77,7 +77,7 @@ public class LoginController {
                 SessionManager.getInstance().setCurrentUser(user);
                 navigateToDashboard(user);
             } else {
-                showError(loginErrorLabel, "Identifiants incorrects");
+                showError(loginErrorLabel, "Invalid credentials");
             }
         });
 
@@ -85,7 +85,7 @@ public class LoginController {
         loginTask.setOnFailed(e -> {
             toggleLoading(false);
             Throwable error = loginTask.getException();
-            showError(loginErrorLabel, "Erreur connexion: " + error.getMessage());
+            showError(loginErrorLabel, "Connection error: " + error.getMessage());
             error.printStackTrace();
         });
 
@@ -100,7 +100,7 @@ public class LoginController {
         String password = registerPasswordField.getText();
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            showError(registerErrorLabel, "Veuillez tout remplir");
+            showError(registerErrorLabel, "Please fill in all fields");
             return;
         }
 
@@ -123,7 +123,7 @@ public class LoginController {
 
         registerTask.setOnFailed(e -> {
             toggleLoading(false);
-            showError(registerErrorLabel, "Erreur: " + registerTask.getException().getMessage());
+            showError(registerErrorLabel, "Error: " + registerTask.getException().getMessage());
         });
 
         new Thread(registerTask).start();
