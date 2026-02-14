@@ -23,7 +23,7 @@
                     <Insets topRightBottomLeft="15"/>
                 </padding>
 
-                <Label text="Mes équipes" styleClass="app-title">
+                <Label text="My Teams" styleClass="app-title">
                     <font>
                         <Font name="System Bold" size="24"/>
                     </font>
@@ -45,7 +45,7 @@
                 </HBox>
 
                 <!-- Create team -->
-                <Button text="+ Nouvelle équipe"
+                <Button text="+ New Team"
                         onAction="#handleCreateTeam"
                         styleClass="primary-action-button"/>
             </HBox>

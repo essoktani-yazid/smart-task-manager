@@ -51,7 +51,7 @@ public class TeamCardController {
         this.onEditRequested = onEditRequested;
         teamName.setText(team.getName());
         teamDescription.setText(team.getDescription());
-        memberCountLabel.setText(memberCount + (memberCount > 1 ? " membres" : " membre"));
+        memberCountLabel.setText(memberCount + (memberCount > 1 ? " members" : " member"));
 
         if (team.getColor() != null) {
             String color = team.getColor().replace("0x", "#");

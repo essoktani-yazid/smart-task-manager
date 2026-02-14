@@ -31,11 +31,11 @@ public class TeamDialogController {
     private Runnable onSaveSuccess;
     private final TeamService teamService = new TeamService();
     
-    // Listes pour la gestion des membres
+    // Lists for member management
     private final List<User> selectedUsers = new ArrayList<>();
-    private List<User> initialUsers = new ArrayList<>(); // État initial pour comparaison
+    private List<User> initialUsers = new ArrayList<>(); // Initial state for comparison
     
-    private Team editingTeam; // Null = Création, Non-null = Édition
+    private Team editingTeam; // Null = Creation, Non-null = Edition
 
     @FXML
     public void initialize() {
@@ -45,17 +45,17 @@ public class TeamDialogController {
     }
 
     /**
-     * Configure le mode édition (appelé depuis l'extérieur avant l'affichage)
+     * Configure the edit mode (called from outside before display)
      */
     public void setTeam(Team team) {
         this.editingTeam = team;
         
-        // Adaptation de l'UI
-        dialogTitle.setText("Modifier l'équipe");
-        dialogSubtitle.setText("Mettez à jour les informations de " + team.getName());
-        submitButton.setText("Enregistrer les modifications");
+        // Adapt the UI
+        dialogTitle.setText("Edit team");
+        dialogSubtitle.setText("Update information for " + team.getName());
+        submitButton.setText("Save changes");
 
-        // Pré-remplissage
+        // Pre-filling
         nameField.setText(team.getName());
         descriptionField.setText(team.getDescription());
         if (team.getColor() != null) {
@@ -70,7 +70,7 @@ public class TeamDialogController {
             List<TeamMember> members = teamService.getTeamMembers(teamId);
             List<User> allUsers = teamService.getAllUsers();
             
-            // Filtrer pour obtenir les objets User complets des membres actuels
+            // Filter to get complete User objects of current members
             List<User> currentUsers = allUsers.stream()
                     .filter(u -> members.stream().anyMatch(m -> m.getUserId().equals(u.getId())))
                     .collect(Collectors.toList());
@@ -135,10 +135,10 @@ public class TeamDialogController {
         editingTeam.setColor(colorPicker.getValue().toString());
 
         new Thread(() -> {
-            // 1. Mise à jour infos de base
+            // 1. Update basic information
             boolean success = teamService.updateTeam(editingTeam);
             if (success) {
-                // 2. Synchronisation des membres (ajouts/suppressions)
+                // 2. Synchronize members (additions/removals)
                 syncMembers(editingTeam.getId());
                 Platform.runLater(this::closeAndNotify);
             }
@@ -153,7 +153,7 @@ public class TeamDialogController {
         new Thread(() -> {
             String teamId = teamService.createTeam(team);
             if (teamId != null) {
-                // Ajout simple des membres sélectionnés
+                // Simple addition of selected members
                 for (User user : selectedUsers) {
                     teamService.addMember(teamId, user.getId(), "MEMBER");
                 }
@@ -163,7 +163,7 @@ public class TeamDialogController {
     }
 
     private void syncMembers(String teamId) {
-        // Déterminer les deltas
+        // Determine the deltas
         List<User> toAdd = selectedUsers.stream()
                 .filter(u -> initialUsers.stream().noneMatch(i -> i.getId().equals(u.getId())))
                 .collect(Collectors.toList());
@@ -172,9 +172,9 @@ public class TeamDialogController {
                 .filter(u -> selectedUsers.stream().noneMatch(s -> s.getId().equals(u.getId())))
                 .collect(Collectors.toList());
 
-        // Appels API
+        // API calls
         toAdd.forEach(u -> teamService.addMember(teamId, u.getId(), "MEMBER"));
-        // toRemove.forEach(u -> teamService.removeMember(teamId, u.getId())); // Si implémenté
+        // toRemove.forEach(u -> teamService.removeMember(teamId, u.getId())); // If implemented
     }
 
     private void closeAndNotify() {

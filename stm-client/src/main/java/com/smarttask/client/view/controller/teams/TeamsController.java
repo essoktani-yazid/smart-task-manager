@@ -64,7 +64,7 @@ public class TeamsController {
                 } else {
                     TeamDisplayWrapper wrapper = getTableRow().getItem();
                     if (wrapper.getMembersList().isEmpty()) {
-                        Label emptyLabel = new Label("Aucun membre");
+                        Label emptyLabel = new Label("No members");
                         emptyLabel.getStyleClass().add("empty-member-label");
                         setGraphic(emptyLabel);
                     } else {
@@ -132,15 +132,14 @@ public class TeamsController {
 				editIcon.setFill(Color.web("#4a90e2"));
 				editBtn.setGraphic(editIcon);
 				editBtn.getStyleClass().add("action-button-edit");
-				Tooltip.install(editBtn, new Tooltip("Modifier l'équipe"));
+			Tooltip.install(editBtn, new Tooltip("Edit team"));
 
 				SVGPath deleteIcon = new SVGPath();
 				deleteIcon.setContent(DELETE_PATH);
 				deleteIcon.setFill(Color.web("#e74c3c"));
 				deleteBtn.setGraphic(deleteIcon);
 				deleteBtn.getStyleClass().add("action-button-delete");
-				Tooltip.install(deleteBtn, new Tooltip("Supprimer l'équipe"));
-
+			Tooltip.install(deleteBtn, new Tooltip("Delete team"));
 				container.setAlignment(javafx.geometry.Pos.CENTER);
 
 				editBtn.setOnAction(event -> {
@@ -247,8 +246,8 @@ public class TeamsController {
     }
 
     private void handleDeleteTeam(Team team) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Voulez-vous vraiment supprimer l'équipe " + team.getName() + " ?", ButtonType.YES, ButtonType.NO);
-        alert.setTitle("Suppression d'équipe");
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Do you really want to delete the team " + team.getName() + " ?", ButtonType.YES, ButtonType.NO);
+        alert.setTitle("Team deletion");
         if (alert.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
             new Thread(() -> {
                 if (teamService.deactivateTeam(team.getId())) {
@@ -259,7 +258,7 @@ public class TeamsController {
     }
 
     /**
-     * Ouvre la boîte de dialogue générique pour la création ou l'édition
+     * Opens the generic dialog box for creation or edit
      */
     private void openTeamDialog(Team team) {
         try {
@@ -268,15 +267,15 @@ public class TeamsController {
 
             Stage dialogStage = new Stage();
             dialogStage.initModality(Modality.APPLICATION_MODAL);
-            dialogStage.setTitle(team == null ? "Créer une équipe" : "Modifier l'équipe");
+            dialogStage.setTitle(team == null ? "Create a team" : "Edit team");
 
-            // Récupération du contrôleur mis à jour
+            // Get the updated controller
             TeamDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
-            controller.setOnSaveSuccess(this::loadTeams); // Rafraîchir la liste après succès
+            controller.setOnSaveSuccess(this::loadTeams); // Refresh the list after success
 
             if (team != null) {
-                controller.setTeam(team); // Active le mode édition
+                controller.setTeam(team); // Enables edit mode
             }
 
             dialogStage.setScene(new Scene(root));
@@ -284,7 +283,7 @@ public class TeamsController {
             
         } catch (IOException e) {
             e.printStackTrace();
-            showError("Erreur de chargement", "Impossible d'ouvrir le formulaire d'équipe.");
+            showError("Loading error", "Unable to open the team form.");
         }
     }
 

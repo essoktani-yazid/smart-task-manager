@@ -65,7 +65,7 @@ public class EditTeamDialogController {
                 (int)(colorPicker.getValue().getGreen()*255),
                 (int)(colorPicker.getValue().getBlue()*255)));
 
-        teamService.updateTeam(team); // à implémenter côté service
+        teamService.updateTeam(team); // To implement on service side
         if (onTeamUpdated != null) onTeamUpdated.accept(null);
         dialogStage.close();
     }

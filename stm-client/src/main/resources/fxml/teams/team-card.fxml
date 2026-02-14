@@ -20,8 +20,8 @@
         </StackPane>
 
         <VBox spacing="4" HBox.hgrow="ALWAYS">
-            <Label fx:id="teamName" text="Nom de l'équipe" styleClass="team-name"/>
-            <Label fx:id="teamDescription" text="Description de l'équipe" styleClass="team-desc" wrapText="true" maxHeight="40"/>
+            <Label fx:id="teamName" text="Team Name" styleClass="team-name"/>
+            <Label fx:id="teamDescription" text="Team Description" styleClass="team-desc" wrapText="true" maxHeight="40"/>
         </VBox>
     </HBox>
 
