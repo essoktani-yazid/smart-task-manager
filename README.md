@@ -1,319 +1,192 @@
-<div align="center" width="100%">
+<div align="center">
+  <!-- En-tête créatif -->
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=00B4D8&height=150&section=header&text=Smart+Task+Manager&fontSize=50&fontAlignY=35&fontColor=ffffff" width="100%"/>
 
-  <h1>🧠 SmartTask Manager</h1>
-  
+  <!-- Animation texte ciblant "Ce que fait le projet" et "Pourquoi c'est utile" -->
+  <img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&weight=700&size=20&duration=3000&pause=1000&color=00B4D8&center=true&vCenter=true&width=600&lines=Gestion+Intelligente+de+T%C3%A2ches;Assistant+IA+%26+Commandes+Vocales;Collaboration+d'%C3%89quipe+%26+Temps+R%C3%A9el;Synchronisation+Google+Calendar" alt="Typing SVG" />
+
+  <br/>
+
+  <!-- Badges recommandés par GitHub -->
   <p>
-    An intelligent productivity platform merging <b>Modern UI</b> with <b>Generative AI</b>.
-    <br>
-    <i>"Stop managing tasks, start executing them."</i>
+    <img src="https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge" alt="Version">
+    <img src="https://img.shields.io/github/license/essoktani-yazid/smart-task-manager?style=for-the-badge" alt="License">
+    <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21">
+    <img src="https://img.shields.io/badge/JavaFX-21-FF6F00?style=for-the-badge" alt="JavaFX">
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11">
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+    <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   </p>
+</div>
 
-  <a href="https://www.java.com">
-    <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java" />
-  </a>
-  <a href="https://openjfx.io/">
-    <img src="https://img.shields.io/badge/Frontend-JavaFX-007396?style=for-the-badge&logo=java&logoColor=white" alt="JavaFX" />
-  </a>
-  <a href="https://fastapi.tiangolo.com/">
-    <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
-  </a>
-  <a href="#">
-    <img src="https://img.shields.io/badge/AI-Mistral_7B-purple?style=for-the-badge&logo=openai&logoColor=white" alt="AI" />
-  </a>
+---
 
-<br /> <br />
+<!-- 1. CE QUE FAIT LE PROJET -->
+## À propos du projet
 
-  <table align="center" style="margin-left: auto; margin-right: auto; border-collapse: collapse; width: 100%;">
-    <tr>
-        <td align="center" width="25%"><b>🎓 School</b></td>
-        <td align="center" width="25%"><b>📚 Module</b></td>
-        <td align="center" width="25%"><b>👩‍🏫 Supervisor</b></td>
-    </tr>
-    <tr>
-        <td align="center">ENSET Mohammedia (Master SDIA)</td>
-        <td align="center">Object-Oriented Programming</td>
-        <td align="center">Prof. Loubna Aminou</td>
-    </tr>
-  </table>
+**Smart Task Manager** est une solution applicative distribuée et intelligente conçue pour optimiser la productivité individuelle et la gestion de projet collaborative. Elle permet aux équipes et aux professionnels de piloter leurs flux de travail (tableaux Kanban, dépendances de tâches, suivi temporel), d'interagir avec un **assistant IA vocal et textuel** capable d'exécuter des actions métier directement en langage naturel, et de synchroniser leurs réunions en temps réel avec **Google Calendar** sans friction administrative.
 
-  <h3>👨‍💻 The Development Team</h3>
-  
-  **Yazid ESSOKTANI** • **Loubna MAHRACH** • **Rayane TOKO** • **Mohamed Amin BOUSSAID**
+> [!NOTE]
+> Pour une vue détaillée des choix de conception et des schémas système, consultez la [documentation d'architecture](docs/ARCHITECTURE.md).
+
+<!-- 2. POURQUOI LE PROJET EST UTILE -->
+## Pourquoi utiliser ce projet ?
+
+Smart Task Manager répond aux problématiques de dispersion des outils et de lenteur dans l'organisation quotidienne des équipes en apportant des avantages concrets :
+
+- **Assistant IA Contextuel & Mode Vocal :** Traduction instantanée d'instructions orales ou écrites en requêtes de données sécurisées (`NL-to-SQL`), propulsé par un modèle LLM (Mistral 7B via OpenRouter), streaming WebSocket et synthèse/reconnaissance vocale intégrée (Vosk & Edge-TTS).
+- **Collaboration d'Équipe & Gestion Kanban Avancée :** Gestion des rôles au sein des équipes (Owner, Admin, Member), assignation de projets collectifs, suivi visuel par colonnes de statut, gestion des sous-tâches, des dépendances de tâches et du temps de travail effectif (*time tracking*).
+- **Synchronisation Google Calendar & Réunions :** Synchronisation bidirectionnelle native avec l'API Google Calendar v3 via OAuth2, génération de liens de réunion (Google Meet / Zoom) et envoi automatisé d'invitations e-mail.
+- **Architecture Distribuée & Temps Réel :** Séparation claire entre le client riche JavaFX, le serveur central Java (API REST + WebSocket pour les notifications instantanées) et le microservice d'intelligence artificielle en Python FastAPI.
+- **Multi-plateforme & Installateurs Autonomes :** Packaging automatisé via `jpackage` fournissant un installateur Windows (`.exe`) et un paquet Linux (`.deb`).
+
+### Stack Technique
+
+| Couche | Technologies |
+| :--- | :--- |
+| **Frontend / UI Desktop** | `Java 21`, `JavaFX 21`, `MaterialFX`, `ControlsFX`, `CSS3` |
+| **Backend & API** | `Java 21`, `HttpServer (com.sun.net.httpserver)`, `Java-WebSocket`, `JDBC`, `Gson` |
+| **Microservice IA & Audio** | `Python 3.11`, `FastAPI`, `Uvicorn`, `WebSockets`, `OpenRouter API (Mistral 7B)`, `Vosk`, `Edge-TTS`, `pydub`, `FFmpeg` |
+| **Données & Persistance** | `MySQL 8.0` (Schéma relationnel 16 tables, index d'optimisation, contraintes d'intégrité) |
+| **Services & Intégrations** | `Google Calendar API v3` (OAuth2 Jetty), `JavaMail (SMTP)`, `OpenRouter` |
+| **DevOps & Packaging** | `Maven Multi-Module`, `Docker`, `jpackage (EXE / DEB)`, `GitHub Actions CI/CD` |
+
+<!-- 3. COMMENT DÉMARRER -->
+## Pour commencer
+
+Suivez ces instructions pour déployer et exécuter une instance locale du projet pour le développement et les tests.
+
+### Prérequis
+
+Assurez-vous d'avoir installé les outils suivants sur votre environnement :
+
+- `Java JDK 21+` (ex: Eclipse Temurin ou OpenJDK 21)
+- `Apache Maven 3.9+`
+- `Python 3.11+`
+- `MySQL Server 8.0+`
+- `FFmpeg` (requis pour le décodage et l'encodage audio du microservice IA)
+
+### Installation
+
+1. **Cloner le dépôt**
+   ```bash
+   git clone https://github.com/essoktani-yazid/smart-task-manager.git
+   cd smart-task-manager
+   ```
+
+2. **Configurer la base de données MySQL**
+   Créez la base de données et les tables en exécutant le script SQL fourni :
+   ```bash
+   mysql -u root -p < stm-server/src/main/resources/schema.sql
+   ```
+   *(Assurez-vous que les identifiants de connexion correspondent à votre environnement dans `stm-server/src/main/resources/database.properties` et `stm-ai-service/.env`)*.
+
+3. **Lancer le serveur backend Java (`stm-server`)**
+   ```bash
+   mvn clean compile exec:java -pl stm-server
+   ```
+   Le serveur API démarre sur le port `8080` (`http://localhost:8080/api`) et le serveur WebSocket de notifications sur le port `8887`.
+
+4. **Lancer le microservice IA (`stm-ai-service`)**
+   ```bash
+   cd stm-ai-service
+   python -m venv venv
+   source venv/bin/activate  # Sous Windows : .\venv\Scripts\activate
+   pip install -r requirements.txt
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+5. **Lancer l'application cliente JavaFX (`stm-client`)**
+   Dans une nouvelle fenêtre de terminal à la racine du projet :
+   ```bash
+   mvn javafx:run -pl stm-client
+   ```
+
+### Exemple d'utilisation
+
+Une fois le serveur démarré, les services REST et WebSockets sont opérationnels. Voici un exemple de requête HTTP pour créer une tâche via l'API :
+
+```bash
+curl -X POST http://localhost:8080/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Finaliser la présentation du projet",
+    "description": "Préparer les diapositives pour la démonstration",
+    "priority": "HIGH",
+    "status": "TODO",
+    "dueDate": "2026-10-30T14:00:00",
+    "userId": "d712fa65-c503-43e8-a370-825dd8481d38"
+  }'
+```
+
+*Pour découvrir l'ensemble des endpoints et paramètres disponibles, consultez la [Référence API complète](docs/API.md).*
+
+### Structure du projet
+
+```text
+.
+├── stm-common/             # Module partagé : Modèles de données (Task, User, Team, Event...), Adapters
+├── stm-server/             # Serveur HTTP REST et WebSocket Java (Handlers, DAOs, JDBC, Notifications)
+│   └── src/main/resources/ # Scripts SQL (schema.sql, create_teams_tables.sql)
+├── stm-client/             # Application cliente de bureau JavaFX 21 (Vues FXML, Contrôleurs, Services)
+│   └── src/main/resources/ # Fichiers FXML, feuilles CSS, icônes et images
+├── stm-ai-service/         # Microservice IA Python (FastAPI, WebSockets, RAG / NL-to-SQL, Mode Vocal)
+├── docs/                   # Documentation technique détaillée
+│   ├── assets/             # Captures d'écran, démonstrations et schémas d'architecture
+│   ├── ARCHITECTURE.md     # Conception système, flux de données et modèle relationnel
+│   └── API.md              # Documentation exhaustive des routes REST et protocoles WebSocket
+├── .github/
+│   ├── workflows/          # CI/CD GitHub Actions (Génération automatique des installateurs EXE et DEB)
+│   └── prompts/            # Directives et prompts du projet
+├── pom.xml                 # POM parent Maven multi-module
+├── Procfile                # Configuration de déploiement Cloud (Railway)
+├── LICENCE                 # Licence logicielle MIT
+└── README.md               # Documentation principale
+```
+
+<!-- 4. AIDE & SUPPORT -->
+## Aide et Support
+
+Vous avez une question sur l'architecture ou l'implémentation du projet ?
+- **Documentation :** Consultez les fichiers techniques présents dans le dossier [`docs/`](docs/).
+- **Contact direct :** N'hésitez pas à me contacter directement via LinkedIn ou mon portfolio.
+
+<!-- 5. CONTRIBUTION & AUTEUR -->
+## Contribuer
+
+Les contributions et propositions d'améliorations sont les bienvenues !
+1. **Forkez** le projet
+2. Créez votre branche de fonctionnalité (`git checkout -b feature/NouvelleFonctionnalite`)
+3. Commitez vos changements (`git commit -m 'feat: Ajout de NouvelleFonctionnalite'`)
+4. Pushez vers la branche (`git push origin feature/NouvelleFonctionnalite`)
+5. Ouvrez une **Pull Request**
+
+## Équipe de développement
+
+Projet académique réalisé dans le cadre du **Master SDIA** (Systèmes Distribués et Intelligence Artificielle) à l'**ENSET Mohammedia**, sous la supervision du **Pr. Loubna Aminou**.
+
+Conçu et développé en équipe par :
+
+- **[Yazid ESSOKTANI](https://github.com/essoktani-yazid)** : Architecture distribuée 3-tiers, Microservice IA (NL-to-SQL, WebSocket, Mode vocal Vosk/TTS), Dashboard KPI, CI/CD multi-plateforme (`jpackage` pour Windows EXE & Linux DEB) et déploiement cloud.
+- **[Rayane TOKO](https://github.com/RyanTk03)** (`ryntk`) : Module Collaboration & Équipes (création, gestion des membres et attribution des rôles), liaison Équipes-Projets, serveur de notifications temps réel WebSocket (`NotificationWebSocketServer`).
+- **[Amine BOUSSAID](https://github.com/aminebsd)** (`aminebsd`) : Module Calendrier interactif & Événements, synchronisation bidirectionnelle Google Calendar API v3 (OAuth2), gestion des visioconférences (Meet/Zoom) et notifications e-mail.
+- **[Loubna MAHRACH](https://github.com/loubnamahrach)** (`loubnamahrach`) : Modélisation initiale de la base de données relationnelle, module Authentification (Login & Inscription), interface et gestion du Profil utilisateur (sécurité et changement de mot de passe).
+
+## Auteur
+
+<div align="center">
+
+**Yazid ESSOKTANI**  
+*Full-Stack Web & AI Developer*
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-essoktani.tech-00B4D8?style=for-the-badge&logo=google-chrome&logoColor=white)](https://www.essoktani.tech/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Yazid_ESSOKTANI-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/yazid-essoktani-337549251)
+[![GitHub](https://img.shields.io/badge/GitHub-@essoktani--yazid-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/essoktani-yazid)
 
 </div>
 
-<hr>
-
-## 📝 Project Overview
-
-**SmartTask Manager** is not just another To-Do list application. It is a hybrid system designed to demonstrate how **Java Object-Oriented architecture** can seamlessly interact with a **Python Microservice for AI**.
-
-The user can manage tasks via a beautiful Glassmorphism UI or simply **chat with the AI** to perform complex database operations using natural language.
-
 ---
 
-## 📋 Table of Contents
+## Licence
 
-1. [Overview](#-overview)
-2. [Architecture](#-architecture)
-3. [Project Structure](#-project-structure)
-4. [Modules](#-modules)
-5. [Configuration](#-configuration)
-6. [Build and Run](#-build-and-run)
-7. [REST API](#-rest-api)
-
----
-
-## 🎯 Overview
-
-SmartTaskManager is a task management application divided into **four main components**:
-
-| Module             | Role                                                                 |
-| ------------------ | -------------------------------------------------------------------- |
-| **stm-common**     | Shared Data Models (POJOs)                                           |
-| **stm-server**     | HTTP Backend with REST API and JDBC persistence                      |
-| **stm-client**     | JavaFX Client (Login, Dashboard, Calendar, AI, Profile)              |
-| **stm-ai-service** | AI Microservice: Natural language → SQL via LLM (Mistral/OpenRouter) |
-
----
-
-## 🏗️ Architecture
-
-### Global Data Flow
-
-The application offers **two modes** of interaction with the database:
-
-#### Case 1: Direct connection via the server (Classic CRUD)
-
-For standard operations (create, edit, delete tasks via the interface), the client communicates with the server which accesses MySQL directly.
-
-```
-┌─────────────────┐     HTTP/JSON      ┌─────────────────┐       JDBC       ┌───────────────┐
-│   Client        │ ──────────────────> │   Server        │ ────────────────> │   MySQL DB    │
-│   (JavaFX)      │ <────────────────── │   (HttpServer)  │ <──────────────── │ (smarttask_db)│
-└─────────────────┘   Dashboard, CRUD   └─────────────────┘                   └───────────────┘
-```
-
-#### Case 2: Natural Language via AI Service
-
-To work more easily with the interface, you can **write in natural language** in a prompt: the application understands your request and executes the operations on the database.
-
-_Example: "Delete overdue tasks" or "Show my priority tasks for the week"_
-
-```
-┌─────────────────┐     WebSocket      ┌───────────────┐     LLM + SQL      ┌───────────────┐
-│   Client        │ ──────────────────> │ stm-ai-service│ ─────────────────> │   MySQL DB    │
-│   (JavaFX)      │   "Prompts" text    │  (FastAPI)    │   Analyze + exec   │ (smarttask_db)│
-└─────────────────┘ <────────────────── └───────────────┘ <───────────────── └───────────────┘
-                       Response / Confirm
-```
-
-### AI Microservice Architecture (stm-ai-service)
-
-The AI service acts as an intelligent bridge between the JavaFX client and the database: it translates natural language into secure SQL operations via an LLM (Mistral via OpenRouter).
-
-**Read-Execute / Write-Confirm Security:**
-
-- **READ**: Immediate execution (SELECT)
-- **WRITE** (INSERT/UPDATE/DELETE): No modification without **double validation** — the AI generates the SQL, the system simulates the impact, and the user confirms in the interface.
-
-**Real-time Feedback (WebSocket):**
-
-> _Analyzing intent..._ → _Reading database..._ → _Summarizing..._
-
----
-
-## 📁 Project Structure
-
-```
-SmartTaskManager/
-├── pom.xml                          # Maven Parent POM
-│
-├── stm-common/                      # Shared Models
-│   └── src/main/java/com/smarttask/model/
-│       ├── Task.java, MainTask.java, SubTask.java
-│       ├── User.java, Priority.java, Status.java
-│       ├── CalendarEvent.java, TaskDependency.java
-│       ├── Comment.java, SharedTask.java, TimeTracking.java
-│       └── ...
-│
-├── stm-server/                      # REST Backend
-│   ├── src/main/java/com/smarttask/server/
-│   │   ├── MainServer.java          # Entry Point (HttpServer, port 8080)
-│   │   ├── config/                  # DatabaseConnection, SchemaUpdater
-│   │   ├── dao/                     # TaskDAO, UserDAO, CalendarEventDAO
-│   │   └── handler/                 # AuthHandler, TaskHandler, UserHandler
-│   └── src/main/resources/
-│       ├── database.properties      # DB Config (⚠️ do not commit)
-│       └── schema.sql               # Complete Schema + Test Data
-│
-├── stm-client/                      # JavaFX Interface
-│   ├── src/main/java/com/smarttask/client/
-│   │   ├── App.java
-│   │   ├── service/                 # AuthService, TaskService, UserService, PlannerManager
-│   │   └── view/controller/         # Login, Dashboard, Calendar, AI, Profile
-│   └── src/main/resources/
-│       ├── fxml/                    # login, dashboard, calendar, ai-view, profile, etc.
-│       └── css/
-│
-└── stm-ai-service/                  # AI Microservice (Python)
-    ├── app/
-    │   ├── main.py                  # FastAPI + WebSocket /ai/stream
-    │   ├── database.py              # MySQL Connection
-    │   ├── core/config.py           # Environment Variables
-    │   ├── rag/prompts.py           # System Prompts (SQL Security)
-    │   ├── services/
-    │   │   ├── ai_service.py        # OpenRouter Communication (LLM)
-    │   │   └── query_service.py     # Logic: Intent → SQL → Confirmation
-    │   └── utils/logger.py
-    ├── .env                         # OPENROUTER_API_KEY, DB_*
-    └── requirements.txt
-```
-
----
-
-## 📦 Modules
-
-### stm-common
-
-POJO models shared between client and server (Task, User, CalendarEvent, etc.) to ensure data consistency.
-
-### stm-server
-
-- **MainServer**: Launches the `HttpServer` on port **8080**
-- **config/DatabaseConnection**: JDBC connection management via `database.properties`
-- **dao/**: CRUD for tasks, users, calendar events
-- **handler/**: Routes `/api/auth`, `/api/tasks`, `/api/users`
-
-### stm-client
-
-- **App.java**: JavaFX entry point
-- **Controllers**: Login, Dashboard, Calendar, AI, Profile, MainLayout
-- **Services**: HTTP communication with the server and WebSocket with the AI service
-
-### stm-ai-service (Python)
-
-- **main.py**: FastAPI, WebSocket `/ai/stream`, routing (prompts vs confirmations)
-- **query_service.py**: Intent analysis, READ/WRITE decision, real-time status
-- **prompts.py**: System prompts to ensure SQL compliance with the schema and filtering by `user_id`
-
----
-
-## ⚙️ Configuration
-
-### Prerequisites
-
-- **Java 21** and Maven 3.6+
-- **MySQL 8.0+**
-- **Python 3.10+** (for stm-ai-service)
-- **OpenRouter API Key** (for the AI service)
-
-### 1. Database
-
-Create the database and tables:
-
-```bash
-mysql -u root -p < stm-server/src/main/resources/schema.sql
-```
-
-The schema creates the `smarttask_db` database with tables: users, tasks, task_tags, task_dependencies, comments, calendar_event, time_tracking, shared_tasks, notifications, productivity_insights, etc.
-
-### 2. Server Configuration (database.properties)
-
-File `stm-server/src/main/resources/database.properties`:
-
-```properties
-db.url=jdbc:mysql://localhost:3306/smarttask_db?useSSL=false&serverTimezone=UTC
-db.username=root
-db.password=YOUR_PASSWORD
-db.driver=com.mysql.cj.jdbc.Driver
-```
-
-### 3. AI Service Configuration (.env)
-
-File `stm-ai-service/.env`:
-
-```env
-OPENROUTER_API_KEY=sk-or-your-key...
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=smarttask_db
-```
-
----
-
-## 🚀 Build and Run
-
-### Compilation (Java)
-
-```bash
-mvn clean install
-```
-
-### Start Server
-
-```bash
-mvn exec:java -pl stm-server
-```
-
-The server listens on `http://localhost:8080`.
-
-### Start Client
-
-```bash
-mvn javafx:run -pl stm-client
-```
-
-### Start AI Service
-
-```bash
-cd stm-ai-service
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-WebSocket available at `ws://localhost:8000/ai/stream`.
-
-### Development with Nodemon (Optional)
-
-To automatically reload on changes:
-
-```bash
-# Server
-nodemon --watch stm-server/src --watch stm-common/src -e "*" --exec "mvn compile exec:java -pl stm-server"
-
-# Client
-nodemon --watch stm-client/src --watch stm-common/src -e "*" --exec "mvn compile javafx:run -pl stm-client"
-```
-
----
-
-## 🌐 REST API
-
-### Authentication
-
-| Method | Endpoint             | Description |
-| ------ | -------------------- | ----------- |
-| POST   | `/api/auth/register` | Register    |
-| POST   | `/api/auth/login`    | Login       |
-
-### Tasks
-
-| Method | Endpoint               | Description   |
-| ------ | ---------------------- | ------------- |
-| GET    | `/api/tasks`           | List tasks    |
-| GET    | `/api/tasks/{id}`      | Task details  |
-| GET    | `/api/tasks/{id}/user` | User's tasks  |
-| POST   | `/api/tasks`           | Create a task |
-| PUT    | `/api/tasks/{id}`      | Update a task |
-| DELETE | `/api/tasks/{id}`      | Delete a task |
-
----
-
-## 📝 Important Notes
-
-1. **Security**: `database.properties` and `.env` contain secrets. Do not commit them. Use environment variables in production.
-2. **Passwords**: Currently in plain text. In production: hashing (BCrypt, Argon2).
-3. **CORS**: `Access-Control-Allow-Origin: *` in handlers. Restrict in production.
-4. **Connection Pool**: For production, consider HikariCP or equivalent.
+Distribué sous la licence **MIT**. Consultez le fichier [`LICENCE`](LICENCE) pour plus d'informations.
