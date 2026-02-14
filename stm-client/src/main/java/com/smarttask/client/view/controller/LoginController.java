@@ -117,7 +117,16 @@ public class LoginController {
             toggleLoading(false);
             User user = registerTask.getValue();
             if (user != null) {
-                navigateToDashboard(user);
+                // Après enregistrement, revenir à l'écran de connexion
+                // Pré-remplir le champ username et afficher un message de succès
+                loginUsernameField.setText(user.getUsername());
+                loginPasswordField.clear();
+                registerUsernameField.clear();
+                registerEmailField.clear();
+                registerPasswordField.clear();
+                loginErrorLabel.setText("Registration successful. Please log in.");
+                loginErrorLabel.setVisible(true);
+                switchToLogin();
             }
         });
 
