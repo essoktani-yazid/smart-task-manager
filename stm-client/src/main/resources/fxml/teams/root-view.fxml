@@ -59,13 +59,13 @@
                 <Insets topRightBottomLeft="25"/>
             </padding>
 
-            <!-- Cards container -->
             <ScrollPane fx:id="cardsScroll" fitToWidth="true" styleClass="view-scroll" hbarPolicy="NEVER">
                 <FlowPane fx:id="teamsFlow"
-                          hgap="20"
-                          vgap="20"
-                          prefWrapLength="900"
-                          alignment="TOP_CENTER"/>
+                        hgap="20"
+                        vgap="20"
+                        style="-fx-background-color: transparent;" 
+                        prefWrapLength="900"
+                        alignment="TOP_CENTER"/>
             </ScrollPane>
 
             <!-- List container -->
